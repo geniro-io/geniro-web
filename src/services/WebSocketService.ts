@@ -33,7 +33,7 @@ class WebSocketService {
    */
   connect(token: string, userId?: string): void {
     if (this.socket?.connected || this.isConnecting) {
-      console.log('[WebSocket] Already connected or connecting');
+      console.debug('[WebSocket] Already connected or connecting');
       return;
     }
 
@@ -41,7 +41,7 @@ class WebSocketService {
     this.token = token;
     this.userId = userId || null;
 
-    console.log('[WebSocket] Connecting to:', API_URL);
+    console.debug('[WebSocket] Connecting to:', API_URL);
 
     // Create socket connection with authentication
     this.socket = io(API_URL, {
@@ -68,7 +68,7 @@ class WebSocketService {
 
     // Connection events
     this.socket.on('connect', () => {
-      console.log('[WebSocket] Connected:', this.socket?.id);
+      console.debug('[WebSocket] Connected:', this.socket?.id);
       this.reconnectAttempts = 0;
 
       // Re-subscribe to graphs after reconnection
@@ -78,7 +78,7 @@ class WebSocketService {
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('[WebSocket] Disconnected:', reason);
+      console.debug('[WebSocket] Disconnected:', reason);
     });
 
     this.socket.on('connect_error', (error) => {
@@ -92,43 +92,36 @@ class WebSocketService {
 
     // Graph update events
     this.socket.on('graph.update', (data: SocketNotification) => {
-      console.log('[WebSocket] Graph update:', data);
       this.emitToHandlers('graph.update', data);
     });
 
     // Agent message events
     this.socket.on('agent.message', (data: SocketNotification) => {
-      console.log('[WebSocket] Agent message:', data);
       this.emitToHandlers('agent.message', data);
     });
 
     // Agent state update events
     this.socket.on('agent.state.update', (data: SocketNotification) => {
-      console.log('[WebSocket] Agent state update:', data);
       this.emitToHandlers('agent.state.update', data);
     });
 
     // Thread create events
     this.socket.on('thread.create', (data: SocketNotification) => {
-      console.log('[WebSocket] Thread create:', data);
       this.emitToHandlers('thread.create', data);
     });
 
     // Thread update events
     this.socket.on('thread.update', (data: SocketNotification) => {
-      console.log('[WebSocket] Thread update:', data);
       this.emitToHandlers('thread.update', data);
     });
 
     // Thread delete events
     this.socket.on('thread.delete', (data: SocketNotification) => {
-      console.log('[WebSocket] Thread delete:', data);
       this.emitToHandlers('thread.delete', data);
     });
 
     // Graph node update events
     this.socket.on('graph.node.update', (data: SocketNotification) => {
-      console.log('[WebSocket] Graph node update:', data);
       this.emitToHandlers('graph.node.update', data);
     });
 
@@ -142,7 +135,6 @@ class WebSocketService {
 
     revisionEvents.forEach((eventType) => {
       this.socket?.on(eventType, (data: SocketNotification) => {
-        console.log(`[WebSocket] ${eventType}:`, data);
         this.emitToHandlers(eventType, data);
       });
     });
@@ -195,14 +187,14 @@ class WebSocketService {
     this.subscribedGraphs.add(graphId);
 
     if (!this.socket?.connected) {
-      console.log(
+      console.debug(
         '[WebSocket] Socket not connected yet. Queued subscription for graph:',
         graphId,
       );
       return;
     }
 
-    console.log('[WebSocket] Subscribing to graph:', graphId);
+    console.debug('[WebSocket] Subscribing to graph:', graphId);
     const payload: SubscribeGraphPayload = { graphId };
     this.socket.emit('subscribe_graph', payload);
   }
@@ -221,14 +213,14 @@ class WebSocketService {
     this.subscribedGraphs.delete(graphId);
 
     if (!this.socket?.connected) {
-      console.log(
+      console.debug(
         '[WebSocket] Socket not connected. Removed queued subscription for graph:',
         graphId,
       );
       return;
     }
 
-    console.log('[WebSocket] Unsubscribing from graph:', graphId);
+    console.debug('[WebSocket] Unsubscribing from graph:', graphId);
     const payload: UnsubscribeGraphPayload = { graphId };
     this.socket.emit('unsubscribe_graph', payload);
   }
@@ -273,7 +265,7 @@ class WebSocketService {
    */
   disconnect(): void {
     if (this.socket) {
-      console.log('[WebSocket] Disconnecting');
+      console.debug('[WebSocket] Disconnecting');
       this.subscribedGraphs.clear();
       this.socket.disconnect();
       this.socket = null;

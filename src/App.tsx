@@ -1,11 +1,13 @@
 import '@refinedev/antd/dist/reset.css';
 
 import {
+  ApiOutlined,
   BookOutlined,
   FolderOutlined,
   HomeOutlined,
   MessageOutlined,
   NodeIndexOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { useKeycloak } from '@react-keycloak/web';
 import {
@@ -22,18 +24,20 @@ import routerBindings, {
 import dataProvider from '@refinedev/simple-rest';
 import { App as AntdApp } from 'antd';
 import { useEffect } from 'react';
-import { BrowserRouter, Outlet, Route, Routes } from 'react-router';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router';
 
 import { createAuthProvider, useAuth } from './auth';
 import { Header } from './components/header';
 import { CustomSider } from './components/layout/CustomSider';
 import { API_URL, PROJECT_ID } from './config';
 import { ChatsPage } from './pages/chats/page';
+import { GitHubAppCallbackPage } from './pages/github-app/components/GitHubAppCallbackPage';
 import { GraphPage } from './pages/graphs/details';
 import { GraphsListPage } from './pages/graphs/list';
 import { KnowledgeListPage } from './pages/knowledge/list';
 import { MainPage } from './pages/main/page';
 import { RepositoriesListPage } from './pages/repositories/list';
+import { IntegrationsPage } from './pages/settings/IntegrationsPage';
 
 // Login page component that redirects to Keycloak
 const LoginPage = ({ authProvider }: { authProvider: AuthProvider }) => {
@@ -117,6 +121,22 @@ function App() {
                 icon: <BookOutlined />,
               },
             },
+            {
+              name: 'Settings',
+              meta: {
+                label: 'Settings',
+                icon: <SettingOutlined />,
+              },
+            },
+            {
+              name: 'Integrations',
+              list: '/settings/integrations',
+              meta: {
+                label: 'Integrations',
+                parent: 'Settings',
+                icon: <ApiOutlined />,
+              },
+            },
           ]}
           options={{
             syncWithLocation: true,
@@ -162,6 +182,14 @@ function App() {
               <Route path="/chats" element={<ChatsPage />} />
               <Route path="/repositories" element={<RepositoriesListPage />} />
               <Route path="/knowledge" element={<KnowledgeListPage />} />
+              <Route path="/settings">
+                <Route index element={<Navigate to="integrations" replace />} />
+                <Route path="integrations" element={<IntegrationsPage />} />
+              </Route>
+              <Route
+                path="/github-app/callback"
+                element={<GitHubAppCallbackPage />}
+              />
               <Route path="*" element={<ErrorComponent />} />
             </Route>
             <Route

@@ -93,6 +93,8 @@ interface NodeEditSidebarProps {
    * This should be computed in GraphPage (single source of truth).
    */
   hasNodeUnsavedChangesFromServer?: boolean;
+  /** Whether the GitHub App integration is enabled (for conditional form fields). */
+  githubAppEnabled?: boolean;
 }
 
 export type AiSuggestionState = {
@@ -133,6 +135,7 @@ export const NodeEditSidebar = React.memo(
     graphId,
     draftNodeConfigVersion,
     hasNodeUnsavedChangesFromServer,
+    githubAppEnabled = false,
   }: NodeEditSidebarProps) => {
     const isHydratingRef = useRef(false);
     const nodeRef = useRef<GraphNode | null>(null);
@@ -1028,6 +1031,7 @@ export const NodeEditSidebar = React.memo(
                 aiSuggestionEnabled={Boolean(
                   isGraphRunning && graphId && node?.id,
                 )}
+                githubAppEnabled={githubAppEnabled}
               />
             ) : (
               <Text type="secondary">
@@ -1039,6 +1043,7 @@ export const NodeEditSidebar = React.memo(
       );
     }, [
       configFormData,
+      githubAppEnabled,
       graphId,
       handleConfigFormChange,
       isGraphRunning,
@@ -1329,7 +1334,8 @@ export const NodeEditSidebar = React.memo(
       prevProps.onTriggerClick === nextProps.onTriggerClick &&
       prevProps.onClose === nextProps.onClose &&
       prevProps.onNodeDraftChange === nextProps.onNodeDraftChange &&
-      prevProps.draftNodeConfigVersion === nextProps.draftNodeConfigVersion
+      prevProps.draftNodeConfigVersion === nextProps.draftNodeConfigVersion &&
+      prevProps.githubAppEnabled === nextProps.githubAppEnabled
     );
   },
 );
