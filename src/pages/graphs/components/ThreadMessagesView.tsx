@@ -53,6 +53,19 @@ import { TokenUsagePopoverIcon } from './threadMessages/TokenUsagePopoverIcon';
 
 const { Text } = Typography;
 
+/** Stable style references for MarkdownContent to enable React.memo effectiveness. */
+const MARKDOWN_DEFAULT_STYLE: React.CSSProperties = {
+  fontSize: '14px',
+  lineHeight: '1.4',
+  color: '#000000',
+};
+
+const MARKDOWN_COMPACT_STYLE: React.CSSProperties = {
+  fontSize: '13px',
+  lineHeight: '1.4',
+  color: '#333',
+};
+
 export interface ThreadMessagesViewProps {
   messages: ThreadMessageDto[];
   messagesLoading: boolean;
@@ -502,7 +515,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
 
           <MarkdownContent
             content={finishMessage}
-            style={{ fontSize: '14px', lineHeight: '1.4', color: '#000000' }}
+            style={MARKDOWN_DEFAULT_STYLE}
           />
         </ChatBubble>
       );
@@ -826,11 +839,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
               </div>
               <MarkdownContent
                 content={content}
-                style={{
-                  fontSize: '14px',
-                  lineHeight: '1.4',
-                  color: '#000000',
-                }}
+                style={MARKDOWN_DEFAULT_STYLE}
               />
             </div>
           </ChatBubble>
@@ -894,11 +903,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
               </div>
               <MarkdownContent
                 content={content}
-                style={{
-                  fontSize: '14px',
-                  lineHeight: '1.4',
-                  color: '#000000',
-                }}
+                style={MARKDOWN_DEFAULT_STYLE}
               />
             </div>
           </ChatBubble>
@@ -933,10 +938,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
               </Text>
             ) : undefined
           }>
-          <MarkdownContent
-            content={content}
-            style={{ fontSize: '14px', lineHeight: '1.4', color: '#000000' }}
-          />
+          <MarkdownContent content={content} style={MARKDOWN_DEFAULT_STYLE} />
         </ChatBubble>
       );
     };
@@ -981,10 +983,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
               {sendTimeText}
             </Text>
           }>
-          <MarkdownContent
-            content={content}
-            style={{ fontSize: '14px', lineHeight: '1.4', color: '#000000' }}
-          />
+          <MarkdownContent content={content} style={MARKDOWN_DEFAULT_STYLE} />
         </ChatBubble>
       );
     };
@@ -1143,10 +1142,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
               borderRadius: 6,
               border: '1px solid #f0f0f0',
             }}>
-            <MarkdownContent
-              content={content}
-              style={{ fontSize: '13px', lineHeight: '1.4', color: '#333' }}
-            />
+            <MarkdownContent content={content} style={MARKDOWN_COMPACT_STYLE} />
           </div>
         );
       }

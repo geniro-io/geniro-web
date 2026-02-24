@@ -292,37 +292,35 @@ export interface MarkdownContentProps {
   allowHorizontalScroll?: boolean;
 }
 
-export const MarkdownContent: React.FC<MarkdownContentProps> = ({
-  content,
-  style,
-  className,
-  allowHorizontalScroll = true,
-}) => {
-  if (!content || content.trim().length === 0) {
-    return null;
-  }
+export const MarkdownContent: React.FC<MarkdownContentProps> = React.memo(
+  ({ content, style, className, allowHorizontalScroll = true }) => {
+    if (!content || content.trim().length === 0) {
+      return null;
+    }
 
-  // Collapse 3+ consecutive blank lines into 2 (one visual blank line).
-  // This prevents react-markdown from generating excessive <p> wrappers
-  // inside list items when the source markdown has extra blank lines.
-  const normalizedContent = content.replace(/\n{3,}/g, '\n\n');
+    // Collapse 3+ consecutive blank lines into 2 (one visual blank line).
+    // This prevents react-markdown from generating excessive <p> wrappers
+    // inside list items when the source markdown has extra blank lines.
+    const normalizedContent = content.replace(/\n{3,}/g, '\n\n');
 
-  const combinedStyle: React.CSSProperties = {
-    maxWidth: '100%',
-    overflowX: allowHorizontalScroll ? 'auto' : 'hidden',
-    wordBreak: 'break-word',
-    ...style,
-  };
+    const combinedStyle: React.CSSProperties = {
+      maxWidth: '100%',
+      overflowX: allowHorizontalScroll ? 'auto' : 'hidden',
+      wordBreak: 'break-word',
+      ...style,
+    };
 
-  return (
-    <div
-      style={combinedStyle}
-      className={`md-content${className ? ` ${className}` : ''}`}>
-      <ReactMarkdown
-        remarkPlugins={REMARK_PLUGINS}
-        components={markdownComponents}>
-        {normalizedContent}
-      </ReactMarkdown>
-    </div>
-  );
-};
+    return (
+      <div
+        style={combinedStyle}
+        className={`md-content${className ? ` ${className}` : ''}`}>
+        <ReactMarkdown
+          remarkPlugins={REMARK_PLUGINS}
+          components={markdownComponents}>
+          {normalizedContent}
+        </ReactMarkdown>
+      </div>
+    );
+  },
+);
+MarkdownContent.displayName = 'MarkdownContent';

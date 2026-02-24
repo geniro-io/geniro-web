@@ -26,10 +26,16 @@ const getMessageString = (
 
 export const sortMessagesChronologically = (
   msgs: ThreadMessageDto[],
-): ThreadMessageDto[] =>
-  [...msgs].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-  );
+): ThreadMessageDto[] => {
+  if (msgs.length <= 1) return msgs;
+  const decorated = msgs.map((msg, i) => ({
+    msg,
+    ts: new Date(msg.createdAt).getTime(),
+    idx: i,
+  }));
+  decorated.sort((a, b) => a.ts - b.ts || a.idx - b.idx);
+  return decorated.map((d) => d.msg);
+};
 
 export const extractReasoningEntries = (
   source: unknown,
@@ -385,6 +391,7 @@ export const upsertReasoningEntries = (
   if (!entries.length) return prev;
 
   let hasChanges = false;
+  let hasNewEntries = false;
   const byId = new Map<string, ThreadMessageDto>();
   prev.forEach((msg) => {
     byId.set(msg.id, msg);
@@ -463,6 +470,9 @@ export const upsertReasoningEntries = (
       )
     ) {
       hasChanges = true;
+      if (!existing) {
+        hasNewEntries = true;
+      }
     }
 
     byId.set(entry.reasoningId, nextMessage);
@@ -470,6 +480,11 @@ export const upsertReasoningEntries = (
 
   if (!hasChanges) {
     return prev;
+  }
+
+  if (!hasNewEntries) {
+    // Only updated existing entries — order unchanged, just replace in-place.
+    return prev.map((msg) => byId.get(msg.id) ?? msg);
   }
 
   return sortMessagesChronologically(Array.from(byId.values()));

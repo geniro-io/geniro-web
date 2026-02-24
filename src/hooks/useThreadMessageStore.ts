@@ -55,6 +55,30 @@ export const useThreadMessageStore = () => {
         const currentMessages = threadMessages[key] || [];
         const updatedMessages = updater(currentMessages);
 
+        // Fast-path: skip expensive multi-pass processing when no optimistic
+        // messages exist. This covers the common streaming case.
+        const hasOptimistic = updatedMessages.some(
+          (msg) =>
+            typeof msg.id === 'string' && msg.id.startsWith('optimistic-'),
+        );
+
+        if (!hasOptimistic) {
+          const seenIds = new Set<string>();
+          const deduped = updatedMessages.filter((msg) => {
+            if (seenIds.has(msg.id)) return false;
+            seenIds.add(msg.id);
+            return true;
+          });
+
+          return {
+            ...prev,
+            [threadId]: {
+              ...threadMessages,
+              [key]: deduped,
+            },
+          };
+        }
+
         /**
          * Replace optimistic messages with real ones when they arrive.
          *
@@ -141,16 +165,19 @@ export const useThreadMessageStore = () => {
         // Add the real messages that replaced optimistic ones
         const merged = [...result, ...realMessagesToAdd];
 
-        // Sort by createdAt to maintain chronological order
-        merged.sort((a, b) => {
-          const timeA = new Date(a.createdAt).getTime();
-          const timeB = new Date(b.createdAt).getTime();
-          return timeA - timeB;
-        });
+        // Sort by createdAt to maintain chronological order (Schwartzian transform
+        // to avoid redundant Date parsing in the comparator).
+        const decorated = merged.map((msg, i) => ({
+          msg,
+          ts: new Date(msg.createdAt).getTime(),
+          idx: i,
+        }));
+        decorated.sort((a, b) => a.ts - b.ts || a.idx - b.idx);
+        const sorted = decorated.map((d) => d.msg);
 
         // Final safety check: deduplicate by ID to catch any edge cases
         const seenIds = new Set<string>();
-        const deduplicated = merged.filter((msg) => {
+        const deduplicated = sorted.filter((msg) => {
           if (seenIds.has(msg.id)) {
             return false;
           }
