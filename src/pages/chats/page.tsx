@@ -587,8 +587,7 @@ export const ChatsPage = () => {
                   }}>
                   <div>
                     <Title level={4} style={{ margin: 0 }}>
-                      {selectedThread.name ||
-                        `Thread ${selectedThread.id.slice(-6)}`}
+                      {selectedThread.name || 'New Thread'}
                     </Title>
                     <Space size="small" wrap>
                       <Text type="secondary">

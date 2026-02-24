@@ -107,13 +107,13 @@ export const ThreadListItem: React.FC<ThreadListItemProps> = React.memo(
               <Text
                 strong
                 ellipsis={{
-                  tooltip: thread.name || `Thread ${thread.id.slice(-6)}`,
+                  tooltip: thread.name || 'New Thread',
                 }}
                 style={{
                   width: '100%',
                   display: 'block',
                 }}>
-                {thread.name || `Thread ${thread.id.slice(-6)}`}
+                {thread.name || 'New Thread'}
               </Text>
             </div>
             {statusMeta && (

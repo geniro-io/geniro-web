@@ -321,6 +321,37 @@ export const useChatsWebSocket = (deps: UseChatsWebSocketDeps) => {
         setDraftThread(null);
         setSelectedThreadId(newThread.id);
         pendingThreadSelectionRef.current = null;
+
+        // Safety net: re-fetch thread after a delay to pick up the
+        // AI-generated name that may have been missed during the
+        // draft-to-real transition (WebSocket subscription gap).
+        const refetchThreadId = newThread.id;
+        setTimeout(() => {
+          void (async () => {
+            try {
+              const response = await threadsApi.getThreadById(refetchThreadId);
+              const refreshed = response.data;
+              if (!refreshed) return;
+
+              setThreads((prev) => {
+                const idx = prev.findIndex((t) => t.id === refetchThreadId);
+                if (idx === -1) return prev;
+                const existing = prev[idx];
+                if (
+                  existing.name === refreshed.name &&
+                  existing.status === refreshed.status
+                ) {
+                  return prev;
+                }
+                const next = [...prev];
+                next[idx] = { ...existing, ...refreshed };
+                return sortThreadsByTimestampDesc(next);
+              });
+            } catch {
+              // Best-effort — thread list is already populated
+            }
+          })();
+        }, 3000);
       } else if (
         pendingThreadSelectionRef.current &&
         pendingThreadSelectionRef.current === newThread.externalThreadId
