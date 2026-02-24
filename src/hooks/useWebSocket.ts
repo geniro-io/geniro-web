@@ -10,6 +10,7 @@ import {
   SocketEventHandler,
   webSocketService,
 } from '../services/WebSocketService';
+import type { SocketNotification } from '../services/WebSocketTypes';
 
 interface UseWebSocketOptions {
   /**
@@ -129,25 +130,33 @@ export const useWebSocket = (
     };
   }, [graphId]);
 
-  // Register event handlers
+  // Register stable forwarding handlers — only re-run if the set of event
+  // types changes, not when handler implementations change. The forwarding
+  // functions delegate to `handlersRef.current` so they always invoke the
+  // latest handler without needing to unsubscribe/resubscribe.
   useEffect(() => {
-    if (!handlers) return;
+    const currentHandlers = handlersRef.current;
+    if (!currentHandlers) return;
 
-    // Register all handlers
-    const unsubscribeFns = Object.entries(handlers).map(
-      ([eventType, handler]) => {
-        return webSocketService.on(eventType, handler);
-      },
-    );
+    const eventTypes = Object.keys(currentHandlers);
+
+    // Create stable wrapper functions that forward to the ref
+    const unsubscribeFns = eventTypes.map((eventType) => {
+      const stableHandler = (data: SocketNotification) => {
+        handlersRef.current?.[eventType]?.(data);
+      };
+      return webSocketService.on(eventType, stableHandler);
+    });
 
     unsubscribeFnsRef.current = unsubscribeFns;
 
     return () => {
-      // Unregister all handlers on cleanup
       unsubscribeFns.forEach((fn) => fn());
       unsubscribeFnsRef.current = [];
     };
-  }, [handlers]);
+    // Only re-run if the set of event types changes, not handler implementations
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(handlers ? Object.keys(handlers) : [])]);
 
   const subscribeToGraph = useCallback((graphId: string) => {
     webSocketService.subscribeToGraph(graphId);

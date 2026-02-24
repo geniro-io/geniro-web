@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -25,6 +26,13 @@ import {
   sortRevisions,
 } from '../utils/graphPageUtils';
 
+const REVISION_STATUS_RANK: Record<GraphRevisionDtoStatusEnum, number> = {
+  [GraphRevisionDtoStatusEnum.Pending]: 0,
+  [GraphRevisionDtoStatusEnum.Applying]: 1,
+  [GraphRevisionDtoStatusEnum.Applied]: 2,
+  [GraphRevisionDtoStatusEnum.Failed]: 2,
+};
+
 interface UseGraphRevisionsOptions {
   graphId: string | undefined;
   graph: GraphDto | null;
@@ -34,6 +42,7 @@ interface UseGraphRevisionsOptions {
   };
   draftStateRef: MutableRefObject<UseGraphDraftStateReturn>;
   saving: boolean;
+  onRevisionComplete?: (revision: GraphRevisionDto) => void;
 }
 
 export const useGraphRevisions = ({
@@ -43,7 +52,14 @@ export const useGraphRevisions = ({
   draftState,
   draftStateRef,
   saving,
+  onRevisionComplete,
 }: UseGraphRevisionsOptions) => {
+  // Store onRevisionComplete in a ref so the polling interval doesn't restart
+  // when the callback identity changes.
+  const onRevisionCompleteRef = useRef(onRevisionComplete);
+  useEffect(() => {
+    onRevisionCompleteRef.current = onRevisionComplete;
+  }, [onRevisionComplete]);
   const [revisions, setRevisions] = useState<GraphRevisionDto[]>([]);
   const [revisionsLoading, setRevisionsLoading] = useState(false);
   const [revisionPopoverVisible, setRevisionPopoverVisible] = useState(false);
@@ -95,11 +111,70 @@ export const useGraphRevisions = ({
       if (index === -1) {
         next.push(revision);
       } else {
-        next[index] = revision;
+        const existing = next[index];
+        const existingRank =
+          REVISION_STATUS_RANK[existing.status as GraphRevisionDtoStatusEnum] ??
+          0;
+        const incomingRank =
+          REVISION_STATUS_RANK[revision.status as GraphRevisionDtoStatusEnum] ??
+          0;
+        if (incomingRank >= existingRank) {
+          next[index] = revision;
+        }
       }
       return sortRevisions(next).slice(0, REVISION_FETCH_LIMIT);
     });
   }, []);
+
+  // Derive a stable key for the active (Pending/Applying) revision.
+  // Only changes when the active revision identity or status changes, avoiding
+  // unnecessary polling interval restarts when unrelated revisions update.
+  const activeRevKey = useMemo(() => {
+    const activeRev = revisions.find(
+      (r) =>
+        r.status === GraphRevisionDtoStatusEnum.Pending ||
+        r.status === GraphRevisionDtoStatusEnum.Applying,
+    );
+    return activeRev ? `${activeRev.id}:${activeRev.status}` : null;
+  }, [revisions]);
+
+  // Polling fallback for pending/applying revisions — catches missed WebSocket events.
+  // When an active revision is detected, poll its status every 3 seconds for up to 60 seconds.
+  useEffect(() => {
+    if (!graphId || !activeRevKey) return;
+
+    const [revId] = activeRevKey.split(':');
+
+    const poll = async () => {
+      try {
+        const response = await graphRevisionsApi.getGraphRevision(
+          graphId,
+          revId,
+        );
+        const updated = response.data;
+        if (
+          updated.status === GraphRevisionDtoStatusEnum.Applied ||
+          updated.status === GraphRevisionDtoStatusEnum.Failed
+        ) {
+          upsertRevision(updated);
+          onRevisionCompleteRef.current?.(updated);
+        }
+      } catch {
+        // Silently ignore polling errors — WebSocket is the primary channel
+      }
+    };
+
+    const POLL_INTERVAL_MS = 3000;
+    const POLL_TIMEOUT_MS = 60000;
+
+    const interval = setInterval(() => void poll(), POLL_INTERVAL_MS);
+    const timeout = setTimeout(() => clearInterval(interval), POLL_TIMEOUT_MS);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [graphId, activeRevKey, upsertRevision]);
 
   const activeRevision = useMemo(() => {
     if (!revisions.length) {

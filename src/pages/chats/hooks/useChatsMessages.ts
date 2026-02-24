@@ -33,6 +33,7 @@ export const useChatsMessages = (deps: UseChatsMessagesDeps) => {
   useEffect(() => {
     messageMetaRef.current = messageMeta;
   }, [messageMeta]);
+  const loadingThreadsRef = useRef<Set<string>>(new Set());
   const externalThreadIdsRef = useRef(externalThreadIds);
   useEffect(() => {
     externalThreadIdsRef.current = externalThreadIds;
@@ -69,6 +70,10 @@ export const useChatsMessages = (deps: UseChatsMessagesDeps) => {
         return;
       }
 
+      if (!force && loadingThreadsRef.current.has(threadId)) {
+        return;
+      }
+
       const meta = getMessageMeta(threadId);
       if (
         !force &&
@@ -77,6 +82,7 @@ export const useChatsMessages = (deps: UseChatsMessagesDeps) => {
         return;
       }
 
+      loadingThreadsRef.current.add(threadId);
       updateMessageMeta(threadId, (prev) => ({
         ...prev,
         loading: true,
@@ -94,7 +100,9 @@ export const useChatsMessages = (deps: UseChatsMessagesDeps) => {
           0,
         );
         const fetched = response.data?.reverse() || [];
-        updateMessages(threadId, () => fetched);
+        updateMessages(threadId, (prev) =>
+          mergeMessagesReplacingStreaming(prev, fetched),
+        );
         updateMessageMeta(threadId, (prev) => ({
           ...prev,
           loading: false,
@@ -126,6 +134,8 @@ export const useChatsMessages = (deps: UseChatsMessagesDeps) => {
           hasMore: false,
           initialLoadFailed: true,
         }));
+      } finally {
+        loadingThreadsRef.current.delete(threadId);
       }
     },
     [

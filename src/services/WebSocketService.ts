@@ -196,7 +196,52 @@ class WebSocketService {
 
     console.debug('[WebSocket] Subscribing to graph:', graphId);
     const payload: SubscribeGraphPayload = { graphId };
-    this.socket.emit('subscribe_graph', payload);
+    this.socket.emit(
+      'subscribe_graph',
+      payload,
+      (response: { success: boolean; error?: string } | undefined) => {
+        if (response && !response.success) {
+          console.error(
+            '[WebSocket] Graph subscription failed:',
+            graphId,
+            response.error,
+          );
+          // Retry once after a short delay (handleConnection may still be running)
+          setTimeout(() => {
+            if (this.socket?.connected && this.subscribedGraphs.has(graphId)) {
+              console.debug(
+                '[WebSocket] Retrying graph subscription:',
+                graphId,
+              );
+              this.socket.emit(
+                'subscribe_graph',
+                payload,
+                (
+                  retryResponse:
+                    | { success: boolean; error?: string }
+                    | undefined,
+                ) => {
+                  if (retryResponse && !retryResponse.success) {
+                    console.error(
+                      '[WebSocket] Graph subscription retry also failed:',
+                      graphId,
+                      retryResponse.error,
+                    );
+                  } else if (retryResponse) {
+                    console.debug(
+                      '[WebSocket] Graph subscription confirmed on retry:',
+                      graphId,
+                    );
+                  }
+                },
+              );
+            }
+          }, 1000);
+        } else if (response) {
+          console.debug('[WebSocket] Graph subscription confirmed:', graphId);
+        }
+      },
+    );
   }
 
   /**

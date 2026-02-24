@@ -390,10 +390,12 @@ export const useChatsWebSocket = (deps: UseChatsWebSocketDeps) => {
           (thread) => thread.id === updatedThread.id,
         );
         if (index === -1) {
-          if (selectedThreadIdRef.current === updatedThread.id) {
-            return sortThreadsByTimestampDesc([updatedThread, ...prev]);
-          }
-          return prev;
+          // Thread not yet in list — add it instead of dropping.
+          // This handles the race where ThreadUpdate arrives before
+          // ThreadCreate (e.g. eager creation + notification handler timing).
+          // Graph-level filtering already happened above, so the thread
+          // is relevant to the current view.
+          return sortThreadsByTimestampDesc([updatedThread, ...prev]);
         }
         const currentThread = prev[index];
 
@@ -404,6 +406,11 @@ export const useChatsWebSocket = (deps: UseChatsWebSocketDeps) => {
         next[index] = updatedThread;
         return sortThreadsByTimestampDesc(next);
       });
+
+      // Ensure graph cache is populated for this thread (idempotent —
+      // skips fetch if already cached). Needed when ThreadUpdate adds
+      // a previously-unknown thread to the list.
+      void ensureGraphsLoaded([updatedThread]);
 
       if (selectedThreadIdRef.current === updatedThread.id) {
         setSelectedThreadShadow(updatedThread);
@@ -437,6 +444,7 @@ export const useChatsWebSocket = (deps: UseChatsWebSocketDeps) => {
     },
     [
       appendThreadSocketEvent,
+      ensureGraphsLoaded,
       setExternalThreadIds,
       shouldApplyThreadUpdate,
       sortThreadsByTimestampDesc,
