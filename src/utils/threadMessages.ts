@@ -436,9 +436,18 @@ export const upsertReasoningEntries = (
     }
 
     const nextContent = entry.content;
-    const additionalChanged =
-      JSON.stringify(existingAdditional) !==
-      JSON.stringify(nextMessage.message?.additionalKwargs ?? {});
+    const nextAdditional =
+      (nextMessage.message?.additionalKwargs as Record<string, unknown>) ?? {};
+    // Shallow comparison — sufficient because buildReasoningThreadMessage
+    // only sets primitive values (strings, booleans) in additionalKwargs.
+    const additionalChanged = (() => {
+      const existingKeys = Object.keys(existingAdditional);
+      const nextKeys = Object.keys(nextAdditional);
+      if (existingKeys.length !== nextKeys.length) return true;
+      return existingKeys.some(
+        (k) => existingAdditional[k] !== nextAdditional[k],
+      );
+    })();
 
     if (
       !existing ||

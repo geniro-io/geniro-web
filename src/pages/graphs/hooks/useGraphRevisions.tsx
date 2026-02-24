@@ -1,4 +1,4 @@
-import { Button, message, Modal, Space, Spin, Tag, Typography } from 'antd';
+import { App, Button, Space, Spin, Tag, Typography } from 'antd';
 import { createTwoFilesPatch } from 'diff';
 import {
   type MutableRefObject,
@@ -54,6 +54,7 @@ export const useGraphRevisions = ({
   saving,
   onRevisionComplete,
 }: UseGraphRevisionsOptions) => {
+  const { message, modal } = App.useApp();
   // Store onRevisionComplete in a ref so the polling interval doesn't restart
   // when the callback identity changes.
   const onRevisionCompleteRef = useRef(onRevisionComplete);
@@ -97,7 +98,7 @@ export const useGraphRevisions = ({
         setRevisionsLoading(false);
       }
     },
-    [graphId],
+    [graphId, message],
   );
 
   useEffect(() => {
@@ -238,7 +239,7 @@ export const useGraphRevisions = ({
   const handleResetAllLocalChanges = useCallback(() => {
     if (saving || isRevisionApplying) return;
 
-    Modal.confirm({
+    modal.confirm({
       title: 'Reset all local changes?',
       content:
         'This will discard all unsaved changes and restore the last saved version from the server.',
@@ -251,7 +252,7 @@ export const useGraphRevisions = ({
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [saving, isRevisionApplying]);
+  }, [saving, isRevisionApplying, modal, message]);
 
   const handleOpenLocalDiff = useCallback(() => {
     setLocalDiffModalVisible(true);
@@ -427,7 +428,7 @@ export const useGraphRevisions = ({
       message.error('Failed to download graph backup');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graph]);
+  }, [graph, message]);
 
   const handleCloseRevisionDiff = useCallback(() => {
     setRevisionDiffRevision(null);

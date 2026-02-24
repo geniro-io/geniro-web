@@ -156,6 +156,18 @@ export const useChatsWebSocket = (deps: UseChatsWebSocketDeps) => {
   // Keyed by threadId so entries can be cleared when a thread restarts.
   const nodesWithStateUpdateRef = useRef<Map<string, Set<string>>>(new Map());
 
+  const agentMessageBufferRef = useRef<
+    Map<
+      string,
+      {
+        threadId: string;
+        scopeKeys: (string | undefined)[];
+        messages: AgentMessageNotification[];
+      }
+    >
+  >(new Map());
+  const agentMessageFlushScheduledRef = useRef(false);
+
   const [threadSocketEvents, setThreadSocketEvents] = useState<
     Record<string, ThreadSocketEventEntry[]>
   >({});
@@ -597,148 +609,224 @@ export const useChatsWebSocket = (deps: UseChatsWebSocketDeps) => {
     }
   });
 
+  const flushAgentMessages = useCallback(() => {
+    agentMessageFlushScheduledRef.current = false;
+    const buffer = agentMessageBufferRef.current;
+    if (buffer.size === 0) return;
+
+    const snapshot = new Map(buffer);
+    buffer.clear();
+
+    // Accumulate all token usage updates to apply in a single setState call
+    const tokenUsageUpdates: {
+      threadId: string;
+      nodeId: string;
+      usageToAccumulate: NonNullable<
+        AgentMessageNotification['data']['requestTokenUsage']
+      >;
+    }[] = [];
+
+    // Track the last externalThreadId per thread (last one wins)
+    const externalThreadIdUpdates = new Map<string, string>();
+
+    snapshot.forEach(({ threadId, scopeKeys, messages }) => {
+      // Merge all buffered messages for each scope key in a single updateMessages call
+      scopeKeys.forEach((key) => {
+        updateMessages(
+          threadId,
+          (prev) => {
+            let current = prev;
+            for (const msg of messages) {
+              const normalized = normalizeIncomingCreatedAtForDisplay(
+                current,
+                msg.data,
+              );
+              current = mergeMessagesReplacingStreaming(current, [normalized]);
+            }
+            return current;
+          },
+          key,
+        );
+      });
+
+      // Batch pending message removals: collect all human message contents
+      const humanContents = new Set<string>();
+      for (const msg of messages) {
+        const content = msg.data.message?.content;
+        const role = msg.data.message?.role as string | undefined;
+        if (typeof content === 'string' && role === 'human') {
+          humanContents.add(content);
+        }
+      }
+      if (humanContents.size > 0) {
+        scopeKeys.forEach((key) => {
+          updatePendingMessages(
+            threadId,
+            (prev) =>
+              prev.filter(
+                (p) =>
+                  typeof p.content !== 'string' ||
+                  !humanContents.has(p.content),
+              ),
+            key,
+          );
+        });
+      }
+
+      // Track externalThreadId — last message with one wins
+      for (const msg of messages) {
+        if (msg.data.externalThreadId) {
+          externalThreadIdUpdates.set(threadId, msg.data.externalThreadId);
+        }
+      }
+
+      // Accumulate token usage for all messages in this thread
+      for (const msg of messages) {
+        const nodeId = msg.nodeId;
+        const incomingMessage = msg.data;
+        const reqUsage = incomingMessage.requestTokenUsage;
+        const toolUsage = incomingMessage.toolTokenUsage;
+        const threadNodeSet = nodesWithStateUpdateRef.current.get(threadId);
+        const nodeHasStateUpdates = threadNodeSet?.has(nodeId) ?? false;
+
+        const msgRecord = incomingMessage.message as unknown as
+          | Record<string, unknown>
+          | undefined;
+        const msgKwargs =
+          msgRecord?.additionalKwargs ?? msgRecord?.additional_kwargs;
+        const isSubagentOrCommMessage =
+          typeof msgKwargs === 'object' &&
+          msgKwargs !== null &&
+          (Boolean(
+            (msgKwargs as Record<string, unknown>).__subagentCommunication,
+          ) ||
+            Boolean(
+              (msgKwargs as Record<string, unknown>).__interAgentCommunication,
+            ));
+
+        const usageToAccumulate =
+          isSubagentOrCommMessage && reqUsage
+            ? reqUsage
+            : !nodeHasStateUpdates && reqUsage
+              ? reqUsage
+              : toolUsage;
+
+        if (usageToAccumulate && nodeId) {
+          tokenUsageUpdates.push({
+            threadId,
+            nodeId,
+            usageToAccumulate,
+          });
+        }
+      }
+    });
+
+    // Apply externalThreadId updates in a single setState call
+    if (externalThreadIdUpdates.size > 0) {
+      setExternalThreadIds((prev) => {
+        const updates: Record<string, string> = {};
+        let changed = false;
+        externalThreadIdUpdates.forEach((extId, tid) => {
+          if (prev[tid] !== extId) {
+            updates[tid] = extId;
+            changed = true;
+          }
+        });
+        return changed ? { ...prev, ...updates } : prev;
+      });
+    }
+
+    // Apply all token usage updates in a single setState call
+    if (tokenUsageUpdates.length > 0) {
+      setThreadTokenUsageByNode((prev) => {
+        let result = prev;
+        for (const {
+          threadId,
+          nodeId,
+          usageToAccumulate,
+        } of tokenUsageUpdates) {
+          const existingThread = result[threadId] ?? {};
+          const existingNode = existingThread[nodeId] ?? {};
+          result = {
+            ...result,
+            [threadId]: {
+              ...existingThread,
+              [nodeId]: {
+                inputTokens: addUsageField(
+                  existingNode.inputTokens,
+                  usageToAccumulate.inputTokens,
+                ),
+                cachedInputTokens: addUsageField(
+                  existingNode.cachedInputTokens,
+                  usageToAccumulate.cachedInputTokens,
+                ),
+                outputTokens: addUsageField(
+                  existingNode.outputTokens,
+                  usageToAccumulate.outputTokens,
+                ),
+                reasoningTokens: addUsageField(
+                  existingNode.reasoningTokens,
+                  usageToAccumulate.reasoningTokens,
+                ),
+                totalTokens: addUsageField(
+                  existingNode.totalTokens,
+                  usageToAccumulate.totalTokens,
+                ),
+                totalPrice: addUsageField(
+                  existingNode.totalPrice,
+                  usageToAccumulate.totalPrice,
+                ),
+                currentContext:
+                  typeof usageToAccumulate.currentContext === 'number' &&
+                  Number.isFinite(usageToAccumulate.currentContext)
+                    ? usageToAccumulate.currentContext
+                    : existingNode.currentContext,
+              },
+            },
+          };
+        }
+        return result;
+      });
+    }
+  }, [
+    updateMessages,
+    updatePendingMessages,
+    setExternalThreadIds,
+    setThreadTokenUsageByNode,
+  ]);
+
   useWebSocketEvent('agent.message', (notification) => {
     const data = notification as AgentMessageNotification;
     if (!data.internalThreadId) return;
 
     const threadId = data.internalThreadId;
     appendThreadSocketEvent(threadId, data);
-    const nodeId = data.nodeId;
-    const incomingMessage = data.data;
 
-    const applyMessageKeys = buildAgentMessageScopeKeysForGraph(
+    const scopeKeys = buildAgentMessageScopeKeysForGraph(
       data.graphId,
-      nodeId,
+      data.nodeId,
     );
-    applyMessageKeys.forEach((key) => {
-      updateMessages(
+
+    // Buffer the message for batched processing
+    const buffer = agentMessageBufferRef.current;
+    const existing = buffer.get(threadId);
+    if (existing) {
+      // Merge scope keys (union) and append message
+      const mergedKeys = new Set([...existing.scopeKeys, ...scopeKeys]);
+      existing.scopeKeys = Array.from(mergedKeys);
+      existing.messages.push(data);
+    } else {
+      buffer.set(threadId, {
         threadId,
-        (prev) => {
-          const normalized = normalizeIncomingCreatedAtForDisplay(
-            prev,
-            incomingMessage,
-          );
-          return mergeMessagesReplacingStreaming(prev, [normalized]);
-        },
-        key,
-      );
-    });
-
-    const incomingContent =
-      typeof incomingMessage.message?.content === 'string'
-        ? (incomingMessage.message?.content as string)
-        : undefined;
-    const incomingRole = incomingMessage.message?.role as string | undefined;
-    if (incomingContent && incomingRole === 'human') {
-      const applyPendingToKeys = applyMessageKeys;
-      applyPendingToKeys.forEach((key) => {
-        updatePendingMessages(
-          threadId,
-          (prev) =>
-            prev.filter(
-              (p) =>
-                typeof p.content !== 'string' || p.content !== incomingContent,
-            ),
-          key,
-        );
+        scopeKeys: [...scopeKeys],
+        messages: [data],
       });
     }
 
-    if (incomingMessage.externalThreadId) {
-      setExternalThreadIds((prev) => ({
-        ...prev,
-        [threadId]: incomingMessage.externalThreadId,
-      }));
-    }
-
-    // Accumulate per-request token usage into real-time node totals.
-    //
-    // For nodes that receive agent.state.update events (cumulative totals),
-    // we skip additive requestTokenUsage to avoid double-counting — the state
-    // update is the authoritative source.  However we still additively
-    // accumulate toolTokenUsage, which captures subagent/tool costs that
-    // the node-level state update may not yet include.
-    //
-    // Exception: subagent / inter-agent communication messages carry their
-    // own requestTokenUsage representing the *subagent's* LLM cost, which
-    // is NOT included in the parent node's agent.state.update totals until
-    // the subagent completes.  Always accumulate these additively so the
-    // thread header updates in real-time during subagent execution.
-    //
-    // For nodes without state updates, we accumulate requestTokenUsage
-    // additively so the UI shows live progress.
-    const reqUsage = incomingMessage.requestTokenUsage;
-    const toolUsage = incomingMessage.toolTokenUsage;
-    const threadNodeSet = nodesWithStateUpdateRef.current.get(threadId);
-    const nodeHasStateUpdates = threadNodeSet?.has(nodeId) ?? false;
-
-    // Detect subagent/communication inner messages via additional_kwargs flags.
-    const msgRecord = incomingMessage.message as unknown as
-      | Record<string, unknown>
-      | undefined;
-    const msgKwargs =
-      msgRecord?.additionalKwargs ?? msgRecord?.additional_kwargs;
-    const isSubagentOrCommMessage =
-      typeof msgKwargs === 'object' &&
-      msgKwargs !== null &&
-      (Boolean(
-        (msgKwargs as Record<string, unknown>).__subagentCommunication,
-      ) ||
-        Boolean(
-          (msgKwargs as Record<string, unknown>).__interAgentCommunication,
-        ));
-
-    const usageToAccumulate =
-      isSubagentOrCommMessage && reqUsage
-        ? reqUsage
-        : !nodeHasStateUpdates && reqUsage
-          ? reqUsage
-          : toolUsage;
-
-    if (usageToAccumulate && nodeId) {
-      setThreadTokenUsageByNode((prev) => {
-        const existingThread = prev[threadId] ?? {};
-        const existingNode = existingThread[nodeId] ?? {};
-
-        return {
-          ...prev,
-          [threadId]: {
-            ...existingThread,
-            [nodeId]: {
-              inputTokens: addUsageField(
-                existingNode.inputTokens,
-                usageToAccumulate.inputTokens,
-              ),
-              cachedInputTokens: addUsageField(
-                existingNode.cachedInputTokens,
-                usageToAccumulate.cachedInputTokens,
-              ),
-              outputTokens: addUsageField(
-                existingNode.outputTokens,
-                usageToAccumulate.outputTokens,
-              ),
-              reasoningTokens: addUsageField(
-                existingNode.reasoningTokens,
-                usageToAccumulate.reasoningTokens,
-              ),
-              totalTokens: addUsageField(
-                existingNode.totalTokens,
-                usageToAccumulate.totalTokens,
-              ),
-              totalPrice: addUsageField(
-                existingNode.totalPrice,
-                usageToAccumulate.totalPrice,
-              ),
-              // currentContext is a snapshot, not additive — always replace
-              currentContext:
-                typeof usageToAccumulate.currentContext === 'number' &&
-                Number.isFinite(usageToAccumulate.currentContext)
-                  ? usageToAccumulate.currentContext
-                  : existingNode.currentContext,
-            },
-          },
-        };
-      });
+    // Schedule flush via microtask if not already scheduled
+    if (!agentMessageFlushScheduledRef.current) {
+      agentMessageFlushScheduledRef.current = true;
+      setTimeout(flushAgentMessages, 0);
     }
   });
 

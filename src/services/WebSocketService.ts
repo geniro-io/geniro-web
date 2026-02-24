@@ -152,11 +152,13 @@ class WebSocketService {
     const handlers = this.eventHandlers.get(eventType);
     if (handlers) {
       handlers.forEach((handler) => {
-        try {
-          handler(data);
-        } catch (error) {
-          console.error('[WebSocket] Error in event handler:', error);
-        }
+        setTimeout(() => {
+          try {
+            handler(data);
+          } catch (error) {
+            console.error('[WebSocket] Error in event handler:', error);
+          }
+        }, 0);
       });
     }
 
@@ -164,11 +166,13 @@ class WebSocketService {
     const wildcardHandlers = this.eventHandlers.get('*');
     if (wildcardHandlers) {
       wildcardHandlers.forEach((handler) => {
-        try {
-          handler(data);
-        } catch (error) {
-          console.error('[WebSocket] Error in wildcard handler:', error);
-        }
+        setTimeout(() => {
+          try {
+            handler(data);
+          } catch (error) {
+            console.error('[WebSocket] Error in wildcard handler:', error);
+          }
+        }, 0);
       });
     }
   }
