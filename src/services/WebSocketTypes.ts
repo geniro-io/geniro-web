@@ -165,6 +165,20 @@ export interface GraphRevisionProgressNotification extends BaseNotification {
   data: GraphRevisionProgressData;
 }
 
+// Runtime status notification
+export type RuntimeStatusValue = 'creating' | 'ready' | 'failed';
+
+export interface RuntimeStatusNotification extends BaseNotification {
+  type: 'runtime.status';
+  nodeId: string;
+  threadId: string;
+  data: {
+    status: RuntimeStatusValue;
+    runtimeType: string;
+    message?: string;
+  };
+}
+
 // Server error notification
 export interface ServerErrorNotification {
   message: string;
@@ -180,7 +194,8 @@ export type SocketNotification =
   | ThreadDeleteNotification
   | GraphNodeUpdateNotification
   | GraphRevisionNotification
-  | GraphRevisionProgressNotification;
+  | GraphRevisionProgressNotification
+  | RuntimeStatusNotification;
 
 // Client to Server events payload types
 export interface SubscribeGraphPayload {

@@ -21,6 +21,7 @@ import type {
   GraphRevisionNotification,
   GraphRevisionProgressNotification,
   GraphUpdateNotification,
+  RuntimeStatusNotification,
 } from '../../../services/WebSocketTypes';
 import type { GraphNode, GraphNodeData } from '../types';
 
@@ -364,6 +365,43 @@ export const useGraphWebSocketHandlers = ({
             content: `Applying revision ${progressData.toVersion}: rebuilding node ${progressData.currentNode}/${progressData.totalNodes}`,
             duration: 0,
           });
+        }
+      },
+
+      'runtime.status': (notification) => {
+        const data = notification as RuntimeStatusNotification;
+        if (data.graphId !== id) return;
+
+        const { status, message: errorMessage } = data.data;
+        const messageKey = `runtime-status-${data.threadId}-${data.nodeId}`;
+
+        switch (status) {
+          case 'creating':
+            message.open({
+              key: messageKey,
+              type: 'loading',
+              content: 'Creating sandbox...',
+              duration: 0,
+            });
+            break;
+          case 'ready':
+            message.open({
+              key: messageKey,
+              type: 'success',
+              content: 'Sandbox ready',
+              duration: 3,
+            });
+            break;
+          case 'failed':
+            message.open({
+              key: messageKey,
+              type: 'error',
+              content: errorMessage
+                ? `Sandbox creation failed: ${errorMessage}`
+                : 'Sandbox creation failed',
+              duration: 5,
+            });
+            break;
         }
       },
     },

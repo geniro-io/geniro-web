@@ -139,6 +139,11 @@ class WebSocketService {
       });
     });
 
+    // Runtime status events
+    this.socket.on('runtime.status', (data: SocketNotification) => {
+      this.emitToHandlers('runtime.status', data);
+    });
+
     // Server error events
     this.socket.on('server_error', (error: ServerErrorNotification) => {
       console.error('[WebSocket] Server error:', error);
