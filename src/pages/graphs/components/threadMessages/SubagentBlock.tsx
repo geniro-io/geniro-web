@@ -45,23 +45,32 @@ export interface SubagentBlockProps {
 }
 
 /**
- * Filter out the last chat message inside the subagent block when it has no
- * tool calls — its content is already surfaced as the `resultText` below the
- * inner messages area, so showing it twice is redundant.
- *
- * Only filters when `resultText` is provided; otherwise the trailing chat is
- * the only place the final AI response is visible.
+ * Filter out redundant trailing messages when resultText is present —
+ * their content is already surfaced in the Result section below.
  */
-const filterTrailingChat = (
+const filterTrailingMessages = (
   messages: PreparedMessage[],
   hasResultText: boolean,
 ): PreparedMessage[] => {
   if (!hasResultText || messages.length === 0) return messages;
-  const last = messages[messages.length - 1];
-  if (last.type === 'chat' && !last.isToolCallContent) {
-    return messages.slice(0, -1);
+
+  let filtered = messages;
+
+  // Remove trailing finish tool — its result duplicates the Result section
+  const last = filtered[filtered.length - 1];
+  if (last.type === 'tool' && last.name?.toLowerCase() === 'finish') {
+    filtered = filtered.slice(0, -1);
   }
-  return messages;
+
+  // Remove trailing plain chat (no tool calls) — its content duplicates resultText
+  if (filtered.length > 0) {
+    const newLast = filtered[filtered.length - 1];
+    if (newLast.type === 'chat' && !newLast.isToolCallContent) {
+      filtered = filtered.slice(0, -1);
+    }
+  }
+
+  return filtered;
 };
 
 export const SubagentBlock: React.FC<SubagentBlockProps> = ({
@@ -84,7 +93,7 @@ export const SubagentBlock: React.FC<SubagentBlockProps> = ({
   const headerLabel = purpose ? `Subagent: ${purpose}` : 'Subagent';
 
   const filteredInnerMessages = useMemo(
-    () => filterTrailingChat(innerMessages, !!resultText),
+    () => filterTrailingMessages(innerMessages, !!resultText),
     [innerMessages, resultText],
   );
 

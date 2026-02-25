@@ -100,8 +100,24 @@ export const CommunicationBlock: React.FC<CommunicationBlockProps> = ({
     ? `Result from ${targetAgentName}`
     : 'Result';
 
+  const filteredInnerMessages = useMemo(() => {
+    if (!resultText || innerMessages.length === 0) return innerMessages;
+    let filtered = innerMessages;
+    const last = filtered[filtered.length - 1];
+    if (last.type === 'tool' && last.name?.toLowerCase() === 'finish') {
+      filtered = filtered.slice(0, -1);
+    }
+    if (filtered.length > 0) {
+      const newLast = filtered[filtered.length - 1];
+      if (newLast.type === 'chat' && !newLast.isToolCallContent) {
+        filtered = filtered.slice(0, -1);
+      }
+    }
+    return filtered;
+  }, [innerMessages, resultText]);
+
   // Count only non-reasoning messages for collapse threshold.
-  const nonReasoningCount = innerMessages.filter(
+  const nonReasoningCount = filteredInnerMessages.filter(
     (m) => m.type !== 'reasoning',
   ).length;
   const isCollapsible =
@@ -109,16 +125,16 @@ export const CommunicationBlock: React.FC<CommunicationBlockProps> = ({
 
   // When collapsed, take items from the start until we have enough non-reasoning ones.
   const visibleMessages = useMemo(() => {
-    if (!isCollapsible || expanded) return innerMessages;
+    if (!isCollapsible || expanded) return filteredInnerMessages;
     const result: PreparedMessage[] = [];
     let count = 0;
-    for (const m of innerMessages) {
+    for (const m of filteredInnerMessages) {
       result.push(m);
       if (m.type !== 'reasoning') count++;
       if (count >= COLLAPSED_MESSAGE_COUNT) break;
     }
     return result;
-  }, [innerMessages, isCollapsible, expanded]);
+  }, [filteredInnerMessages, isCollapsible, expanded]);
 
   const hiddenCount = nonReasoningCount - COLLAPSED_MESSAGE_COUNT;
 
@@ -203,9 +219,9 @@ export const CommunicationBlock: React.FC<CommunicationBlockProps> = ({
       )}
 
       {/* Inner messages area */}
-      {(innerMessages.length > 0 || isCalling) && (
+      {(filteredInnerMessages.length > 0 || isCalling) && (
         <div style={INNER_AREA_STYLE}>
-          {innerMessages.length === 0 && isCalling && (
+          {filteredInnerMessages.length === 0 && isCalling && (
             <Text
               type="secondary"
               style={{ fontSize: 12, fontStyle: 'italic' }}>
@@ -258,7 +274,7 @@ export const CommunicationBlock: React.FC<CommunicationBlockProps> = ({
       )}
 
       {/* Thinking indicator + statistics — rendered on a single row when both present */}
-      {isCalling && innerMessages.length > 0 ? (
+      {isCalling && filteredInnerMessages.length > 0 ? (
         <div style={FOOTER_ROW_STYLE}>
           <StatisticsFooter
             statistics={statistics}
