@@ -1,0 +1,48 @@
+name: Build and Lint
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+      - develop
+
+env:
+  NODE_VERSION: 22
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-22.04
+    name: Build and Lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: 0
+
+      - name: Build
+        run: pnpm build
+
+      - name: Lint
+        run: pnpm lint:fix
