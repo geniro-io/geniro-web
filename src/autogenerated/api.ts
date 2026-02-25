@@ -1009,6 +1009,87 @@ export interface KnowledgeDocUpdateDto {
 /**
  *
  * @export
+ * @interface LinkInstallationResponseDto
+ */
+export interface LinkInstallationResponseDto {
+  /**
+   * Whether the installation was successfully linked
+   * @type {boolean}
+   * @memberof LinkInstallationResponseDto
+   */
+  'linked': boolean;
+  /**
+   * GitHub org/user login where the app is installed
+   * @type {string}
+   * @memberof LinkInstallationResponseDto
+   */
+  'accountLogin': string;
+  /**
+   * Account type: Organization or User
+   * @type {string}
+   * @memberof LinkInstallationResponseDto
+   */
+  'accountType': string;
+}
+/**
+ *
+ * @export
+ * @interface ListInstallationsResponseDto
+ */
+export interface ListInstallationsResponseDto {
+  /**
+   *
+   * @type {Array<ListInstallationsResponseDtoInstallationsInner>}
+   * @memberof ListInstallationsResponseDto
+   */
+  'installations': Array<ListInstallationsResponseDtoInstallationsInner>;
+}
+/**
+ *
+ * @export
+ * @interface ListInstallationsResponseDtoInstallationsInner
+ */
+export interface ListInstallationsResponseDtoInstallationsInner {
+  /**
+   * Installation record ID
+   * @type {string}
+   * @memberof ListInstallationsResponseDtoInstallationsInner
+   */
+  'id': string;
+  /**
+   * GitHub installation ID
+   * @type {number}
+   * @memberof ListInstallationsResponseDtoInstallationsInner
+   */
+  'installationId': number;
+  /**
+   * GitHub org/user login
+   * @type {string}
+   * @memberof ListInstallationsResponseDtoInstallationsInner
+   */
+  'accountLogin': string;
+  /**
+   * Account type: Organization or User
+   * @type {string}
+   * @memberof ListInstallationsResponseDtoInstallationsInner
+   */
+  'accountType': string;
+  /**
+   * Whether the installation is active
+   * @type {boolean}
+   * @memberof ListInstallationsResponseDtoInstallationsInner
+   */
+  'isActive': boolean;
+  /**
+   *
+   * @type {string}
+   * @memberof ListInstallationsResponseDtoInstallationsInner
+   */
+  'createdAt': string;
+}
+/**
+ *
+ * @export
  * @interface LiteLlmModelDto
  */
 export interface LiteLlmModelDto {
@@ -1024,6 +1105,19 @@ export interface LiteLlmModelDto {
    * @memberof LiteLlmModelDto
    */
   'ownedBy': string;
+}
+/**
+ *
+ * @export
+ * @interface OAuthLinkRequestDto
+ */
+export interface OAuthLinkRequestDto {
+  /**
+   * GitHub OAuth authorization code
+   * @type {string}
+   * @memberof OAuthLinkRequestDto
+   */
+  'code': string;
 }
 /**
  *
@@ -1136,6 +1230,92 @@ export type RepoIndexDtoStatusEnum =
 /**
  *
  * @export
+ * @interface RuntimeInstanceDto
+ */
+export interface RuntimeInstanceDto {
+  /**
+   * Runtime instance ID
+   * @type {string}
+   * @memberof RuntimeInstanceDto
+   */
+  'id': string;
+  /**
+   * Graph ID
+   * @type {string}
+   * @memberof RuntimeInstanceDto
+   */
+  'graphId': string;
+  /**
+   * Node ID
+   * @type {string}
+   * @memberof RuntimeInstanceDto
+   */
+  'nodeId': string;
+  /**
+   * External thread ID (graphId:threadUUID)
+   * @type {string}
+   * @memberof RuntimeInstanceDto
+   */
+  'externalThreadId': string;
+  /**
+   * Runtime type
+   * @type {string}
+   * @memberof RuntimeInstanceDto
+   */
+  'type': RuntimeInstanceDtoTypeEnum;
+  /**
+   * Runtime instance status
+   * @type {string}
+   * @memberof RuntimeInstanceDto
+   */
+  'status': RuntimeInstanceDtoStatusEnum;
+  /**
+   * Container name
+   * @type {string}
+   * @memberof RuntimeInstanceDto
+   */
+  'containerName': string;
+  /**
+   * Last used timestamp
+   * @type {string}
+   * @memberof RuntimeInstanceDto
+   */
+  'lastUsedAt': string;
+  /**
+   * Creation timestamp
+   * @type {string}
+   * @memberof RuntimeInstanceDto
+   */
+  'createdAt': string;
+  /**
+   * Last update timestamp
+   * @type {string}
+   * @memberof RuntimeInstanceDto
+   */
+  'updatedAt': string;
+}
+
+export const RuntimeInstanceDtoTypeEnum = {
+  Docker: 'Docker',
+  Daytona: 'Daytona',
+} as const;
+
+export type RuntimeInstanceDtoTypeEnum =
+  (typeof RuntimeInstanceDtoTypeEnum)[keyof typeof RuntimeInstanceDtoTypeEnum];
+export const RuntimeInstanceDtoStatusEnum = {
+  Starting: 'Starting',
+  Running: 'Running',
+  Stopping: 'Stopping',
+  Stopped: 'Stopped',
+  Failed: 'Failed',
+} as const;
+
+export type RuntimeInstanceDtoStatusEnum =
+  (typeof RuntimeInstanceDtoStatusEnum)[keyof typeof RuntimeInstanceDtoStatusEnum];
+
+/**
+ *
+ * @export
  * @interface SetThreadMetadataDto
  */
 export interface SetThreadMetadataDto {
@@ -1145,6 +1325,31 @@ export interface SetThreadMetadataDto {
    * @memberof SetThreadMetadataDto
    */
   'metadata': { [key: string]: any };
+}
+/**
+ *
+ * @export
+ * @interface SetupInfoResponseDto
+ */
+export interface SetupInfoResponseDto {
+  /**
+   * URL to redirect the user to for GitHub App installation
+   * @type {string}
+   * @memberof SetupInfoResponseDto
+   */
+  'installUrl': string;
+  /**
+   * Whether the GitHub App is fully configured
+   * @type {boolean}
+   * @memberof SetupInfoResponseDto
+   */
+  'configured': boolean;
+  /**
+   * Path the user must set as \"Setup URL\" in their GitHub App settings (append to their domain)
+   * @type {string}
+   * @memberof SetupInfoResponseDto
+   */
+  'callbackPath': string;
 }
 /**
  *
@@ -1246,6 +1451,19 @@ export interface SuggestGraphInstructionsResponseDtoUpdatesInner {
    * @memberof SuggestGraphInstructionsResponseDtoUpdatesInner
    */
   'instructions': string;
+}
+/**
+ *
+ * @export
+ * @interface SystemSettingsResponseDto
+ */
+export interface SystemSettingsResponseDto {
+  /**
+   * Whether the GitHub App integration is configured and available
+   * @type {boolean}
+   * @memberof SystemSettingsResponseDto
+   */
+  'githubAppEnabled': boolean;
 }
 /**
  *
@@ -2314,6 +2532,19 @@ export const TriggerReindexResponseDtoRepoIndexStatusEnum = {
 export type TriggerReindexResponseDtoRepoIndexStatusEnum =
   (typeof TriggerReindexResponseDtoRepoIndexStatusEnum)[keyof typeof TriggerReindexResponseDtoRepoIndexStatusEnum];
 
+/**
+ *
+ * @export
+ * @interface UnlinkInstallationResponseDto
+ */
+export interface UnlinkInstallationResponseDto {
+  /**
+   * Whether the installation was successfully unlinked
+   * @type {boolean}
+   * @memberof UnlinkInstallationResponseDto
+   */
+  'unlinked': boolean;
+}
 /**
  *
  * @export
@@ -4423,6 +4654,584 @@ export const GetRepositoriesProviderEnum = {
 } as const;
 export type GetRepositoriesProviderEnum =
   (typeof GetRepositoriesProviderEnum)[keyof typeof GetRepositoriesProviderEnum];
+
+/**
+ * GithubAppApi - axios parameter creator
+ * @export
+ */
+export const GithubAppApiAxiosParamCreator = function (
+  configuration?: Configuration,
+) {
+  return {
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getSetupInfo: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/v1/github-app/setup`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} installationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    linkInstallation: async (
+      installationId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'installationId' is not null or undefined
+      assertParamExists('linkInstallation', 'installationId', installationId);
+      const localVarPath =
+        `/api/v1/github-app/installations/{installationId}/link`.replace(
+          `{${'installationId'}}`,
+          encodeURIComponent(String(installationId)),
+        );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'POST',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {OAuthLinkRequestDto} oAuthLinkRequestDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    linkViaOAuthCode: async (
+      oAuthLinkRequestDto: OAuthLinkRequestDto,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'oAuthLinkRequestDto' is not null or undefined
+      assertParamExists(
+        'linkViaOAuthCode',
+        'oAuthLinkRequestDto',
+        oAuthLinkRequestDto,
+      );
+      const localVarPath = `/api/v1/github-app/oauth/link`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'POST',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter['Content-Type'] = 'application/json';
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        oAuthLinkRequestDto,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listInstallations: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/v1/github-app/installations`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} installationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    unlinkInstallation: async (
+      installationId: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'installationId' is not null or undefined
+      assertParamExists('unlinkInstallation', 'installationId', installationId);
+      const localVarPath =
+        `/api/v1/github-app/installations/{installationId}`.replace(
+          `{${'installationId'}}`,
+          encodeURIComponent(String(installationId)),
+        );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'DELETE',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * GithubAppApi - functional programming interface
+ * @export
+ */
+export const GithubAppApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator =
+    GithubAppApiAxiosParamCreator(configuration);
+  return {
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getSetupInfo(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<SetupInfoResponseDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getSetupInfo(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['GithubAppApi.getSetupInfo']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} installationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async linkInstallation(
+      installationId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<LinkInstallationResponseDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.linkInstallation(
+          installationId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['GithubAppApi.linkInstallation']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {OAuthLinkRequestDto} oAuthLinkRequestDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async linkViaOAuthCode(
+      oAuthLinkRequestDto: OAuthLinkRequestDto,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<LinkInstallationResponseDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.linkViaOAuthCode(
+          oAuthLinkRequestDto,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['GithubAppApi.linkViaOAuthCode']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async listInstallations(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<ListInstallationsResponseDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.listInstallations(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['GithubAppApi.listInstallations']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} installationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async unlinkInstallation(
+      installationId: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<UnlinkInstallationResponseDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.unlinkInstallation(
+          installationId,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['GithubAppApi.unlinkInstallation']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * GithubAppApi - factory interface
+ * @export
+ */
+export const GithubAppApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = GithubAppApiFp(configuration);
+  return {
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getSetupInfo(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<SetupInfoResponseDto> {
+      return localVarFp
+        .getSetupInfo(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} installationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    linkInstallation(
+      installationId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<LinkInstallationResponseDto> {
+      return localVarFp
+        .linkInstallation(installationId, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {OAuthLinkRequestDto} oAuthLinkRequestDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    linkViaOAuthCode(
+      oAuthLinkRequestDto: OAuthLinkRequestDto,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<LinkInstallationResponseDto> {
+      return localVarFp
+        .linkViaOAuthCode(oAuthLinkRequestDto, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listInstallations(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<ListInstallationsResponseDto> {
+      return localVarFp
+        .listInstallations(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} installationId
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    unlinkInstallation(
+      installationId: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<UnlinkInstallationResponseDto> {
+      return localVarFp
+        .unlinkInstallation(installationId, options)
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * GithubAppApi - object-oriented interface
+ * @export
+ * @class GithubAppApi
+ * @extends {BaseAPI}
+ */
+export class GithubAppApi extends BaseAPI {
+  /**
+   *
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof GithubAppApi
+   */
+  public getSetupInfo(options?: RawAxiosRequestConfig) {
+    return GithubAppApiFp(this.configuration)
+      .getSetupInfo(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} installationId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof GithubAppApi
+   */
+  public linkInstallation(
+    installationId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return GithubAppApiFp(this.configuration)
+      .linkInstallation(installationId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {OAuthLinkRequestDto} oAuthLinkRequestDto
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof GithubAppApi
+   */
+  public linkViaOAuthCode(
+    oAuthLinkRequestDto: OAuthLinkRequestDto,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return GithubAppApiFp(this.configuration)
+      .linkViaOAuthCode(oAuthLinkRequestDto, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof GithubAppApi
+   */
+  public listInstallations(options?: RawAxiosRequestConfig) {
+    return GithubAppApiFp(this.configuration)
+      .listInstallations(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} installationId
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof GithubAppApi
+   */
+  public unlinkInstallation(
+    installationId: string,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return GithubAppApiFp(this.configuration)
+      .unlinkInstallation(installationId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+}
 
 /**
  * GraphRevisionsApi - axios parameter creator
@@ -7699,6 +8508,324 @@ export class LitellmApi extends BaseAPI {
   public listModels(options?: RawAxiosRequestConfig) {
     return LitellmApiFp(this.configuration)
       .listModels(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+}
+
+/**
+ * RuntimesApi - axios parameter creator
+ * @export
+ */
+export const RuntimesApiAxiosParamCreator = function (
+  configuration?: Configuration,
+) {
+  return {
+    /**
+     *
+     * @param {string} threadId Filter by thread ID
+     * @param {GetRuntimesStatusEnum} [status] Filter by runtime instance status
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getRuntimes: async (
+      threadId: string,
+      status?: GetRuntimesStatusEnum,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'threadId' is not null or undefined
+      assertParamExists('getRuntimes', 'threadId', threadId);
+      const localVarPath = `/api/v1/runtimes`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      if (threadId !== undefined) {
+        localVarQueryParameter['threadId'] = threadId;
+      }
+
+      if (status !== undefined) {
+        localVarQueryParameter['status'] = status;
+      }
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * RuntimesApi - functional programming interface
+ * @export
+ */
+export const RuntimesApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator = RuntimesApiAxiosParamCreator(configuration);
+  return {
+    /**
+     *
+     * @param {string} threadId Filter by thread ID
+     * @param {GetRuntimesStatusEnum} [status] Filter by runtime instance status
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getRuntimes(
+      threadId: string,
+      status?: GetRuntimesStatusEnum,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<Array<RuntimeInstanceDto>>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.getRuntimes(
+        threadId,
+        status,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['RuntimesApi.getRuntimes']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * RuntimesApi - factory interface
+ * @export
+ */
+export const RuntimesApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = RuntimesApiFp(configuration);
+  return {
+    /**
+     *
+     * @param {string} threadId Filter by thread ID
+     * @param {GetRuntimesStatusEnum} [status] Filter by runtime instance status
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getRuntimes(
+      threadId: string,
+      status?: GetRuntimesStatusEnum,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<Array<RuntimeInstanceDto>> {
+      return localVarFp
+        .getRuntimes(threadId, status, options)
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * RuntimesApi - object-oriented interface
+ * @export
+ * @class RuntimesApi
+ * @extends {BaseAPI}
+ */
+export class RuntimesApi extends BaseAPI {
+  /**
+   *
+   * @param {string} threadId Filter by thread ID
+   * @param {GetRuntimesStatusEnum} [status] Filter by runtime instance status
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof RuntimesApi
+   */
+  public getRuntimes(
+    threadId: string,
+    status?: GetRuntimesStatusEnum,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return RuntimesApiFp(this.configuration)
+      .getRuntimes(threadId, status, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+}
+
+/**
+ * @export
+ */
+export const GetRuntimesStatusEnum = {
+  Starting: 'Starting',
+  Running: 'Running',
+  Stopping: 'Stopping',
+  Stopped: 'Stopped',
+  Failed: 'Failed',
+} as const;
+export type GetRuntimesStatusEnum =
+  (typeof GetRuntimesStatusEnum)[keyof typeof GetRuntimesStatusEnum];
+
+/**
+ * SystemApi - axios parameter creator
+ * @export
+ */
+export const SystemApiAxiosParamCreator = function (
+  configuration?: Configuration,
+) {
+  return {
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getSettings: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/v1/system/settings`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * SystemApi - functional programming interface
+ * @export
+ */
+export const SystemApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator = SystemApiAxiosParamCreator(configuration);
+  return {
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getSettings(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<SystemSettingsResponseDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getSettings(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['SystemApi.getSettings']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * SystemApi - factory interface
+ * @export
+ */
+export const SystemApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = SystemApiFp(configuration);
+  return {
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getSettings(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<SystemSettingsResponseDto> {
+      return localVarFp
+        .getSettings(options)
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * SystemApi - object-oriented interface
+ * @export
+ * @class SystemApi
+ * @extends {BaseAPI}
+ */
+export class SystemApi extends BaseAPI {
+  /**
+   *
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof SystemApi
+   */
+  public getSettings(options?: RawAxiosRequestConfig) {
+    return SystemApiFp(this.configuration)
+      .getSettings(options)
       .then((request) => request(this.axios, this.basePath));
   }
 }

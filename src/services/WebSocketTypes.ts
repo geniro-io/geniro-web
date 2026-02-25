@@ -166,13 +166,19 @@ export interface GraphRevisionProgressNotification extends BaseNotification {
 }
 
 // Runtime status notification
-export type RuntimeStatusValue = 'creating' | 'ready' | 'failed';
+export type RuntimeStatusValue =
+  | 'Starting'
+  | 'Running'
+  | 'Stopping'
+  | 'Stopped'
+  | 'Failed';
 
 export interface RuntimeStatusNotification extends BaseNotification {
   type: 'runtime.status';
   nodeId: string;
   threadId: string;
   data: {
+    runtimeId: string;
     status: RuntimeStatusValue;
     runtimeType: string;
     message?: string;
