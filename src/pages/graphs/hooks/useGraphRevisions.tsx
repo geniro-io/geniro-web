@@ -2,7 +2,6 @@ import { App, Button, Space, Spin, Tag, Typography } from 'antd';
 import { createTwoFilesPatch } from 'diff';
 import {
   type MutableRefObject,
-  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -353,46 +352,6 @@ export const useGraphRevisions = ({
     ).trimEnd();
   }, [draftState.draftState, graph, serverGraphState]);
 
-  const formatRevisionDiffValue = useCallback(
-    (value: unknown): ReactNode | null => {
-      if (value === undefined) {
-        return null;
-      }
-      if (value === null) {
-        return (
-          <Typography.Text code style={{ fontSize: 12 }}>
-            null
-          </Typography.Text>
-        );
-      }
-      if (
-        typeof value === 'string' ||
-        typeof value === 'number' ||
-        typeof value === 'boolean'
-      ) {
-        return (
-          <Typography.Text code style={{ fontSize: 12 }}>
-            {JSON.stringify(value)}
-          </Typography.Text>
-        );
-      }
-      return (
-        <pre
-          style={{
-            background: '#f5f5f5',
-            borderRadius: 6,
-            padding: '8px 10px',
-            margin: 0,
-            fontSize: 12,
-            whiteSpace: 'pre-wrap',
-          }}>
-          {JSON.stringify(value, null, 2)}
-        </pre>
-      );
-    },
-    [],
-  );
-
   const handleOpenRevisionDiff = useCallback((revision: GraphRevisionDto) => {
     setRevisionDiffRevision(revision);
     setRevisionPopoverVisible(false);
@@ -435,6 +394,17 @@ export const useGraphRevisions = ({
   }, []);
 
   const revisionDiffModalVisible = revisionDiffRevision !== null;
+
+  // Find the previous version's config to diff against.
+  // A revision's baseVersion points to the version it was based on,
+  // so we look for a revision whose toVersion matches the selected revision's baseVersion.
+  const revisionDiffPreviousConfig = useMemo(() => {
+    if (!revisionDiffRevision) return null;
+    const prevRevision = revisions.find(
+      (r) => r.toVersion === revisionDiffRevision.baseVersion,
+    );
+    return prevRevision?.newConfig ?? null;
+  }, [revisionDiffRevision, revisions]);
 
   const revisionPopoverContent = useMemo(() => {
     if (revisionsLoading) {
@@ -481,15 +451,6 @@ export const useGraphRevisions = ({
             return (
               <div
                 key={revision.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => handleOpenRevisionDiff(revision)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    handleOpenRevisionDiff(revision);
-                  }
-                }}
                 onMouseEnter={() => setHoveredRevisionId(revision.id)}
                 onMouseLeave={() =>
                   setHoveredRevisionId((prev) =>
@@ -508,8 +469,6 @@ export const useGraphRevisions = ({
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 4,
-                  cursor: 'pointer',
-                  outline: 'none',
                   transition:
                     'background-color 0.2s ease, border-color 0.2s ease',
                 }}>
@@ -523,17 +482,36 @@ export const useGraphRevisions = ({
                   <Typography.Text strong style={{ fontSize: 13 }}>
                     v{revision.toVersion}
                   </Typography.Text>
-                  <Tag
-                    color={meta.color}
+                  <div
                     style={{
-                      margin: 0,
-                      borderRadius: 999,
-                      fontSize: 11,
-                      lineHeight: '18px',
-                      padding: '0 8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      marginLeft: 'auto',
                     }}>
-                    {meta.label}
-                  </Tag>
+                    <Button
+                      type="link"
+                      size="small"
+                      onClick={() => handleOpenRevisionDiff(revision)}
+                      style={{
+                        padding: 0,
+                        height: 'auto',
+                        fontSize: 12,
+                      }}>
+                      View diff
+                    </Button>
+                    <Tag
+                      color={meta.color}
+                      style={{
+                        margin: 0,
+                        borderRadius: 999,
+                        fontSize: 11,
+                        lineHeight: '18px',
+                        padding: '0 8px',
+                      }}>
+                      {meta.label}
+                    </Tag>
+                  </div>
                 </div>
                 <Typography.Text
                   type="secondary"
@@ -570,6 +548,7 @@ export const useGraphRevisions = ({
     revisionPopoverVisible,
     setRevisionPopoverVisible,
     revisionDiffRevision,
+    revisionDiffPreviousConfig,
     localDiffModalVisible,
     loadRevisions,
     upsertRevision,
@@ -581,7 +560,6 @@ export const useGraphRevisions = ({
     handleCloseLocalDiff,
     unsavedChangesPopoverContent,
     revisionPopoverContent,
-    formatRevisionDiffValue,
     handleDownloadGraphBackup,
     handleCloseRevisionDiff,
     revisionDiffModalVisible,

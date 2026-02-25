@@ -420,7 +420,17 @@ export const prepareReadyMessages = (
 
   const isInterAgentCommunication = (msg: ThreadMessageDto): boolean => {
     const additional = getAdditionalKwargs(msg.message);
-    return Boolean(additional?.__interAgentCommunication);
+    if (additional?.__interAgentCommunication) return true;
+    // Messages belonging to a communication context have an externalThreadId
+    // following the pattern {baseId}__{nodeId}__{agentName}.  This detects
+    // orphaned communication members even when they lack the explicit
+    // __interAgentCommunication flag — e.g. when the parent communication_exec
+    // AI message is not loaded due to pagination.  Applies to ALL roles (ai,
+    // tool, human, system) so every message in the context is grouped.
+    if (msg.externalThreadId && msg.externalThreadId.includes('__')) {
+      return true;
+    }
+    return false;
   };
 
   const isSubagentCommunication = (msg: ThreadMessageDto): boolean => {
@@ -454,6 +464,35 @@ export const prepareReadyMessages = (
     }
   });
 
+  // Pre-scan: collect communication_exec tool result content for orphaned
+  // calls.  When the parent AI message is not loaded (pagination), the tool
+  // result is normally skipped in the main loop.  Capture it here so that
+  // synthetic communication blocks can display the finish/error message.
+  // Keyed by the result message's externalThreadId (the calling agent's
+  // thread) so the post-processing can match via prefix of the group key.
+  const commExecResultsByCallerExtId = new Map<
+    string,
+    { toolCallId: string; content: unknown }[]
+  >();
+  for (const msg of msgs) {
+    if (!isToolLikeRole(msg.message?.role as string)) continue;
+    const name = getMessageString(msg.message, 'name');
+    const toolCallId = getMessageString(msg.message, 'toolCallId');
+    if (
+      name === 'communication_exec' &&
+      toolCallId &&
+      !existingToolCallIds.has(toolCallId)
+    ) {
+      const callerExtId = msg.externalThreadId || '';
+      if (!commExecResultsByCallerExtId.has(callerExtId)) {
+        commExecResultsByCallerExtId.set(callerExtId, []);
+      }
+      commExecResultsByCallerExtId
+        .get(callerExtId)!
+        .push({ toolCallId, content: msg.message?.content });
+    }
+  }
+
   // First pass: mark tool results that belong to AI messages as consumed
   msgs.forEach((m) => {
     const role = (m.message?.role as string) || '';
@@ -477,6 +516,12 @@ export const prepareReadyMessages = (
   });
 
   const prepared: PreparedMessage[] = [];
+
+  // Maps block IDs to the parent AI message's externalThreadId so that the
+  // post-processing pass can group subagent/communication blocks back into
+  // the correct communication group even when the block's inner messages
+  // carry a different externalThreadId.
+  const blockParentExtThreadId = new Map<string, string>();
 
   let i = 0;
 
@@ -650,6 +695,7 @@ export const prepareReadyMessages = (
 
           const model = extractSubagentModel(innerRawMessages);
 
+          const subBlockId = `subagent-${tc.id || `${m.id || m.createdAt}-${idx}`}`;
           prepared.push({
             type: 'subagent',
             toolCallId: tc.id!,
@@ -670,13 +716,16 @@ export const prepareReadyMessages = (
               : allowCallingIndicators && isLatestRun(toolCallRunId)
                 ? 'calling'
                 : 'stopped',
-            id: `subagent-${tc.id || `${m.id || m.createdAt}-${idx}`}`,
+            id: subBlockId,
             nodeId: matched?.nodeId ?? m.nodeId,
             createdAt: m.createdAt,
             inCommunicationExec: isInterAgent,
             inSubagentExec: isSubagent,
             sourceAgentNodeId,
           });
+          if (isInterAgent && m.externalThreadId) {
+            blockParentExtThreadId.set(subBlockId, m.externalThreadId);
+          }
           continue;
         }
 
@@ -784,6 +833,7 @@ export const prepareReadyMessages = (
         const matchedTitle = getMessageTitle(matched?.message);
         const effectiveTitle = matchedTitle || callTitle;
 
+        const toolBlockId = `tool-${tc.id || `${m.id || m.createdAt}-${idx}`}`;
         prepared.push({
           type: 'tool',
           name: name || 'tool',
@@ -793,7 +843,7 @@ export const prepareReadyMessages = (
               ? 'calling'
               : 'stopped',
           result: resultContent,
-          id: `tool-${tc.id || `${m.id || m.createdAt}-${idx}`}`,
+          id: toolBlockId,
           toolKind: isShell ? 'shell' : 'generic',
           shellCommand,
           toolOptions,
@@ -809,6 +859,9 @@ export const prepareReadyMessages = (
           inSubagentExec: isSubagent,
           sourceAgentNodeId,
         });
+        if (isInterAgent && m.externalThreadId) {
+          blockParentExtThreadId.set(toolBlockId, m.externalThreadId);
+        }
       }
 
       i = i + 1 + followingTools.length;
@@ -848,12 +901,13 @@ export const prepareReadyMessages = (
       const isShell = (name || '').toLowerCase() === 'shell';
       const toolOptions = undefined;
 
+      const standaloneToolId = `tool-standalone-${m.id || m.createdAt}`;
       prepared.push({
         type: 'tool',
         name,
         status: 'executed',
         result: resultContent,
-        id: `tool-standalone-${m.id || m.createdAt}`,
+        id: standaloneToolId,
         toolKind: isShell ? 'shell' : 'generic',
         shellCommand,
         toolOptions,
@@ -868,6 +922,9 @@ export const prepareReadyMessages = (
         inSubagentExec: isSubagent,
         sourceAgentNodeId,
       });
+      if (isInterAgent && m.externalThreadId) {
+        blockParentExtThreadId.set(standaloneToolId, m.externalThreadId);
+      }
       i++;
       continue;
     }
@@ -974,36 +1031,48 @@ export const prepareReadyMessages = (
   // communication blocks by __toolCallId so each call gets its own block.
   let result = prepared;
 
-  if (
-    communicationToolCallIds.size === 0 &&
-    !options.insideCommunicationBlock
-  ) {
-    const nonCommItems: PreparedMessage[] = [];
-
-    // Group communication items by __toolCallId; items without one go into
-    // a single fallback bucket keyed by '__unresolved'.
+  if (!options.insideCommunicationBlock) {
+    // Group orphaned communication items by externalThreadId; items
+    // without one go into a single fallback bucket keyed by '__unresolved'.
     const commGroups = new Map<
       string,
-      { items: PreparedMessage[]; instructionMsg?: ThreadMessageDto }
+      {
+        items: PreparedMessage[];
+        instructionMsg?: ThreadMessageDto;
+        firstIndex: number;
+      }
     >();
     const UNRESOLVED_KEY = '__unresolved';
 
     const getCommGroupKey = (item: PreparedMessage): string | undefined => {
       const rawMsg = getRawMsg(item);
-      if (!rawMsg) return undefined;
-      const additional = getAdditionalKwargs(rawMsg.message);
-      const tcId =
-        typeof additional?.__toolCallId === 'string'
-          ? additional.__toolCallId
-          : undefined;
-      return tcId ?? UNRESOLVED_KEY;
+      if (rawMsg) {
+        return rawMsg.externalThreadId || undefined;
+      }
+      // For wrapped blocks (subagent / communication) that were created inside
+      // a communication context, use the parent AI message's externalThreadId
+      // that was captured during the main loop.
+      if ('id' in item && typeof item.id === 'string') {
+        const parentExt = blockParentExtThreadId.get(item.id);
+        if (parentExt) return parentExt;
+      }
+      return undefined;
     };
 
-    // First pass: separate communication-flagged items from the rest.
-    for (const item of result) {
+    // Identify which items are orphaned communication messages.
+    // Any inCommunicationExec item that reaches `prepared` is orphaned:
+    // if the pre-scan (resolveCommToolCallId) had matched it to a loaded
+    // communication_exec call, it would have been consumed into
+    // commInnerMsgIds and skipped during the main loop.
+    const orphanedCommIndices = new Set<number>();
+
+    for (let idx = 0; idx < result.length; idx++) {
+      const item = result[idx];
       if ('inCommunicationExec' in item && item.inCommunicationExec) {
+        const rawMsg = getRawMsg(item);
+        const additional = getAdditionalKwargs(rawMsg?.message);
+
         // Pull instruction message out for the block header.
-        const additional = getAdditionalKwargs(getRawMsg(item)?.message);
         const isInstruction =
           item.type === 'chat' &&
           (additional?.__isAgentInstructionMessage ||
@@ -1011,96 +1080,154 @@ export const prepareReadyMessages = (
         const groupKey = getCommGroupKey(item) ?? UNRESOLVED_KEY;
 
         if (!commGroups.has(groupKey)) {
-          commGroups.set(groupKey, { items: [] });
+          commGroups.set(groupKey, { items: [], firstIndex: idx });
         }
         const group = commGroups.get(groupKey)!;
 
         if (isInstruction && !group.instructionMsg) {
-          group.instructionMsg = getRawMsg(item);
+          group.instructionMsg = rawMsg;
         } else {
           group.items.push(item);
         }
-      } else {
-        nonCommItems.push(item);
+        orphanedCommIndices.add(idx);
       }
     }
 
-    // Second pass: when we have communication items, pull subagent-only
-    // items too (they are subagent calls inside the communication context
-    // but only have __subagentCommunication, not __interAgentCommunication).
+    // Second pass: pull subagent items into existing comm groups when
+    // their externalThreadId matches.  These are subagent calls inside a
+    // communication context — even if the immediate subagent parent IS
+    // loaded, they belong inside the communication block.
     if (commGroups.size > 0) {
-      const remainingNonComm: PreparedMessage[] = [];
-      for (const item of nonCommItems) {
+      for (let idx = 0; idx < result.length; idx++) {
+        if (orphanedCommIndices.has(idx)) continue;
+        const item = result[idx];
         if ('inSubagentExec' in item && item.inSubagentExec) {
-          const groupKey = getCommGroupKey(item) ?? UNRESOLVED_KEY;
-          if (!commGroups.has(groupKey)) {
-            commGroups.set(groupKey, { items: [] });
+          const groupKey = getCommGroupKey(item);
+          if (groupKey && commGroups.has(groupKey)) {
+            commGroups.get(groupKey)!.items.push(item);
+            orphanedCommIndices.add(idx);
           }
-          commGroups.get(groupKey)!.items.push(item);
-        } else {
-          remainingNonComm.push(item);
         }
       }
-      nonCommItems.length = 0;
-      nonCommItems.push(...remainingNonComm);
     }
 
-    const syntheticBlocks: PreparedMessage[] = [];
-    for (const [
-      groupKey,
-      { items: groupItems, instructionMsg },
-    ] of commGroups) {
-      if (groupItems.length === 0 && !instructionMsg) continue;
+    if (commGroups.size > 0) {
+      // Build synthetic blocks, keyed by the index of the group's first
+      // orphaned message so we can insert them in chronological order.
+      const syntheticByIndex = new Map<number, PreparedMessage>();
 
-      const finalInnerMessages = wrapOrphanSubagentItems(groupItems);
+      for (const [
+        groupKey,
+        { items: groupItems, instructionMsg, firstIndex },
+      ] of commGroups) {
+        if (groupItems.length === 0 && !instructionMsg) continue;
 
-      let targetAgentName: string | undefined;
-      for (const item of groupItems) {
-        const rawMsg = getRawMsg(item);
-        if (rawMsg) {
-          const additional = getAdditionalKwargs(rawMsg.message);
-          if (typeof additional?.__sourceAgentName === 'string') {
-            targetAgentName = additional.__sourceAgentName;
-            break;
-          }
-        }
-      }
+        const finalInnerMessages = wrapOrphanSubagentItems(groupItems);
 
-      const commModel = (() => {
+        let targetAgentName: string | undefined;
         for (const item of groupItems) {
           const rawMsg = getRawMsg(item);
           if (rawMsg) {
             const additional = getAdditionalKwargs(rawMsg.message);
-            if (typeof additional?.__model === 'string') {
-              return additional.__model;
+            if (typeof additional?.__sourceAgentName === 'string') {
+              targetAgentName = additional.__sourceAgentName;
+              break;
             }
           }
         }
-        return undefined;
-      })();
+        // Fallback: extract agent name from externalThreadId which follows
+        // the pattern {baseId}__{nodeId}__{agentName}.
+        if (!targetAgentName && groupKey !== UNRESOLVED_KEY) {
+          const parts = groupKey.split('__');
+          if (parts.length >= 3) {
+            targetAgentName = parts[parts.length - 1];
+          }
+        }
 
-      syntheticBlocks.push({
-        type: 'communication',
-        toolCallId: groupKey,
-        targetAgentName,
-        instructionMessage: instructionMsg,
-        innerMessages: finalInnerMessages,
-        model: commModel,
-        status: 'executed',
-        id: `comm-synthetic-${groupKey}-${groupItems[0]?.id ?? 'orphan'}`,
-        nodeId:
-          groupItems.length > 0 && 'nodeId' in groupItems[0]
-            ? groupItems[0].nodeId
-            : undefined,
-        createdAt:
-          groupItems.length > 0 && 'createdAt' in groupItems[0]
-            ? groupItems[0].createdAt
-            : undefined,
-      });
-    }
+        const commModel = (() => {
+          for (const item of groupItems) {
+            const rawMsg = getRawMsg(item);
+            if (rawMsg) {
+              const additional = getAdditionalKwargs(rawMsg.message);
+              if (typeof additional?.__model === 'string') {
+                return additional.__model;
+              }
+            }
+          }
+          return undefined;
+        })();
 
-    if (syntheticBlocks.length > 0) {
-      result = [...nonCommItems, ...syntheticBlocks];
+        // Extract resultText/errorText from the communication_exec tool
+        // result when available.  The group key is the inner messages'
+        // externalThreadId (pattern: {callerExtId}__{nodeId}__{agentName}).
+        // The comm_exec result message sits on the CALLER's thread, so its
+        // externalThreadId is the base part before the first "__".
+        let syntheticResultText: string | undefined;
+        let syntheticErrorText: string | undefined;
+        if (groupKey !== UNRESOLVED_KEY) {
+          const callerExtId = groupKey.split('__')[0];
+          const candidates =
+            commExecResultsByCallerExtId.get(callerExtId) ?? [];
+          // When there is exactly one comm_exec result for this caller thread,
+          // use it directly.  When there are multiple, try to match by agent
+          // name extracted from the group key.
+          const candidate = candidates.length === 1 ? candidates[0] : undefined;
+          const resultContent = candidate?.content;
+          if (resultContent != null) {
+            const rcObj = isPlainObject(resultContent)
+              ? (resultContent as Record<string, unknown>)
+              : typeof resultContent === 'string'
+                ? (parseJsonSafe(resultContent) as Record<
+                    string,
+                    unknown
+                  > | null)
+                : null;
+            syntheticResultText =
+              typeof rcObj?.result === 'string'
+                ? rcObj.result
+                : typeof rcObj?.message === 'string'
+                  ? (rcObj.message as string)
+                  : undefined;
+            syntheticErrorText =
+              typeof rcObj?.error === 'string' ? rcObj.error : undefined;
+          }
+        }
+
+        syntheticByIndex.set(firstIndex, {
+          type: 'communication',
+          toolCallId: groupKey,
+          targetAgentName,
+          instructionMessage: instructionMsg,
+          innerMessages: finalInnerMessages,
+          model: commModel,
+          resultText: syntheticResultText,
+          errorText: syntheticErrorText,
+          status: 'executed',
+          id: `comm-synthetic-${groupKey}-${groupItems[0]?.id ?? 'orphan'}`,
+          nodeId:
+            groupItems.length > 0 && 'nodeId' in groupItems[0]
+              ? groupItems[0].nodeId
+              : undefined,
+          createdAt:
+            groupItems.length > 0 && 'createdAt' in groupItems[0]
+              ? groupItems[0].createdAt
+              : undefined,
+        });
+      }
+
+      // Rebuild result: insert each synthetic block at the position of its
+      // first orphaned message to preserve chronological order. Skip all
+      // other orphaned items (they are now inside the synthetic block).
+      const newResult: PreparedMessage[] = [];
+      for (let idx = 0; idx < result.length; idx++) {
+        const synth = syntheticByIndex.get(idx);
+        if (synth) {
+          newResult.push(synth);
+        } else if (!orphanedCommIndices.has(idx)) {
+          newResult.push(result[idx]);
+        }
+      }
+      result = newResult;
     }
   }
 
@@ -1108,21 +1235,57 @@ export const prepareReadyMessages = (
   // When subagents_run_task parent AI messages aren't loaded, their inner
   // messages appear as standalone items with inSubagentExec: true.
   // Group them into synthetic subagent blocks.
-  if (subagentToolCallIds.size === 0 && !options.insideSubagentBlock) {
-    const subItems: PreparedMessage[] = [];
-    const nonSubItems: PreparedMessage[] = [];
+  if (!options.insideSubagentBlock) {
+    const orphanedSubIndices = new Set<number>();
+    const subItemsByTcId = new Map<
+      string,
+      { items: PreparedMessage[]; firstIndex: number }
+    >();
 
-    for (const item of result) {
+    for (let idx = 0; idx < result.length; idx++) {
+      const item = result[idx];
       if ('inSubagentExec' in item && item.inSubagentExec) {
-        subItems.push(item);
-      } else {
-        nonSubItems.push(item);
+        const rawMsg = getRawMsg(item);
+        const additional = rawMsg
+          ? getAdditionalKwargs(rawMsg.message)
+          : undefined;
+        const tcId =
+          typeof additional?.__toolCallId === 'string'
+            ? additional.__toolCallId
+            : undefined;
+
+        // Only treat as orphaned when __toolCallId points to an unloaded
+        // tool call. When absent or loaded, keep as-is.
+        if (tcId && !existingToolCallIds.has(tcId)) {
+          if (!subItemsByTcId.has(tcId)) {
+            subItemsByTcId.set(tcId, { items: [], firstIndex: idx });
+          }
+          subItemsByTcId.get(tcId)!.items.push(item);
+          orphanedSubIndices.add(idx);
+        }
       }
     }
 
-    if (subItems.length > 0) {
-      const wrapped = wrapOrphanSubagentItems(subItems);
-      result = [...nonSubItems, ...wrapped];
+    if (subItemsByTcId.size > 0) {
+      const syntheticByIndex = new Map<number, PreparedMessage[]>();
+
+      for (const [_tcId, { items: groupItems, firstIndex }] of subItemsByTcId) {
+        const wrapped = wrapOrphanSubagentItems(groupItems);
+        syntheticByIndex.set(firstIndex, wrapped);
+      }
+
+      // Rebuild result: insert synthetic subagent blocks at the position
+      // of their first orphaned message to preserve chronological order.
+      const newResult: PreparedMessage[] = [];
+      for (let idx = 0; idx < result.length; idx++) {
+        const synthArr = syntheticByIndex.get(idx);
+        if (synthArr) {
+          newResult.push(...synthArr);
+        } else if (!orphanedSubIndices.has(idx)) {
+          newResult.push(result[idx]);
+        }
+      }
+      result = newResult;
     }
   }
 

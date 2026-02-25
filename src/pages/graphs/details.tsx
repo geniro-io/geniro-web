@@ -392,6 +392,7 @@ export const GraphPage = () => {
     revisionPopoverVisible,
     setRevisionPopoverVisible,
     revisionDiffRevision,
+    revisionDiffPreviousConfig,
     localDiffModalVisible,
     loadRevisions,
     upsertRevision,
@@ -403,7 +404,6 @@ export const GraphPage = () => {
     handleCloseLocalDiff,
     unsavedChangesPopoverContent,
     revisionPopoverContent,
-    formatRevisionDiffValue,
     handleDownloadGraphBackup,
     handleCloseRevisionDiff,
     revisionDiffModalVisible,
@@ -924,9 +924,9 @@ export const GraphPage = () => {
 
       <RevisionDiffModal
         revision={revisionDiffRevision}
+        previousConfig={revisionDiffPreviousConfig}
         visible={revisionDiffModalVisible}
         onClose={handleCloseRevisionDiff}
-        formatDiffValue={formatRevisionDiffValue}
       />
     </Layout>
   );

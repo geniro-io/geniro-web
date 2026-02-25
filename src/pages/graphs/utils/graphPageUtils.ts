@@ -62,18 +62,6 @@ export const REVISION_STATUS_STYLES: Record<
   },
 } as const;
 
-export const REVISION_DIFF_OP_META: Record<
-  string,
-  { label: string; color: string }
-> = {
-  add: { label: 'Add', color: '#52c41a' },
-  remove: { label: 'Remove', color: '#ff4d4f' },
-  replace: { label: 'Replace', color: '#1890ff' },
-  move: { label: 'Move', color: '#722ed1' },
-  copy: { label: 'Copy', color: '#13c2c2' },
-  test: { label: 'Test', color: '#595959' },
-};
-
 export const deepSortKeys = (value: unknown): unknown => {
   if (value === null || value === undefined) return value;
   if (typeof value !== 'object') return value;

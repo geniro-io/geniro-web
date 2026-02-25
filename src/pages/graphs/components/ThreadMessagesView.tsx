@@ -113,12 +113,19 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
     newMessageMode,
   }) => {
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-    const prevScrollHeightRef = useRef<number>(0);
-    const prevScrollTopRef = useRef<number>(0);
     const isPrependingRef = useRef<boolean>(false);
+    const justPrependedRef = useRef<boolean>(false);
     const pendingAutoScrollRef = useRef<boolean>(false);
     const autoScrollDisabledRef = useRef<boolean>(false);
     const lastMessageCountRef = useRef<number>(0);
+    // Scroll anchor for load-more: we store the LAST block's data-msg-id and
+    // its viewport-relative offset.  The last block is stable across load-more
+    // because new (older) messages are prepended at the top while the bottom
+    // of the conversation doesn't change identity.
+    const anchorRef = useRef<{
+      id: string;
+      viewportOffset: number;
+    } | null>(null);
 
     // Helper to identify working group items.
     const isWorkGroupItem = useCallback((item: PreparedMessage): boolean => {
@@ -144,33 +151,57 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
       pendingAutoScrollRef.current = true;
     }, [selectedThreadId, nodeId]);
 
-    // Restore scroll position synchronously before paint when older messages
-    // are prepended at the top (load-more pagination).  Using useLayoutEffect
-    // prevents the visible flicker / jump that occurs when the adjustment
-    // happens in a regular useEffect (which runs *after* the browser paints).
+    // After load-more, restore scroll so the anchor element (the last block
+    // before load-more) stays at the same viewport position.  The last block
+    // is used because its identity is stable — new (older) messages are
+    // prepended at the top while the bottom of the conversation keeps the
+    // same blocks.
     //
-    // We use the scrollHeight and scrollTop captured at the moment the user
-    // triggered load-more (in handleScroll) rather than the current scrollTop,
-    // because intermediate renders (e.g. the loadingMore spinner appearing /
-    // disappearing) can shift the scroll position between the trigger and the
-    // moment new messages actually arrive.
+    // A ResizeObserver re-anchors on each layout change (block collapsing)
+    // until the DOM settles, preventing jumps.
     useLayoutEffect(() => {
       if (!isPrependingRef.current) return;
       if (messages.length === lastMessageCountRef.current) return;
 
-      const el = scrollContainerRef.current;
-      if (el) {
-        const newContentHeight = el.scrollHeight - prevScrollHeightRef.current;
-        el.scrollTop = prevScrollTopRef.current + newContentHeight;
-      }
       isPrependingRef.current = false;
+      justPrependedRef.current = true;
       lastMessageCountRef.current = messages.length;
+
+      const el = scrollContainerRef.current;
+      const anchor = anchorRef.current;
+      if (!el || !anchor) return;
+
+      const restoreScroll = () => {
+        const target = el.querySelector<HTMLElement>(
+          `[data-msg-id="${CSS.escape(anchor.id)}"]`,
+        );
+        if (target) {
+          el.scrollTop = target.offsetTop - anchor.viewportOffset;
+        }
+      };
+
+      restoreScroll();
+
+      // Blocks may collapse asynchronously — re-anchor on each resize until
+      // layout settles.
+      const observer = new ResizeObserver(() => restoreScroll());
+      observer.observe(el);
+      setTimeout(() => {
+        observer.disconnect();
+        anchorRef.current = null;
+      }, 500);
     }, [messages.length]);
 
     // Auto-scroll to bottom on initial load, thread switch, or when the user
     // is already scrolled near the bottom and new messages arrive.
+    // Skip when the useLayoutEffect above just handled a load-more prepend —
+    // the scroll position was already restored and must not be overridden.
     useEffect(() => {
       if (isPrependingRef.current) return;
+      if (justPrependedRef.current) {
+        justPrependedRef.current = false;
+        return;
+      }
       if (messagesLoading) return;
       const el = scrollContainerRef.current;
       if (!el) return;
@@ -241,8 +272,17 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
         !loadingMore &&
         typeof onLoadMoreMessages === 'function'
       ) {
-        prevScrollHeightRef.current = el.scrollHeight;
-        prevScrollTopRef.current = el.scrollTop;
+        // Anchor to the LAST block — its identity is stable across load-more
+        // because new (older) messages are prepended at the top while the
+        // bottom of the conversation keeps the same blocks.
+        const msgEls = el.querySelectorAll<HTMLElement>('[data-msg-id]');
+        const lastEl = msgEls.length > 0 ? msgEls[msgEls.length - 1] : null;
+        if (lastEl) {
+          anchorRef.current = {
+            id: lastEl.getAttribute('data-msg-id') ?? '',
+            viewportOffset: lastEl.offsetTop - el.scrollTop,
+          };
+        }
         isPrependingRef.current = true;
         onLoadMoreMessages();
       }
@@ -1245,9 +1285,13 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
         key: React.Key,
         content: React.ReactNode,
         extraStyle?: React.CSSProperties,
+        msgId?: string,
       ) => {
         rows.push(
-          <div key={key} style={{ ...messageBlockStyle, ...extraStyle }}>
+          <div
+            key={key}
+            data-msg-id={msgId ?? String(key)}
+            style={{ ...messageBlockStyle, ...extraStyle }}>
             {content}
           </div>,
         );
@@ -1638,32 +1682,38 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
     }
 
     return (
-      <div style={fullHeightColumnStyle}>
+      <div style={{ ...fullHeightColumnStyle, position: 'relative' }}>
+        {loadingMore && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 1,
+              padding: '8px 12px',
+              textAlign: 'center',
+              fontSize: '12px',
+              color: '#8c8c8c',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              background:
+                'linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.7))',
+            }}>
+            <Spin size="small" />
+            <Text
+              type="secondary"
+              style={{ fontSize: '12px', color: '#8c8c8c' }}>
+              Loading more messages...
+            </Text>
+          </div>
+        )}
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
           style={scrollContainerStyle}>
-          {loadingMore && (
-            <div
-              style={{
-                padding: '8px 12px',
-                textAlign: 'center',
-                fontSize: '12px',
-                color: '#8c8c8c',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}>
-              <Spin size="small" />
-              <Text
-                type="secondary"
-                style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                Loading more messages...
-              </Text>
-            </div>
-          )}
-
           {renderPreparedMessages()}
           {isThinkingVisible && !messagesLoading && (
             <div
