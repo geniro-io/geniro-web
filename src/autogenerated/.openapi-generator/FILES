@@ -14,6 +14,7 @@ docs/CreateGraphDtoMetadataNodesInner.md
 docs/CreateGraphDtoSchema.md
 docs/CreateGraphDtoSchemaEdgesInner.md
 docs/CreateGraphDtoSchemaNodesInner.md
+docs/CreateProjectDto.md
 docs/CreateRepositoryDto.md
 docs/ExecuteTriggerDto.md
 docs/ExecuteTriggerResponseDto.md
@@ -39,6 +40,8 @@ docs/ListInstallationsResponseDtoInstallationsInner.md
 docs/LiteLlmModelDto.md
 docs/LitellmApi.md
 docs/OAuthLinkRequestDto.md
+docs/ProjectDto.md
+docs/ProjectsApi.md
 docs/RepoIndexDto.md
 docs/RuntimeInstanceDto.md
 docs/RuntimesApi.md
@@ -98,6 +101,7 @@ docs/UpdateGraphResponseDtoRevisionConfigDiffInnerOneOf3.md
 docs/UpdateGraphResponseDtoRevisionConfigDiffInnerOneOf4.md
 docs/UpdateGraphResponseDtoRevisionConfigDiffInnerOneOf5.md
 docs/UpdateGraphResponseDtoRevisionNewConfig.md
+docs/UpdateProjectDto.md
 docs/UpdateRepositoryDto.md
 git_push.sh
 index.ts

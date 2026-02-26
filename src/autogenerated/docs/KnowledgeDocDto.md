@@ -12,6 +12,7 @@
 | **politic**        | **string**              |             | [optional] [default to undefined] |
 | **embeddingModel** | **string**              |             | [optional] [default to undefined] |
 | **tags**           | **Array&lt;string&gt;** |             | [default to undefined]            |
+| **projectId**      | **string**              |             | [default to undefined]            |
 | **createdAt**      | **string**              |             | [default to undefined]            |
 | **updatedAt**      | **string**              |             | [default to undefined]            |
 
@@ -29,6 +30,7 @@ const instance: KnowledgeDocDto = {
   politic,
   embeddingModel,
   tags,
+  projectId,
   createdAt,
   updatedAt,
 };

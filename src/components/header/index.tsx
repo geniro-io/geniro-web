@@ -1,4 +1,4 @@
-import { LeftOutlined } from '@ant-design/icons';
+import { DownOutlined, LeftOutlined, ProjectOutlined } from '@ant-design/icons';
 import type { RefineThemedLayoutHeaderProps } from '@refinedev/antd';
 import { useBreadcrumb, useGetIdentity, useLogout } from '@refinedev/core';
 import type { MenuProps } from 'antd';
@@ -12,6 +12,8 @@ import {
 } from 'antd';
 import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+
+import { useCurrentProject } from '../../hooks/useCurrentProject';
 
 const { Text } = Typography;
 const { useToken } = theme;
@@ -41,6 +43,7 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
   const location = useLocation();
   const { pathname, search } = location;
   const navigate = useNavigate();
+  const { projectId, currentProject, projects } = useCurrentProject();
 
   const pageTitle = useMemo(
     () =>
@@ -78,8 +81,44 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
     headerStyles.zIndex = 1;
   }
 
+  const projectMenuItems: MenuProps['items'] = useMemo(
+    () => [
+      ...projects.map((p) => ({
+        key: p.id,
+        label: `${p.icon ?? ''} ${p.name}`.trim(),
+        onClick: () => navigate(`/projects/${p.id}/graphs`),
+      })),
+      { type: 'divider' as const },
+      {
+        key: 'manage',
+        label: 'Manage Projects',
+        icon: <ProjectOutlined />,
+        onClick: () => navigate('/projects'),
+      },
+    ],
+    [projects, navigate],
+  );
+
   const hardcodedBackTarget = useMemo((): string | undefined => {
-    if (pathname === '/graphs') return '/';
+    // Project-scoped graph routes
+    if (projectId) {
+      if (pathname === `/projects/${projectId}/graphs`) {
+        return `/projects`;
+      }
+      if (pathname.startsWith(`/projects/${projectId}/graphs/`)) {
+        return `/projects/${projectId}/graphs`;
+      }
+      if (pathname === `/projects/${projectId}/chats`) {
+        const params = new URLSearchParams(search);
+        const graphId = params.get('graphId') ?? undefined;
+        return graphId
+          ? `/projects/${projectId}/graphs/${graphId}`
+          : `/projects/${projectId}/graphs`;
+      }
+    }
+
+    // Legacy fallback
+    if (pathname === '/graphs') return '/projects';
     if (pathname.startsWith('/graphs/')) return '/graphs';
 
     if (pathname === '/chats') {
@@ -89,7 +128,7 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
     }
 
     return undefined;
-  }, [pathname, search]);
+  }, [pathname, search, projectId]);
 
   return (
     <AntdLayout.Header style={headerStyles}>
@@ -120,6 +159,35 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
                 navigate('/', { replace: true });
               }}
             />
+          )}
+
+          {projectId && projects.length > 0 && (
+            <Dropdown
+              menu={{ items: projectMenuItems }}
+              trigger={['click']}
+              placement="bottomLeft">
+              <Button
+                type="text"
+                style={{
+                  fontWeight: 500,
+                  padding: '4px 8px',
+                  height: 'auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  color: token.colorTextSecondary,
+                  borderRight: `1px solid ${token.colorBorderSecondary}`,
+                  borderRadius: 0,
+                  paddingRight: 12,
+                  marginRight: 4,
+                }}>
+                <span>
+                  {currentProject?.icon ? `${currentProject.icon} ` : ''}
+                  {currentProject?.name ?? 'Select Project'}
+                </span>
+                <DownOutlined style={{ fontSize: 10 }} />
+              </Button>
+            </Dropdown>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>

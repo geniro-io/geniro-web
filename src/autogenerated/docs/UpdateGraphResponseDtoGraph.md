@@ -20,6 +20,7 @@ Updated graph
 | **createdAt**      | **string**                                              |                                                       | [default to undefined]            |
 | **updatedAt**      | **string**                                              |                                                       | [default to undefined]            |
 | **temporary**      | **boolean**                                             |                                                       | [optional] [default to false]     |
+| **projectId**      | **string**                                              |                                                       | [optional] [default to undefined] |
 
 ## Example
 
@@ -41,6 +42,7 @@ const instance: UpdateGraphResponseDtoGraph = {
   createdAt,
   updatedAt,
   temporary,
+  projectId,
 };
 ```
 

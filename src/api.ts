@@ -6,6 +6,7 @@ import {
   GraphsApi,
   KnowledgeApi,
   LitellmApi,
+  ProjectsApi,
   RuntimesApi,
   TemplatesApi,
   ThreadsApi,
@@ -25,3 +26,4 @@ export const knowledgeApi = new KnowledgeApi(configuration);
 export const gitRepositoriesApi = new GitRepositoriesApi(configuration);
 export const analyticsApi = new AnalyticsApi(configuration);
 export const runtimesApi = new RuntimesApi(configuration);
+export const projectsApi = new ProjectsApi(configuration);

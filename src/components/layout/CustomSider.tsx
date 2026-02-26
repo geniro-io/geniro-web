@@ -1,10 +1,20 @@
 import {
+  BookOutlined,
+  FolderOutlined,
+  MessageOutlined,
+  NodeIndexOutlined,
+} from '@ant-design/icons';
+import {
   type RefineThemedLayoutSiderProps,
   ThemedSider,
 } from '@refinedev/antd';
+import { Menu } from 'antd';
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation, useNavigate } from 'react-router';
+
+import { useCurrentProject } from '../../hooks/useCurrentProject';
 
 const SIDEBAR_WIDTH = {
   expanded: 200,
@@ -53,6 +63,52 @@ const SiderBorderOverlay = ({ collapsed }: { collapsed?: boolean }) => {
   return createPortal(<div style={borderStyle} />, document.body);
 };
 
+const ProjectScopedNav = ({ collapsed }: { collapsed?: boolean }) => {
+  const { projectId } = useCurrentProject();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  if (!projectId) return null;
+
+  const navItems = [
+    {
+      key: `/projects/${projectId}/graphs`,
+      icon: <NodeIndexOutlined />,
+      label: collapsed ? null : 'Graphs',
+    },
+    {
+      key: `/projects/${projectId}/chats`,
+      icon: <MessageOutlined />,
+      label: collapsed ? null : 'Chats',
+    },
+    {
+      key: `/projects/${projectId}/repositories`,
+      icon: <FolderOutlined />,
+      label: collapsed ? null : 'Repositories',
+    },
+    {
+      key: `/projects/${projectId}/knowledge`,
+      icon: <BookOutlined />,
+      label: collapsed ? null : 'Knowledge',
+    },
+  ];
+
+  const selectedKey = navItems.find((item) =>
+    location.pathname.startsWith(item.key),
+  )?.key;
+
+  return (
+    <Menu
+      mode="inline"
+      selectedKeys={selectedKey ? [selectedKey] : []}
+      inlineCollapsed={collapsed}
+      items={navItems}
+      onClick={({ key }) => navigate(key)}
+      style={{ border: 'none', background: 'transparent' }}
+    />
+  );
+};
+
 export const CustomSider = (props: RefineThemedLayoutSiderProps) => {
   return (
     <ThemedSider
@@ -62,6 +118,7 @@ export const CustomSider = (props: RefineThemedLayoutSiderProps) => {
         <>
           <SiderBorderOverlay collapsed={collapsed} />
           {items}
+          <ProjectScopedNav collapsed={collapsed} />
         </>
       )}
     />
