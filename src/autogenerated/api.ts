@@ -335,6 +335,43 @@ export interface CreateGraphDtoSchemaNodesInner {
 /**
  *
  * @export
+ * @interface CreateProjectDto
+ */
+export interface CreateProjectDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateProjectDto
+   */
+  'name': string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateProjectDto
+   */
+  'description'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateProjectDto
+   */
+  'icon'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateProjectDto
+   */
+  'color'?: string | null;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof CreateProjectDto
+   */
+  'settings'?: { [key: string]: any };
+}
+/**
+ *
+ * @export
  * @interface CreateRepositoryDto
  */
 export interface CreateRepositoryDto {
@@ -492,6 +529,12 @@ export interface GitRepositoryDto {
    * @type {string}
    * @memberof GitRepositoryDto
    */
+  'projectId': string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof GitRepositoryDto
+   */
   'createdAt': string;
   /**
    *
@@ -598,6 +641,12 @@ export interface GraphDto {
    * @memberof GraphDto
    */
   'temporary'?: boolean | null;
+  /**
+   *
+   * @type {string}
+   * @memberof GraphDto
+   */
+  'projectId'?: string | null;
 }
 
 export const GraphDtoStatusEnum = {
@@ -967,6 +1016,12 @@ export interface KnowledgeDocDto {
    * @type {string}
    * @memberof KnowledgeDocDto
    */
+  'projectId': string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof KnowledgeDocDto
+   */
   'createdAt': string;
   /**
    *
@@ -1118,6 +1173,79 @@ export interface OAuthLinkRequestDto {
    * @memberof OAuthLinkRequestDto
    */
   'code': string;
+}
+/**
+ *
+ * @export
+ * @interface ProjectDto
+ */
+export interface ProjectDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  'id': string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  'name': string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  'description'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  'icon'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  'color'?: string | null;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof ProjectDto
+   */
+  'settings': { [key: string]: any };
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  'createdBy': string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  'createdAt': string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  'updatedAt': string;
+  /**
+   *
+   * @type {number}
+   * @memberof ProjectDto
+   */
+  'graphCount': number;
+  /**
+   *
+   * @type {number}
+   * @memberof ProjectDto
+   */
+  'threadCount': number;
 }
 /**
  *
@@ -2844,6 +2972,12 @@ export interface UpdateGraphResponseDtoGraph {
    * @memberof UpdateGraphResponseDtoGraph
    */
   'temporary'?: boolean | null;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateGraphResponseDtoGraph
+   */
+  'projectId'?: string | null;
 }
 
 export const UpdateGraphResponseDtoGraphStatusEnum = {
@@ -3206,6 +3340,43 @@ export interface UpdateGraphResponseDtoRevisionNewConfig {
    * @memberof UpdateGraphResponseDtoRevisionNewConfig
    */
   'temporary': boolean;
+}
+/**
+ *
+ * @export
+ * @interface UpdateProjectDto
+ */
+export interface UpdateProjectDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectDto
+   */
+  'name'?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectDto
+   */
+  'description'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectDto
+   */
+  'icon'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectDto
+   */
+  'color'?: string | null;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof UpdateProjectDto
+   */
+  'settings'?: { [key: string]: any };
 }
 /**
  *
@@ -8508,6 +8679,591 @@ export class LitellmApi extends BaseAPI {
   public listModels(options?: RawAxiosRequestConfig) {
     return LitellmApiFp(this.configuration)
       .listModels(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+}
+
+/**
+ * ProjectsApi - axios parameter creator
+ * @export
+ */
+export const ProjectsApiAxiosParamCreator = function (
+  configuration?: Configuration,
+) {
+  return {
+    /**
+     *
+     * @param {CreateProjectDto} createProjectDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createProject: async (
+      createProjectDto: CreateProjectDto,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'createProjectDto' is not null or undefined
+      assertParamExists('createProject', 'createProjectDto', createProjectDto);
+      const localVarPath = `/api/v1/projects`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'POST',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter['Content-Type'] = 'application/json';
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        createProjectDto,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} id
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteProject: async (
+      id: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'id' is not null or undefined
+      assertParamExists('deleteProject', 'id', id);
+      const localVarPath = `/api/v1/projects/{id}`.replace(
+        `{${'id'}}`,
+        encodeURIComponent(String(id)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'DELETE',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} id
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    findProjectById: async (
+      id: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'id' is not null or undefined
+      assertParamExists('findProjectById', 'id', id);
+      const localVarPath = `/api/v1/projects/{id}`.replace(
+        `{${'id'}}`,
+        encodeURIComponent(String(id)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAllProjects: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/v1/projects`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {string} id
+     * @param {UpdateProjectDto} updateProjectDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    updateProject: async (
+      id: string,
+      updateProjectDto: UpdateProjectDto,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'id' is not null or undefined
+      assertParamExists('updateProject', 'id', id);
+      // verify required parameter 'updateProjectDto' is not null or undefined
+      assertParamExists('updateProject', 'updateProjectDto', updateProjectDto);
+      const localVarPath = `/api/v1/projects/{id}`.replace(
+        `{${'id'}}`,
+        encodeURIComponent(String(id)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'PUT',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter['Content-Type'] = 'application/json';
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        updateProjectDto,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * ProjectsApi - functional programming interface
+ * @export
+ */
+export const ProjectsApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator = ProjectsApiAxiosParamCreator(configuration);
+  return {
+    /**
+     *
+     * @param {CreateProjectDto} createProjectDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async createProject(
+      createProjectDto: CreateProjectDto,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<ProjectDto>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.createProject(
+        createProjectDto,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['ProjectsApi.createProject']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} id
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async deleteProject(
+      id: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.deleteProject(
+        id,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['ProjectsApi.deleteProject']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} id
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async findProjectById(
+      id: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<ProjectDto>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.findProjectById(
+        id,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['ProjectsApi.findProjectById']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getAllProjects(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<Array<ProjectDto>>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getAllProjects(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['ProjectsApi.getAllProjects']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {string} id
+     * @param {UpdateProjectDto} updateProjectDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async updateProject(
+      id: string,
+      updateProjectDto: UpdateProjectDto,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<ProjectDto>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.updateProject(
+        id,
+        updateProjectDto,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['ProjectsApi.updateProject']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * ProjectsApi - factory interface
+ * @export
+ */
+export const ProjectsApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = ProjectsApiFp(configuration);
+  return {
+    /**
+     *
+     * @param {CreateProjectDto} createProjectDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createProject(
+      createProjectDto: CreateProjectDto,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<ProjectDto> {
+      return localVarFp
+        .createProject(createProjectDto, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} id
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteProject(
+      id: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .deleteProject(id, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} id
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    findProjectById(
+      id: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<ProjectDto> {
+      return localVarFp
+        .findProjectById(id, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getAllProjects(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<Array<ProjectDto>> {
+      return localVarFp
+        .getAllProjects(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {string} id
+     * @param {UpdateProjectDto} updateProjectDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    updateProject(
+      id: string,
+      updateProjectDto: UpdateProjectDto,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<ProjectDto> {
+      return localVarFp
+        .updateProject(id, updateProjectDto, options)
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * ProjectsApi - object-oriented interface
+ * @export
+ * @class ProjectsApi
+ * @extends {BaseAPI}
+ */
+export class ProjectsApi extends BaseAPI {
+  /**
+   *
+   * @param {CreateProjectDto} createProjectDto
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ProjectsApi
+   */
+  public createProject(
+    createProjectDto: CreateProjectDto,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ProjectsApiFp(this.configuration)
+      .createProject(createProjectDto, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} id
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ProjectsApi
+   */
+  public deleteProject(id: string, options?: RawAxiosRequestConfig) {
+    return ProjectsApiFp(this.configuration)
+      .deleteProject(id, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} id
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ProjectsApi
+   */
+  public findProjectById(id: string, options?: RawAxiosRequestConfig) {
+    return ProjectsApiFp(this.configuration)
+      .findProjectById(id, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ProjectsApi
+   */
+  public getAllProjects(options?: RawAxiosRequestConfig) {
+    return ProjectsApiFp(this.configuration)
+      .getAllProjects(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {string} id
+   * @param {UpdateProjectDto} updateProjectDto
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof ProjectsApi
+   */
+  public updateProject(
+    id: string,
+    updateProjectDto: UpdateProjectDto,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return ProjectsApiFp(this.configuration)
+      .updateProject(id, updateProjectDto, options)
       .then((request) => request(this.axios, this.basePath));
   }
 }

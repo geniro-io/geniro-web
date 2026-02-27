@@ -11,6 +11,7 @@
 | **provider**      | **string** | Git repository host provider                         | [default to undefined] |
 | **defaultBranch** | **string** | Default branch of the repository (e.g. main, master) | [default to undefined] |
 | **createdBy**     | **string** | User ID who cloned the repository                    | [default to undefined] |
+| **projectId**     | **string** |                                                      | [default to undefined] |
 | **createdAt**     | **string** |                                                      | [default to undefined] |
 | **updatedAt**     | **string** |                                                      | [default to undefined] |
 
@@ -27,6 +28,7 @@ const instance: GitRepositoryDto = {
   provider,
   defaultBranch,
   createdBy,
+  projectId,
   createdAt,
   updatedAt,
 };

@@ -2,11 +2,7 @@ import '@refinedev/antd/dist/reset.css';
 
 import {
   ApiOutlined,
-  BookOutlined,
-  FolderOutlined,
-  HomeOutlined,
-  MessageOutlined,
-  NodeIndexOutlined,
+  ProjectOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
 import { useKeycloak } from '@react-keycloak/web';
@@ -22,20 +18,29 @@ import routerBindings, {
   UnsavedChangesNotifier,
 } from '@refinedev/react-router';
 import dataProvider from '@refinedev/simple-rest';
-import { App as AntdApp } from 'antd';
+import { App as AntdApp, Spin } from 'antd';
 import { useEffect } from 'react';
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router';
+import {
+  BrowserRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useNavigate,
+} from 'react-router';
 
 import { createAuthProvider, useAuth } from './auth';
 import { Header } from './components/header';
 import { CustomSider } from './components/layout/CustomSider';
 import { API_URL, PROJECT_ID } from './config';
+import { ProjectProvider, useProjectContext } from './contexts/ProjectContext';
 import { ChatsPage } from './pages/chats/page';
 import { GitHubAppCallbackPage } from './pages/github-app/components/GitHubAppCallbackPage';
 import { GraphPage } from './pages/graphs/details';
 import { GraphsListPage } from './pages/graphs/list';
 import { KnowledgeListPage } from './pages/knowledge/list';
-import { MainPage } from './pages/main/page';
+import { CreateProjectPage } from './pages/projects/create';
+import { ProjectsListPage } from './pages/projects/list';
 import { RepositoriesListPage } from './pages/repositories/list';
 import { IntegrationsPage } from './pages/settings/IntegrationsPage';
 
@@ -62,6 +67,34 @@ const LoginPage = ({ authProvider }: { authProvider: AuthProvider }) => {
   );
 };
 
+// Guard: if user has no projects, redirect to /projects/create.
+const RequireProject = ({ children }: { children: React.ReactNode }) => {
+  const { projects, loading } = useProjectContext();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && projects.length === 0) {
+      navigate('/projects/create', { replace: true });
+    }
+  }, [projects, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '50vh',
+        }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+};
+
 function App() {
   const { keycloak, initialized } = useAuth();
 
@@ -81,44 +114,44 @@ function App() {
           authProvider={authProvider}
           resources={[
             {
-              name: 'Dashboard',
-              list: '/',
+              name: 'Projects',
+              list: '/projects',
               meta: {
-                label: 'Dashboard',
-                icon: <HomeOutlined />,
+                label: 'Projects',
+                icon: <ProjectOutlined />,
               },
             },
             {
               name: 'Graphs',
-              list: '/graphs',
-              edit: '/graphs/:id',
+              list: '/projects/:projectId/graphs',
+              edit: '/projects/:projectId/graphs/:id',
               meta: {
                 label: 'Graphs',
-                icon: <NodeIndexOutlined />,
+                hide: true,
               },
             },
             {
               name: 'Chats',
-              list: '/chats',
+              list: '/projects/:projectId/chats',
               meta: {
                 label: 'Chats',
-                icon: <MessageOutlined />,
+                hide: true,
               },
             },
             {
               name: 'Repositories',
-              list: '/repositories',
+              list: '/projects/:projectId/repositories',
               meta: {
                 label: 'Repositories',
-                icon: <FolderOutlined />,
+                hide: true,
               },
             },
             {
               name: 'Knowledge',
-              list: '/knowledge',
+              list: '/projects/:projectId/knowledge',
               meta: {
                 label: 'Knowledge',
-                icon: <BookOutlined />,
+                hide: true,
               },
             },
             {
@@ -126,6 +159,7 @@ function App() {
               meta: {
                 label: 'Settings',
                 icon: <SettingOutlined />,
+                hide: true,
               },
             },
             {
@@ -135,6 +169,7 @@ function App() {
                 label: 'Integrations',
                 parent: 'Settings',
                 icon: <ApiOutlined />,
+                hide: true,
               },
             },
           ]}
@@ -147,8 +182,16 @@ function App() {
             <Route
               element={
                 <Authenticated
-                  key="authenticated-inner"
+                  key="authenticated-root"
                   fallback={<CatchAllNavigate to="/login" />}>
+                  <ProjectProvider>
+                    <Outlet />
+                  </ProjectProvider>
+                </Authenticated>
+              }>
+              {/* Group 1: ThemedLayout (sidebar + header) */}
+              <Route
+                element={
                   <ThemedLayout
                     Header={Header}
                     Title={({ collapsed }: { collapsed: boolean }) => (
@@ -174,23 +217,86 @@ function App() {
                     Sider={CustomSider}>
                     <Outlet />
                   </ThemedLayout>
-                </Authenticated>
-              }>
-              <Route index element={<MainPage />} />
-              <Route path="/graphs" element={<GraphsListPage />} />
-              <Route path="/graphs/:id" element={<GraphPage />} />
-              <Route path="/chats" element={<ChatsPage />} />
-              <Route path="/repositories" element={<RepositoriesListPage />} />
-              <Route path="/knowledge" element={<KnowledgeListPage />} />
-              <Route path="/settings">
-                <Route index element={<Navigate to="integrations" replace />} />
-                <Route path="integrations" element={<IntegrationsPage />} />
+                }>
+                <Route index element={<Navigate to="/projects" replace />} />
+                <Route path="/projects" element={<ProjectsListPage />} />
+                <Route
+                  path="/projects/:projectId/graphs"
+                  element={
+                    <RequireProject>
+                      <GraphsListPage />
+                    </RequireProject>
+                  }
+                />
+                <Route
+                  path="/projects/:projectId/graphs/:id"
+                  element={
+                    <RequireProject>
+                      <GraphPage />
+                    </RequireProject>
+                  }
+                />
+                <Route
+                  path="/projects/:projectId/chats"
+                  element={
+                    <RequireProject>
+                      <ChatsPage />
+                    </RequireProject>
+                  }
+                />
+                <Route
+                  path="/projects/:projectId/repositories"
+                  element={
+                    <RequireProject>
+                      <RepositoriesListPage />
+                    </RequireProject>
+                  }
+                />
+                <Route
+                  path="/projects/:projectId/knowledge"
+                  element={
+                    <RequireProject>
+                      <KnowledgeListPage />
+                    </RequireProject>
+                  }
+                />
+                {/* Legacy route redirects */}
+                <Route
+                  path="/graphs"
+                  element={<Navigate to="/projects" replace />}
+                />
+                <Route
+                  path="/graphs/:id"
+                  element={<Navigate to="/projects" replace />}
+                />
+                <Route
+                  path="/chats"
+                  element={<Navigate to="/projects" replace />}
+                />
+                <Route
+                  path="/repositories"
+                  element={<Navigate to="/projects" replace />}
+                />
+                <Route
+                  path="/knowledge"
+                  element={<Navigate to="/projects" replace />}
+                />
+                <Route path="/settings">
+                  <Route
+                    index
+                    element={<Navigate to="integrations" replace />}
+                  />
+                  <Route path="integrations" element={<IntegrationsPage />} />
+                </Route>
+                <Route
+                  path="/github-app/callback"
+                  element={<GitHubAppCallbackPage />}
+                />
+                <Route path="*" element={<ErrorComponent />} />
               </Route>
-              <Route
-                path="/github-app/callback"
-                element={<GitHubAppCallbackPage />}
-              />
-              <Route path="*" element={<ErrorComponent />} />
+
+              {/* Group 2: Full-screen (no sidebar) */}
+              <Route path="/projects/create" element={<CreateProjectPage />} />
             </Route>
             <Route
               path="/login"

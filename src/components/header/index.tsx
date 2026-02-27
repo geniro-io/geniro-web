@@ -1,4 +1,4 @@
-import { LeftOutlined } from '@ant-design/icons';
+import { DownOutlined, LeftOutlined, ProjectOutlined } from '@ant-design/icons';
 import type { RefineThemedLayoutHeaderProps } from '@refinedev/antd';
 import { useBreadcrumb, useGetIdentity, useLogout } from '@refinedev/core';
 import type { MenuProps } from 'antd';
@@ -12,6 +12,8 @@ import {
 } from 'antd';
 import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+
+import { useCurrentProject } from '../../hooks/useCurrentProject';
 
 const { Text } = Typography;
 const { useToken } = theme;
@@ -38,9 +40,11 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
   const { breadcrumbs } = useBreadcrumb();
   const { mutate: logout } = useLogout();
   const [profileHover, setProfileHover] = useState(false);
+  const [projectHover, setProjectHover] = useState(false);
   const location = useLocation();
   const { pathname, search } = location;
   const navigate = useNavigate();
+  const { projectId, currentProject, projects } = useCurrentProject();
 
   const pageTitle = useMemo(
     () =>
@@ -78,8 +82,52 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
     headerStyles.zIndex = 1;
   }
 
+  const projectMenuItems: MenuProps['items'] = useMemo(
+    () => [
+      ...projects.map((p) => ({
+        key: p.id,
+        label: `${p.icon ?? ''} ${p.name}`.trim(),
+        onClick: () => {
+          const sectionMatch = pathname.match(
+            /\/projects\/[^/]+\/(graphs|chats|knowledge|repositories)(.*)/,
+          );
+          const section = sectionMatch
+            ? `${sectionMatch[1]}${sectionMatch[2]}`
+            : 'graphs';
+          navigate(`/projects/${p.id}/${section}`);
+        },
+      })),
+      { type: 'divider' as const },
+      {
+        key: 'manage',
+        label: 'Manage Projects',
+        icon: <ProjectOutlined />,
+        onClick: () => navigate('/projects'),
+      },
+    ],
+    [projects, navigate, pathname],
+  );
+
   const hardcodedBackTarget = useMemo((): string | undefined => {
-    if (pathname === '/graphs') return '/';
+    // Project-scoped graph routes
+    if (projectId) {
+      if (pathname === `/projects/${projectId}/graphs`) {
+        return `/projects`;
+      }
+      if (pathname.startsWith(`/projects/${projectId}/graphs/`)) {
+        return `/projects/${projectId}/graphs`;
+      }
+      if (pathname === `/projects/${projectId}/chats`) {
+        const params = new URLSearchParams(search);
+        const graphId = params.get('graphId') ?? undefined;
+        return graphId
+          ? `/projects/${projectId}/graphs/${graphId}`
+          : `/projects/${projectId}/graphs`;
+      }
+    }
+
+    // Legacy fallback
+    if (pathname === '/graphs') return '/projects';
     if (pathname.startsWith('/graphs/')) return '/graphs';
 
     if (pathname === '/chats') {
@@ -89,7 +137,7 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
     }
 
     return undefined;
-  }, [pathname, search]);
+  }, [pathname, search, projectId]);
 
   return (
     <AntdLayout.Header style={headerStyles}>
@@ -120,6 +168,53 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
                 navigate('/', { replace: true });
               }}
             />
+          )}
+
+          {projects.length > 0 && (
+            <Dropdown
+              menu={{ items: projectMenuItems }}
+              trigger={['click']}
+              placement="bottomLeft">
+              <div
+                onMouseEnter={() => setProjectHover(true)}
+                onMouseLeave={() => setProjectHover(false)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '4px 10px',
+                  borderRadius: 8,
+                  backgroundColor: projectHover
+                    ? 'rgba(0, 0, 0, 0.08)'
+                    : 'rgba(0, 0, 0, 0.04)',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  transition: 'background-color 0.2s ease',
+                  height: 32,
+                }}>
+                {currentProject?.icon && (
+                  <span style={{ fontSize: 14, lineHeight: 1 }}>
+                    {currentProject.icon}
+                  </span>
+                )}
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: token.colorText,
+                    lineHeight: 1,
+                    whiteSpace: 'nowrap',
+                  }}>
+                  {currentProject?.name ?? 'Select Project'}
+                </Text>
+                <DownOutlined
+                  style={{
+                    fontSize: 10,
+                    color: token.colorTextTertiary,
+                  }}
+                />
+              </div>
+            </Dropdown>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
