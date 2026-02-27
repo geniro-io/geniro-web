@@ -6,8 +6,8 @@
 
 [![License: MIT + Commons Clause](https://img.shields.io/badge/License-MIT%20%2B%20Commons%20Clause-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6.svg)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-4-646cff.svg)](https://vitejs.dev/)
+[![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7-646cff.svg)](https://vitejs.dev/)
 [![pnpm](https://img.shields.io/badge/pnpm-%E2%89%A510-f69220.svg)](https://pnpm.io/)
 [![Node](https://img.shields.io/badge/Node-%E2%89%A522-339933.svg)](https://nodejs.org/)
 
@@ -28,6 +28,7 @@
   - [Installation](#installation)
   - [Configuration](#configuration)
   - [Docker](#docker)
+  - [Helm Deployment (Kubernetes)](#helm-deployment-kubernetes)
 - [Project Structure](#project-structure)
 - [Available Scripts](#available-scripts)
 - [Architecture](#architecture)
@@ -56,7 +57,7 @@ A visual workspace for authoring and operating AI agent automations. Teams can s
 
 | Layer        | Technology                                                                                       |
 | ------------ | ------------------------------------------------------------------------------------------------ |
-| Framework    | React 18, Vite, TypeScript                                                                       |
+| Framework    | React 19, Vite 7, TypeScript                                                                     |
 | App Shell    | [Refine](https://refine.dev/) (routing, data fetching, CRUD)                                     |
 | UI           | [Ant Design 5](https://ant.design/)                                                              |
 | Graph Editor | [@xyflow/react](https://xyflow.com/)                                                             |
@@ -119,6 +120,30 @@ docker run -p 80:4173 geniro-web
 ```
 
 The multi-stage Dockerfile uses Node 22-alpine, builds with Vite, and serves the static `dist/` bundle.
+
+### Helm Deployment (Kubernetes)
+
+The Geniro platform (including this Web UI) can be deployed to Kubernetes using the official Helm chart. See the [geniro-dist/helm/geniro](../geniro-dist/helm/geniro/) directory at the monorepo root.
+
+```bash
+# From the monorepo root
+helm install geniro ./geniro-dist/helm/geniro \
+  --set secrets.credentialEncryptionKey=<64-char-hex>
+```
+
+**Important:** The Web image has `API_URL` and related config compiled at build time via `src/config/production.ts`. For deployments to custom domains, edit that file before building:
+
+| Config Field  | Purpose                    | Default        |
+| ------------- | -------------------------- | -------------- |
+| `API_URL`     | REST + WebSocket base URL  | `api.geniro.io`  |
+| `WEBSITE_URL` | Frontend public URL        | `geniro.io`       |
+
+```bash
+# After editing src/config/production.ts:
+pnpm build
+```
+
+See the [Helm chart README](../geniro-dist/helm/geniro/README.md) for full deployment documentation.
 
 ## Project Structure
 
