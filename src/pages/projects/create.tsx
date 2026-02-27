@@ -8,7 +8,7 @@ import {
   Spin,
   Typography,
 } from 'antd';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { projectsApi } from '../../api';
@@ -38,21 +38,10 @@ const DEFAULT_PROJECT_COLORS = [
 export const CreateProjectPage = () => {
   const { message } = App.useApp();
   const navigate = useNavigate();
-  const {
-    projects,
-    loading: projectsLoading,
-    loadProjects,
-  } = useProjectContext();
+  const { loading: projectsLoading, loadProjects } = useProjectContext();
   const [form] = Form.useForm<ProjectFormValues>();
   const [saving, setSaving] = useState(false);
   const [colorValue, setColorValue] = useState<string>('#3B82F6');
-
-  // If user already has projects, redirect to the projects list
-  useEffect(() => {
-    if (!projectsLoading && projects.length > 0) {
-      navigate('/projects', { replace: true });
-    }
-  }, [projects, projectsLoading, navigate]);
 
   const handleSubmit = async () => {
     try {

@@ -3,6 +3,7 @@ import {
   FolderOutlined,
   MessageOutlined,
   NodeIndexOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import {
   type RefineThemedLayoutSiderProps,
@@ -68,33 +69,47 @@ const ProjectScopedNav = ({ collapsed }: { collapsed?: boolean }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (!projectId) return null;
+  const projectNavItems = projectId
+    ? [
+        {
+          key: `/projects/${projectId}/graphs`,
+          icon: <NodeIndexOutlined />,
+          label: collapsed ? null : 'Graphs',
+        },
+        {
+          key: `/projects/${projectId}/chats`,
+          icon: <MessageOutlined />,
+          label: collapsed ? null : 'Chats',
+        },
+        {
+          key: `/projects/${projectId}/repositories`,
+          icon: <FolderOutlined />,
+          label: collapsed ? null : 'Repositories',
+        },
+        {
+          key: `/projects/${projectId}/knowledge`,
+          icon: <BookOutlined />,
+          label: collapsed ? null : 'Knowledge',
+        },
+      ]
+    : [];
 
-  const navItems = [
-    {
-      key: `/projects/${projectId}/graphs`,
-      icon: <NodeIndexOutlined />,
-      label: collapsed ? null : 'Graphs',
-    },
-    {
-      key: `/projects/${projectId}/chats`,
-      icon: <MessageOutlined />,
-      label: collapsed ? null : 'Chats',
-    },
-    {
-      key: `/projects/${projectId}/repositories`,
-      icon: <FolderOutlined />,
-      label: collapsed ? null : 'Repositories',
-    },
-    {
-      key: `/projects/${projectId}/knowledge`,
-      icon: <BookOutlined />,
-      label: collapsed ? null : 'Knowledge',
-    },
-  ];
+  const settingsItem = {
+    key: '/settings',
+    icon: <SettingOutlined />,
+    label: collapsed ? null : 'Settings',
+    children: [
+      {
+        key: '/settings/integrations',
+        label: 'Integrations',
+      },
+    ],
+  };
 
-  const selectedKey = navItems.find((item) =>
-    location.pathname.startsWith(item.key),
+  const navItems = [...projectNavItems, settingsItem];
+
+  const selectedKey = [...projectNavItems, ...settingsItem.children].find(
+    (item) => location.pathname.startsWith(item.key),
   )?.key;
 
   return (

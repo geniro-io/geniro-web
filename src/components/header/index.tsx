@@ -40,6 +40,7 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
   const { breadcrumbs } = useBreadcrumb();
   const { mutate: logout } = useLogout();
   const [profileHover, setProfileHover] = useState(false);
+  const [projectHover, setProjectHover] = useState(false);
   const location = useLocation();
   const { pathname, search } = location;
   const navigate = useNavigate();
@@ -86,7 +87,15 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
       ...projects.map((p) => ({
         key: p.id,
         label: `${p.icon ?? ''} ${p.name}`.trim(),
-        onClick: () => navigate(`/projects/${p.id}/graphs`),
+        onClick: () => {
+          const sectionMatch = pathname.match(
+            /\/projects\/[^/]+\/(graphs|chats|knowledge|repositories)(.*)/,
+          );
+          const section = sectionMatch
+            ? `${sectionMatch[1]}${sectionMatch[2]}`
+            : 'graphs';
+          navigate(`/projects/${p.id}/${section}`);
+        },
       })),
       { type: 'divider' as const },
       {
@@ -96,7 +105,7 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
         onClick: () => navigate('/projects'),
       },
     ],
-    [projects, navigate],
+    [projects, navigate, pathname],
   );
 
   const hardcodedBackTarget = useMemo((): string | undefined => {
@@ -161,32 +170,50 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
             />
           )}
 
-          {projectId && projects.length > 0 && (
+          {projects.length > 0 && (
             <Dropdown
               menu={{ items: projectMenuItems }}
               trigger={['click']}
               placement="bottomLeft">
-              <Button
-                type="text"
+              <div
+                onMouseEnter={() => setProjectHover(true)}
+                onMouseLeave={() => setProjectHover(false)}
                 style={{
-                  fontWeight: 500,
-                  padding: '4px 8px',
-                  height: 'auto',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
-                  color: token.colorTextSecondary,
-                  borderRight: `1px solid ${token.colorBorderSecondary}`,
-                  borderRadius: 0,
-                  paddingRight: 12,
-                  marginRight: 4,
+                  padding: '4px 10px',
+                  borderRadius: 8,
+                  backgroundColor: projectHover
+                    ? 'rgba(0, 0, 0, 0.08)'
+                    : 'rgba(0, 0, 0, 0.04)',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  transition: 'background-color 0.2s ease',
+                  height: 32,
                 }}>
-                <span>
-                  {currentProject?.icon ? `${currentProject.icon} ` : ''}
+                {currentProject?.icon && (
+                  <span style={{ fontSize: 14, lineHeight: 1 }}>
+                    {currentProject.icon}
+                  </span>
+                )}
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: token.colorText,
+                    lineHeight: 1,
+                    whiteSpace: 'nowrap',
+                  }}>
                   {currentProject?.name ?? 'Select Project'}
-                </span>
-                <DownOutlined style={{ fontSize: 10 }} />
-              </Button>
+                </Text>
+                <DownOutlined
+                  style={{
+                    fontSize: 10,
+                    color: token.colorTextTertiary,
+                  }}
+                />
+              </div>
             </Dropdown>
           )}
 

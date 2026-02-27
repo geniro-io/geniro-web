@@ -1234,6 +1234,18 @@ export interface ProjectDto {
    * @memberof ProjectDto
    */
   'updatedAt': string;
+  /**
+   *
+   * @type {number}
+   * @memberof ProjectDto
+   */
+  'graphCount': number;
+  /**
+   *
+   * @type {number}
+   * @memberof ProjectDto
+   */
+  'threadCount': number;
 }
 /**
  *

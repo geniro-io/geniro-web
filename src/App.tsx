@@ -67,7 +67,7 @@ const LoginPage = ({ authProvider }: { authProvider: AuthProvider }) => {
   );
 };
 
-// Guard that redirects to /projects/create if no projects exist
+// Guard: if user has no projects, redirect to /projects/create.
 const RequireProject = ({ children }: { children: React.ReactNode }) => {
   const { projects, loading } = useProjectContext();
   const navigate = useNavigate();
@@ -159,6 +159,7 @@ function App() {
               meta: {
                 label: 'Settings',
                 icon: <SettingOutlined />,
+                hide: true,
               },
             },
             {
@@ -168,6 +169,7 @@ function App() {
                 label: 'Integrations',
                 parent: 'Settings',
                 icon: <ApiOutlined />,
+                hide: true,
               },
             },
           ]}
@@ -180,110 +182,121 @@ function App() {
             <Route
               element={
                 <Authenticated
-                  key="authenticated-inner"
+                  key="authenticated-root"
                   fallback={<CatchAllNavigate to="/login" />}>
                   <ProjectProvider>
-                    <ThemedLayout
-                      Header={Header}
-                      Title={({ collapsed }: { collapsed: boolean }) => (
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '100%',
-                            padding: '16px 0',
-                          }}>
-                          <img
-                            src={collapsed ? '/logo.svg' : '/logo-full.svg'}
-                            alt="Geniro.io"
-                            style={
-                              collapsed
-                                ? { width: 32, height: 32 }
-                                : { height: 32 }
-                            }
-                          />
-                        </div>
-                      )}
-                      Sider={CustomSider}>
-                      <Outlet />
-                    </ThemedLayout>
+                    <Outlet />
                   </ProjectProvider>
                 </Authenticated>
               }>
-              <Route index element={<Navigate to="/projects" replace />} />
-              <Route path="/projects" element={<ProjectsListPage />} />
-              <Route path="/projects/create" element={<CreateProjectPage />} />
+              {/* Group 1: ThemedLayout (sidebar + header) */}
               <Route
-                path="/projects/:projectId/graphs"
                 element={
-                  <RequireProject>
-                    <GraphsListPage />
-                  </RequireProject>
-                }
-              />
-              <Route
-                path="/projects/:projectId/graphs/:id"
-                element={
-                  <RequireProject>
-                    <GraphPage />
-                  </RequireProject>
-                }
-              />
-              <Route
-                path="/projects/:projectId/chats"
-                element={
-                  <RequireProject>
-                    <ChatsPage />
-                  </RequireProject>
-                }
-              />
-              <Route
-                path="/projects/:projectId/repositories"
-                element={
-                  <RequireProject>
-                    <RepositoriesListPage />
-                  </RequireProject>
-                }
-              />
-              <Route
-                path="/projects/:projectId/knowledge"
-                element={
-                  <RequireProject>
-                    <KnowledgeListPage />
-                  </RequireProject>
-                }
-              />
-              {/* Legacy route redirects */}
-              <Route
-                path="/graphs"
-                element={<Navigate to="/projects" replace />}
-              />
-              <Route
-                path="/graphs/:id"
-                element={<Navigate to="/projects" replace />}
-              />
-              <Route
-                path="/chats"
-                element={<Navigate to="/projects" replace />}
-              />
-              <Route
-                path="/repositories"
-                element={<Navigate to="/projects" replace />}
-              />
-              <Route
-                path="/knowledge"
-                element={<Navigate to="/projects" replace />}
-              />
-              <Route path="/settings">
-                <Route index element={<Navigate to="integrations" replace />} />
-                <Route path="integrations" element={<IntegrationsPage />} />
+                  <ThemedLayout
+                    Header={Header}
+                    Title={({ collapsed }: { collapsed: boolean }) => (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '100%',
+                          padding: '16px 0',
+                        }}>
+                        <img
+                          src={collapsed ? '/logo.svg' : '/logo-full.svg'}
+                          alt="Geniro.io"
+                          style={
+                            collapsed
+                              ? { width: 32, height: 32 }
+                              : { height: 32 }
+                          }
+                        />
+                      </div>
+                    )}
+                    Sider={CustomSider}>
+                    <Outlet />
+                  </ThemedLayout>
+                }>
+                <Route index element={<Navigate to="/projects" replace />} />
+                <Route path="/projects" element={<ProjectsListPage />} />
+                <Route
+                  path="/projects/:projectId/graphs"
+                  element={
+                    <RequireProject>
+                      <GraphsListPage />
+                    </RequireProject>
+                  }
+                />
+                <Route
+                  path="/projects/:projectId/graphs/:id"
+                  element={
+                    <RequireProject>
+                      <GraphPage />
+                    </RequireProject>
+                  }
+                />
+                <Route
+                  path="/projects/:projectId/chats"
+                  element={
+                    <RequireProject>
+                      <ChatsPage />
+                    </RequireProject>
+                  }
+                />
+                <Route
+                  path="/projects/:projectId/repositories"
+                  element={
+                    <RequireProject>
+                      <RepositoriesListPage />
+                    </RequireProject>
+                  }
+                />
+                <Route
+                  path="/projects/:projectId/knowledge"
+                  element={
+                    <RequireProject>
+                      <KnowledgeListPage />
+                    </RequireProject>
+                  }
+                />
+                {/* Legacy route redirects */}
+                <Route
+                  path="/graphs"
+                  element={<Navigate to="/projects" replace />}
+                />
+                <Route
+                  path="/graphs/:id"
+                  element={<Navigate to="/projects" replace />}
+                />
+                <Route
+                  path="/chats"
+                  element={<Navigate to="/projects" replace />}
+                />
+                <Route
+                  path="/repositories"
+                  element={<Navigate to="/projects" replace />}
+                />
+                <Route
+                  path="/knowledge"
+                  element={<Navigate to="/projects" replace />}
+                />
+                <Route path="/settings">
+                  <Route
+                    index
+                    element={<Navigate to="integrations" replace />}
+                  />
+                  <Route path="integrations" element={<IntegrationsPage />} />
+                </Route>
+                <Route
+                  path="/github-app/callback"
+                  element={<GitHubAppCallbackPage />}
+                />
+                <Route path="*" element={<ErrorComponent />} />
               </Route>
-              <Route
-                path="/github-app/callback"
-                element={<GitHubAppCallbackPage />}
-              />
-              <Route path="*" element={<ErrorComponent />} />
+
+              {/* Group 2: Full-screen (no sidebar) */}
+              <Route path="/projects/create" element={<CreateProjectPage />} />
             </Route>
             <Route
               path="/login"

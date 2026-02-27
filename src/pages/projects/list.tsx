@@ -3,6 +3,8 @@ import {
   EditOutlined,
   EllipsisOutlined,
   FolderOpenOutlined,
+  MessageOutlined,
+  NodeIndexOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
 import {
@@ -18,6 +20,7 @@ import {
   Spin,
   Typography,
 } from 'antd';
+import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -60,37 +63,45 @@ const ProjectCard = ({
 
   return (
     <Card
+      data-testid="project-card"
       hoverable
       onClick={() => onOpen(project.id)}
       style={{
-        borderRadius: 15,
+        borderRadius: 12,
         border: '1px solid #e5e7eb',
         backgroundColor: '#ffffff',
         cursor: 'pointer',
-        flex: '0 0 clamp(260px, 26vw, 340px)',
-        borderLeft: `4px solid ${accentColor}`,
+        overflow: 'hidden',
       }}
       styles={{
         body: {
           padding: 16,
           display: 'flex',
           flexDirection: 'column',
-          gap: 8,
+          height: '100%',
         },
       }}>
+      {/* Top: icon + name + menu */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
         }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            minWidth: 0,
+          }}>
           <div
             style={{
               width: 36,
               height: 36,
               borderRadius: 8,
               backgroundColor: `${accentColor}20`,
+              border: `2px solid ${accentColor}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -101,7 +112,7 @@ const ProjectCard = ({
               <FolderOpenOutlined style={{ color: accentColor }} />
             )}
           </div>
-          <Text strong style={{ fontSize: 15, color: '#111827' }}>
+          <Text strong ellipsis style={{ fontSize: 15, color: '#111827' }}>
             {project.name}
           </Text>
         </div>
@@ -132,14 +143,55 @@ const ProjectCard = ({
           </Dropdown>
         </div>
       </div>
-      {project.description && (
-        <Paragraph
-          ellipsis={{ rows: 2 }}
-          style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>
-          {project.description}
-        </Paragraph>
-      )}
-      {/* TODO(v2): entity counts */}
+
+      {/* Middle: description */}
+      <div style={{ marginTop: 8 }}>
+        {project.description && (
+          <Paragraph
+            ellipsis={{ rows: 2 }}
+            style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>
+            {project.description}
+          </Paragraph>
+        )}
+      </div>
+
+      {/* Bottom: stats row */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          paddingTop: 8,
+          borderTop: '1px solid #f3f4f6',
+        }}>
+        <Text
+          type="secondary"
+          style={{
+            fontSize: 12,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+          }}>
+          <NodeIndexOutlined />
+          {project.graphCount}
+        </Text>
+        <Text
+          type="secondary"
+          style={{
+            fontSize: 12,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+          }}>
+          <MessageOutlined />
+          {project.threadCount}
+        </Text>
+        <Text type="secondary" style={{ fontSize: 12, marginLeft: 'auto' }}>
+          {formatDistanceToNow(new Date(project.updatedAt), {
+            addSuffix: true,
+          })}
+        </Text>
+      </div>
     </Card>
   );
 };
@@ -289,9 +341,9 @@ export const ProjectsListPage = () => {
       ) : (
         <div
           style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 24,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+            gap: 20,
             padding: 24,
           }}>
           {projects.map((project) => (

@@ -13,6 +13,8 @@
 | **createdBy**   | **string**                  |             | [default to undefined]            |
 | **createdAt**   | **string**                  |             | [default to undefined]            |
 | **updatedAt**   | **string**                  |             | [default to undefined]            |
+| **graphCount**  | **number**                  |             | [default to undefined]            |
+| **threadCount** | **number**                  |             | [default to undefined]            |
 
 ## Example
 
@@ -29,6 +31,8 @@ const instance: ProjectDto = {
   createdBy,
   createdAt,
   updatedAt,
+  graphCount,
+  threadCount,
 };
 ```
 
