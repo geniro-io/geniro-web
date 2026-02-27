@@ -1,27 +1,39 @@
-import { useKeycloak } from '@react-keycloak/web';
+import { ReactKeycloakProvider, useKeycloak } from '@react-keycloak/web';
 import { AuthProvider } from '@refinedev/core';
 import axios from 'axios';
 import Keycloak from 'keycloak-js';
+import { ReactNode } from 'react';
 
-import { KEYCLOAK_CLIENT_ID, KEYCLOAK_REALM, KEYCLOAK_URL } from './config';
-import { GraphStorageService } from './services/GraphStorageService';
+import { GraphStorageService } from '../services/GraphStorageService';
+import type { AuthModule } from './types';
 
-// Initialize Keycloak
-export const keycloak = new Keycloak({
-  clientId: KEYCLOAK_CLIENT_ID,
-  url: KEYCLOAK_URL,
-  realm: KEYCLOAK_REALM,
-});
+export function createKeycloakModule({
+  issuer,
+  clientId,
+}: {
+  issuer: string;
+  clientId: string;
+}): AuthModule {
+  const keycloak = new Keycloak({
+    clientId,
+    oidcProvider: issuer,
+  });
 
-// Hook to access Keycloak instance and initialized state
-export const useAuth = () => {
-  const { keycloak, initialized } = useKeycloak();
-  return { keycloak, initialized };
-};
+  const useAuth = () => {
+    const { keycloak: kc, initialized } = useKeycloak();
+    return {
+      token: kc.token,
+      initialized,
+      userInfo: {
+        name: (kc.tokenParsed as { name?: string } | undefined)?.name,
+        email: (kc.tokenParsed as { email?: string } | undefined)?.email,
+        avatar: (kc.tokenParsed as { picture?: string } | undefined)?.picture,
+        sub: kc.tokenParsed?.sub,
+      },
+    };
+  };
 
-// Auth provider for Refine
-export const createAuthProvider = (keycloak: Keycloak): AuthProvider => {
-  return {
+  const createAuthProvider = (): AuthProvider => ({
     login: async () => {
       await keycloak.login({
         redirectUri: window.location.origin,
@@ -34,7 +46,6 @@ export const createAuthProvider = (keycloak: Keycloak): AuthProvider => {
     },
     logout: async () => {
       try {
-        // Clear all graph states from localStorage on logout
         GraphStorageService.clearAllDrafts();
 
         await keycloak.logout({
@@ -109,5 +120,13 @@ export const createAuthProvider = (keycloak: Keycloak): AuthProvider => {
       }
       return null;
     },
-  };
-};
+  });
+
+  const AuthProviderWrapper = ({ children }: { children: ReactNode }) => (
+    <ReactKeycloakProvider authClient={keycloak} autoRefreshToken>
+      {children}
+    </ReactKeycloakProvider>
+  );
+
+  return { AuthProviderWrapper, useAuth, createAuthProvider };
+}

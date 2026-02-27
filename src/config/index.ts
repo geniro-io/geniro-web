@@ -13,11 +13,4 @@ const config =
   import.meta.env.MODE === 'production' ? productionConfig : developmentConfig;
 
 // Export all configuration variables
-export const {
-  API_URL,
-  KEYCLOAK_CLIENT_ID,
-  KEYCLOAK_URL,
-  KEYCLOAK_REALM,
-  PROJECT_ID,
-  WEBSITE_URL,
-} = config;
+export const { API_URL, PROJECT_ID, WEBSITE_URL } = config;

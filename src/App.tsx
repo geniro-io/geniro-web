@@ -5,7 +5,6 @@ import {
   ProjectOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
-import { useKeycloak } from '@react-keycloak/web';
 import {
   ErrorComponent,
   ThemedLayout,
@@ -19,7 +18,7 @@ import routerBindings, {
 } from '@refinedev/react-router';
 import dataProvider from '@refinedev/simple-rest';
 import { App as AntdApp, Spin } from 'antd';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   BrowserRouter,
   Navigate,
@@ -29,7 +28,7 @@ import {
   useNavigate,
 } from 'react-router';
 
-import { createAuthProvider, useAuth } from './auth';
+import type { AuthModule } from './auth/types';
 import { Header } from './components/header';
 import { CustomSider } from './components/layout/CustomSider';
 import { API_URL, PROJECT_ID } from './config';
@@ -44,15 +43,21 @@ import { ProjectsListPage } from './pages/projects/list';
 import { RepositoriesListPage } from './pages/repositories/list';
 import { IntegrationsPage } from './pages/settings/IntegrationsPage';
 
-// Login page component that redirects to Keycloak
-const LoginPage = ({ authProvider }: { authProvider: AuthProvider }) => {
-  const { keycloak } = useKeycloak();
+// Login page component that redirects to the auth provider
+const LoginPage = ({
+  authProvider,
+  useAuth,
+}: {
+  authProvider: AuthProvider;
+  useAuth: AuthModule['useAuth'];
+}) => {
+  const { token } = useAuth();
 
   useEffect(() => {
-    if (!keycloak.authenticated) {
+    if (!token) {
       authProvider.login({});
     }
-  }, [keycloak, authProvider]);
+  }, [token, authProvider]);
 
   return (
     <div
@@ -95,14 +100,16 @@ const RequireProject = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-function App() {
-  const { keycloak, initialized } = useAuth();
+function App({ authModule }: { authModule: AuthModule }) {
+  const { initialized } = authModule.useAuth();
+  const authProvider = useMemo(
+    () => authModule.createAuthProvider(),
+    [authModule],
+  );
 
   if (!initialized) {
     return <div>Loading...</div>;
   }
-
-  const authProvider = createAuthProvider(keycloak);
 
   return (
     <BrowserRouter>
@@ -300,7 +307,12 @@ function App() {
             </Route>
             <Route
               path="/login"
-              element={<LoginPage authProvider={authProvider} />}
+              element={
+                <LoginPage
+                  authProvider={authProvider}
+                  useAuth={authModule.useAuth}
+                />
+              }
             />
           </Routes>
 

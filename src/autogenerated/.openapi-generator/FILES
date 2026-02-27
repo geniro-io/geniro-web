@@ -8,6 +8,7 @@ docs/AnalyticsApi.md
 docs/AnalyticsByGraphResponseDto.md
 docs/AnalyticsByGraphResponseDtoGraphsInner.md
 docs/AnalyticsOverviewDto.md
+docs/AuthConfigResponseDto.md
 docs/CreateGraphDto.md
 docs/CreateGraphDtoMetadata.md
 docs/CreateGraphDtoMetadataNodesInner.md

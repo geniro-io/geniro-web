@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
-import { useAuth } from '../auth';
+import { useAuth } from '../auth/AuthModuleContext';
 import {
   SocketEventHandler,
   webSocketService,
@@ -78,7 +78,7 @@ export const useWebSocket = (
   options: UseWebSocketOptions = {},
 ): UseWebSocketReturn => {
   const { autoConnect = true, graphId, handlers } = options;
-  const { keycloak } = useAuth();
+  const { token, userInfo } = useAuth();
   const handlersRef = useRef(handlers);
   const unsubscribeFnsRef = useRef<(() => void)[]>([]);
 
@@ -91,14 +91,13 @@ export const useWebSocket = (
   useEffect(() => {
     if (!autoConnect) return;
 
-    const token = keycloak?.token;
     if (!token) {
       console.warn('[useWebSocket] No token available, skipping connection');
       return;
     }
 
     // Get user ID from token for dev mode
-    const userId = keycloak?.tokenParsed?.sub;
+    const userId = userInfo.sub;
 
     // Connect if not already connected
     if (!webSocketService.isConnected()) {
@@ -109,7 +108,7 @@ export const useWebSocket = (
       // Don't disconnect on unmount - keep the connection alive
       // The service is a singleton and other components may be using it
     };
-  }, [autoConnect, keycloak]);
+  }, [autoConnect, token, userInfo.sub]);
 
   // Subscribe to graph
   useEffect(() => {

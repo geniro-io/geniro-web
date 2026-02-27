@@ -7,11 +7,6 @@
 // API URL configuration
 export const API_URL = 'http://localhost:5000';
 
-// Keycloak
-export const KEYCLOAK_CLIENT_ID = 'geniro';
-export const KEYCLOAK_URL = 'http://localhost:8082';
-export const KEYCLOAK_REALM = 'geniro';
-
 // Misc
 export const PROJECT_ID = 'oA2Grn-tb5EdO-q4j17C';
 export const WEBSITE_URL = 'http://localhost:3004';

@@ -165,6 +165,40 @@ export interface AnalyticsOverviewDto {
 /**
  *
  * @export
+ * @interface AuthConfigResponseDto
+ */
+export interface AuthConfigResponseDto {
+  /**
+   * Active auth provider
+   * @type {string}
+   * @memberof AuthConfigResponseDto
+   */
+  'provider': AuthConfigResponseDtoProviderEnum;
+  /**
+   * Token issuer URL
+   * @type {string}
+   * @memberof AuthConfigResponseDto
+   */
+  'issuer': string;
+  /**
+   * OAuth client ID for the auth provider
+   * @type {string}
+   * @memberof AuthConfigResponseDto
+   */
+  'clientId': string;
+}
+
+export const AuthConfigResponseDtoProviderEnum = {
+  Keycloak: 'keycloak',
+  Zitadel: 'zitadel',
+} as const;
+
+export type AuthConfigResponseDtoProviderEnum =
+  (typeof AuthConfigResponseDtoProviderEnum)[keyof typeof AuthConfigResponseDtoProviderEnum];
+
+/**
+ *
+ * @export
  * @interface CreateGraphDto
  */
 export interface CreateGraphDto {
@@ -9462,6 +9496,44 @@ export const SystemApiAxiosParamCreator = function (
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
+    getAuthConfig: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/v1/system/config`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
     getSettings: async (
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
@@ -9514,6 +9586,34 @@ export const SystemApiFp = function (configuration?: Configuration) {
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
+    async getAuthConfig(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<AuthConfigResponseDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getAuthConfig(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['SystemApi.getAuthConfig']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
     async getSettings(
       options?: RawAxiosRequestConfig,
     ): Promise<
@@ -9556,6 +9656,18 @@ export const SystemApiFactory = function (
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
+    getAuthConfig(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<AuthConfigResponseDto> {
+      return localVarFp
+        .getAuthConfig(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
     getSettings(
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<SystemSettingsResponseDto> {
@@ -9573,6 +9685,18 @@ export const SystemApiFactory = function (
  * @extends {BaseAPI}
  */
 export class SystemApi extends BaseAPI {
+  /**
+   *
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof SystemApi
+   */
+  public getAuthConfig(options?: RawAxiosRequestConfig) {
+    return SystemApiFp(this.configuration)
+      .getAuthConfig(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
   /**
    *
    * @param {*} [options] Override http request option.
