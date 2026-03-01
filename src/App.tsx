@@ -72,14 +72,14 @@ const LoginPage = ({
   );
 };
 
-// Guard: if user has no projects, redirect to /projects/create.
+// Guard: if user has no projects, redirect to /onboarding.
 const RequireProject = ({ children }: { children: React.ReactNode }) => {
   const { projects, loading } = useProjectContext();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading && projects.length === 0) {
-      navigate('/projects/create', { replace: true });
+      navigate('/onboarding', { replace: true });
     }
   }, [projects, loading, navigate]);
 
@@ -303,7 +303,7 @@ function App({ authModule }: { authModule: AuthModule }) {
               </Route>
 
               {/* Group 2: Full-screen (no sidebar) */}
-              <Route path="/projects/create" element={<CreateProjectPage />} />
+              <Route path="/onboarding" element={<CreateProjectPage />} />
             </Route>
             <Route
               path="/login"

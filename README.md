@@ -133,10 +133,10 @@ helm install geniro ./geniro-dist/helm/geniro \
 
 **Important:** The Web image has `API_URL` and related config compiled at build time via `src/config/production.ts`. For deployments to custom domains, edit that file before building:
 
-| Config Field  | Purpose                    | Default        |
-| ------------- | -------------------------- | -------------- |
-| `API_URL`     | REST + WebSocket base URL  | `api.geniro.io`  |
-| `WEBSITE_URL` | Frontend public URL        | `geniro.io`       |
+| Config Field  | Purpose                   | Default         |
+| ------------- | ------------------------- | --------------- |
+| `API_URL`     | REST + WebSocket base URL | `api.geniro.io` |
+| `WEBSITE_URL` | Frontend public URL       | `geniro.io`     |
 
 ```bash
 # After editing src/config/production.ts:

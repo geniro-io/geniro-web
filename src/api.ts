@@ -20,9 +20,11 @@ import { API_URL } from './config';
 // Reading from window.location at request time avoids race conditions with
 // useEffect-based approaches and survives header object replacements in auth.
 axios.interceptors.request.use((config) => {
-  const match = window.location.pathname.match(/\/projects\/([^/]+)/);
-  if (match?.[1]) {
-    config.headers['x-project-id'] = match[1];
+  if (!config.headers['x-project-id']) {
+    const match = window.location.pathname.match(/\/projects\/([^/]+)/);
+    if (match?.[1]) {
+      config.headers['x-project-id'] = match[1];
+    }
   }
   return config;
 });

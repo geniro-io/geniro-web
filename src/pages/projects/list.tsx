@@ -300,7 +300,7 @@ export const ProjectsListPage = () => {
   }
 
   if (projects.length === 0) {
-    return <Navigate to="/projects/create" replace />;
+    return <Navigate to="/onboarding" replace />;
   }
 
   return (
