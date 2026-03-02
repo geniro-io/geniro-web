@@ -1,5 +1,6 @@
 import {
   BookOutlined,
+  DashboardOutlined,
   FolderOutlined,
   MessageOutlined,
   NodeIndexOutlined,
@@ -62,6 +63,34 @@ const SiderBorderOverlay = ({ collapsed }: { collapsed?: boolean }) => {
   };
 
   return createPortal(<div style={borderStyle} />, document.body);
+};
+
+const DashboardNav = ({ collapsed }: { collapsed?: boolean }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const items = [
+    {
+      key: '/dashboard',
+      icon: <DashboardOutlined />,
+      label: collapsed ? null : 'Dashboard',
+    },
+  ];
+
+  const selectedKey = location.pathname.startsWith('/dashboard')
+    ? '/dashboard'
+    : undefined;
+
+  return (
+    <Menu
+      mode="inline"
+      selectedKeys={selectedKey ? [selectedKey] : []}
+      inlineCollapsed={collapsed}
+      items={items}
+      onClick={({ key }) => navigate(key)}
+      style={{ border: 'none', background: 'transparent' }}
+    />
+  );
 };
 
 const ProjectScopedNav = ({ collapsed }: { collapsed?: boolean }) => {
@@ -132,6 +161,7 @@ export const CustomSider = (props: RefineThemedLayoutSiderProps) => {
       render={({ items, collapsed }) => (
         <>
           <SiderBorderOverlay collapsed={collapsed} />
+          <DashboardNav collapsed={collapsed} />
           {items}
           <ProjectScopedNav collapsed={collapsed} />
         </>

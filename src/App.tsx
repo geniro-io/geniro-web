@@ -38,6 +38,7 @@ import { GitHubAppCallbackPage } from './pages/github-app/components/GitHubAppCa
 import { GraphPage } from './pages/graphs/details';
 import { GraphsListPage } from './pages/graphs/list';
 import { KnowledgeListPage } from './pages/knowledge/list';
+import { MainPage } from './pages/main/page';
 import { CreateProjectPage } from './pages/projects/create';
 import { ProjectsListPage } from './pages/projects/list';
 import { RepositoriesListPage } from './pages/repositories/list';
@@ -211,7 +212,7 @@ function App({ authModule }: { authModule: AuthModule }) {
                           padding: '16px 0',
                         }}>
                         <img
-                          src={collapsed ? '/logo.svg' : '/logo-full.svg'}
+                          src={collapsed ? '/icon.png' : '/logo.png'}
                           alt="Geniro.io"
                           style={
                             collapsed
@@ -225,7 +226,8 @@ function App({ authModule }: { authModule: AuthModule }) {
                     <Outlet />
                   </ThemedLayout>
                 }>
-                <Route index element={<Navigate to="/projects" replace />} />
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<MainPage />} />
                 <Route path="/projects" element={<ProjectsListPage />} />
                 <Route
                   path="/projects/:projectId/graphs"
