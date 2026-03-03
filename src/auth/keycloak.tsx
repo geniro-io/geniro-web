@@ -1,11 +1,10 @@
 import { ReactKeycloakProvider, useKeycloak } from '@react-keycloak/web';
-import { AuthProvider } from '@refinedev/core';
 import axios from 'axios';
 import Keycloak from 'keycloak-js';
 import { ReactNode } from 'react';
 
 import { GraphStorageService } from '../services/GraphStorageService';
-import type { AuthModule } from './types';
+import type { AuthModule, AuthProvider } from './types';
 
 export function createKeycloakModule({
   issuer,

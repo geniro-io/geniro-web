@@ -1,7 +1,14 @@
-import { Button, Modal } from 'antd';
 import type { FC } from 'react';
 
-import { MarkdownSplitEditor } from '../../../components/markdown/MarkdownSplitEditor';
+import { Button } from '../../../components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../components/ui/dialog';
+import { MdEditor } from '../../../components/ui/md-editor';
 
 interface AiSuggestionLinkProps {
   onClick: () => void;
@@ -15,9 +22,9 @@ const AiSuggestionLink: FC<AiSuggestionLinkProps> = ({
   label = 'Improve with AI',
 }) => (
   <Button
-    type="link"
-    size="small"
-    style={{ padding: 0, height: 'auto', fontSize: 12 }}
+    variant="link"
+    size="sm"
+    className="p-0 h-auto text-xs"
     onClick={onClick}
     disabled={disabled}>
     {label}
@@ -44,41 +51,41 @@ export const NodeExpandedTextareaModal: FC<NodeExpandedTextareaModalProps> = ({
   isGraphRunning = false,
   onOpenAiSuggestion,
 }) => (
-  <Modal
-    title="Edit Text"
+  <Dialog
     open={!!expandedTextarea}
-    onCancel={onCancel}
-    width={1200}
-    footer={[
-      <Button key="cancel" onClick={onCancel}>
-        Cancel
-      </Button>,
-      <Button key="save" type="primary" onClick={onSave}>
-        Save
-      </Button>,
-    ]}>
-    {expandedTextarea && (
-      <>
-        <MarkdownSplitEditor
-          value={expandedTextarea.value}
-          onChange={(nextValue) =>
-            onChange({
-              ...expandedTextarea,
-              value: nextValue,
-            })
-          }
-          height={520}
-          placeholder="Enter markdown…"
-          initialMode="split"
-        />
-        {showAiSuggestion && (
-          <AiSuggestionLink
-            onClick={() => onOpenAiSuggestion?.()}
-            disabled={!isGraphRunning}
-            label="Improve with AI"
+    onOpenChange={(open) => !open && onCancel()}>
+    <DialogContent className="sm:max-w-[1200px]">
+      <DialogHeader>
+        <DialogTitle>Edit Text</DialogTitle>
+      </DialogHeader>
+      {expandedTextarea && (
+        <>
+          <MdEditor
+            value={expandedTextarea.value}
+            onChange={(nextValue) =>
+              onChange({
+                ...expandedTextarea,
+                value: nextValue,
+              })
+            }
+            height={520}
+            placeholder="Enter markdown..."
           />
-        )}
-      </>
-    )}
-  </Modal>
+          {showAiSuggestion && (
+            <AiSuggestionLink
+              onClick={() => onOpenAiSuggestion?.()}
+              disabled={!isGraphRunning}
+              label="Improve with AI"
+            />
+          )}
+        </>
+      )}
+      <DialogFooter>
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button onClick={onSave}>Save</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 );

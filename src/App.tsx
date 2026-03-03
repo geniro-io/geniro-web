@@ -1,37 +1,13 @@
-import '@refinedev/antd/dist/reset.css';
-
-import {
-  ApiOutlined,
-  ProjectOutlined,
-  SettingOutlined,
-} from '@ant-design/icons';
-import {
-  ErrorComponent,
-  ThemedLayout,
-  useNotificationProvider,
-} from '@refinedev/antd';
-import { Authenticated, AuthProvider, Refine } from '@refinedev/core';
-import routerBindings, {
-  CatchAllNavigate,
-  DocumentTitleHandler,
-  UnsavedChangesNotifier,
-} from '@refinedev/react-router';
-import dataProvider from '@refinedev/simple-rest';
-import { App as AntdApp, Spin } from 'antd';
+import axios from 'axios';
+import { Loader2 } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
-import {
-  BrowserRouter,
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-  useNavigate,
-} from 'react-router';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router';
+import { Toaster } from 'sonner';
 
 import type { AuthModule } from './auth/types';
-import { Header } from './components/header';
-import { CustomSider } from './components/layout/CustomSider';
-import { API_URL, PROJECT_ID } from './config';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { Layout } from './components/layout/Layout';
+import { Card } from './components/ui/card';
 import { ProjectProvider, useProjectContext } from './contexts/ProjectContext';
 import { ChatsPage } from './pages/chats/page';
 import { GitHubAppCallbackPage } from './pages/github-app/components/GitHubAppCallbackPage';
@@ -43,16 +19,16 @@ import { CreateProjectPage } from './pages/projects/create';
 import { ProjectsListPage } from './pages/projects/list';
 import { RepositoriesListPage } from './pages/repositories/list';
 import { IntegrationsPage } from './pages/settings/IntegrationsPage';
+import { SettingsLayout } from './pages/settings/SettingsLayout';
+import { StorybookPage } from './pages/storybook/page';
 
-// Login page component that redirects to the auth provider
-const LoginPage = ({
-  authProvider,
-  useAuth,
-}: {
-  authProvider: AuthProvider;
-  useAuth: AuthModule['useAuth'];
-}) => {
-  const { token } = useAuth();
+// Login page: redirects to the SSO provider
+const LoginPage = ({ authModule }: { authModule: AuthModule }) => {
+  const { token } = authModule.useAuth();
+  const authProvider = useMemo(
+    () => authModule.createAuthProvider(),
+    [authModule],
+  );
 
   useEffect(() => {
     if (!token) {
@@ -61,41 +37,63 @@ const LoginPage = ({
   }, [token, authProvider]);
 
   return (
-    <div
-      style={{
-        height: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}>
-      Redirecting to login...
+    <div className="flex h-screen items-center justify-center bg-background">
+      <Card className="w-80 flex flex-col items-center gap-4 p-8">
+        <img src="/logo.png" alt="Geniro" className="h-10" />
+        <p className="text-sm text-muted-foreground">Redirecting to login...</p>
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </Card>
     </div>
   );
 };
 
-// Guard: if user has no projects, redirect to /onboarding.
+// Guard: require authentication
+const RequireAuth = ({
+  children,
+  authModule,
+}: {
+  children: React.ReactNode;
+  authModule: AuthModule;
+}) => {
+  const { token, initialized } = authModule.useAuth();
+
+  // Set Axios Authorization header synchronously so child components
+  // (like ProjectProvider) have the header set before their effects run
+  if (token) {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete axios.defaults.headers.common['Authorization'];
+  }
+
+  if (!initialized) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Guard: if user has no projects, redirect to /onboarding
 const RequireProject = ({ children }: { children: React.ReactNode }) => {
   const { projects, loading } = useProjectContext();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading && projects.length === 0) {
-      navigate('/onboarding', { replace: true });
-    }
-  }, [projects, loading, navigate]);
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '50vh',
-        }}>
-        <Spin size="large" />
+      <div className="flex items-center justify-center h-[50vh]">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
+  }
+
+  if (projects.length === 0) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <>{children}</>;
@@ -103,225 +101,113 @@ const RequireProject = ({ children }: { children: React.ReactNode }) => {
 
 function App({ authModule }: { authModule: AuthModule }) {
   const { initialized } = authModule.useAuth();
-  const authProvider = useMemo(
-    () => authModule.createAuthProvider(),
-    [authModule],
-  );
 
   if (!initialized) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
     <BrowserRouter>
-      <AntdApp>
-        <Refine
-          dataProvider={dataProvider(API_URL)}
-          notificationProvider={useNotificationProvider}
-          routerProvider={routerBindings}
-          authProvider={authProvider}
-          resources={[
-            {
-              name: 'Projects',
-              list: '/projects',
-              meta: {
-                label: 'Projects',
-                icon: <ProjectOutlined />,
-              },
-            },
-            {
-              name: 'Graphs',
-              list: '/projects/:projectId/graphs',
-              edit: '/projects/:projectId/graphs/:id',
-              meta: {
-                label: 'Graphs',
-                hide: true,
-              },
-            },
-            {
-              name: 'Chats',
-              list: '/projects/:projectId/chats',
-              meta: {
-                label: 'Chats',
-                hide: true,
-              },
-            },
-            {
-              name: 'Repositories',
-              list: '/projects/:projectId/repositories',
-              meta: {
-                label: 'Repositories',
-                hide: true,
-              },
-            },
-            {
-              name: 'Knowledge',
-              list: '/projects/:projectId/knowledge',
-              meta: {
-                label: 'Knowledge',
-                hide: true,
-              },
-            },
-            {
-              name: 'Settings',
-              meta: {
-                label: 'Settings',
-                icon: <SettingOutlined />,
-                hide: true,
-              },
-            },
-            {
-              name: 'Integrations',
-              list: '/settings/integrations',
-              meta: {
-                label: 'Integrations',
-                parent: 'Settings',
-                icon: <ApiOutlined />,
-                hide: true,
-              },
-            },
-          ]}
-          options={{
-            syncWithLocation: true,
-            warnWhenUnsavedChanges: true,
-            projectId: PROJECT_ID,
-          }}>
-          <Routes>
+      <Toaster />
+      <Routes>
+        {/* Authenticated + project context */}
+        <Route
+          element={
+            <RequireAuth authModule={authModule}>
+              <ProjectProvider>
+                <Outlet />
+              </ProjectProvider>
+            </RequireAuth>
+          }>
+          {/* Group 1: Layout (sidebar + header) — all pages require at least one project */}
+          <Route
+            element={
+              <ErrorBoundary>
+                <Layout>
+                  <RequireProject>
+                    <Outlet />
+                  </RequireProject>
+                </Layout>
+              </ErrorBoundary>
+            }>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<MainPage />} />
+            <Route path="/projects" element={<ProjectsListPage />} />
             <Route
-              element={
-                <Authenticated
-                  key="authenticated-root"
-                  fallback={<CatchAllNavigate to="/login" />}>
-                  <ProjectProvider>
-                    <Outlet />
-                  </ProjectProvider>
-                </Authenticated>
-              }>
-              {/* Group 1: ThemedLayout (sidebar + header) */}
-              <Route
-                element={
-                  <ThemedLayout
-                    Header={Header}
-                    Title={({ collapsed }: { collapsed: boolean }) => (
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '100%',
-                          padding: '16px 0',
-                        }}>
-                        <img
-                          src={collapsed ? '/icon.png' : '/logo.png'}
-                          alt="Geniro.io"
-                          style={
-                            collapsed
-                              ? { width: 32, height: 32 }
-                              : { height: 32 }
-                          }
-                        />
-                      </div>
-                    )}
-                    Sider={CustomSider}>
-                    <Outlet />
-                  </ThemedLayout>
-                }>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<MainPage />} />
-                <Route path="/projects" element={<ProjectsListPage />} />
-                <Route
-                  path="/projects/:projectId/graphs"
-                  element={
-                    <RequireProject>
-                      <GraphsListPage />
-                    </RequireProject>
-                  }
-                />
-                <Route
-                  path="/projects/:projectId/graphs/:id"
-                  element={
-                    <RequireProject>
-                      <GraphPage />
-                    </RequireProject>
-                  }
-                />
-                <Route
-                  path="/projects/:projectId/chats"
-                  element={
-                    <RequireProject>
-                      <ChatsPage />
-                    </RequireProject>
-                  }
-                />
-                <Route
-                  path="/projects/:projectId/repositories"
-                  element={
-                    <RequireProject>
-                      <RepositoriesListPage />
-                    </RequireProject>
-                  }
-                />
-                <Route
-                  path="/projects/:projectId/knowledge"
-                  element={
-                    <RequireProject>
-                      <KnowledgeListPage />
-                    </RequireProject>
-                  }
-                />
-                {/* Legacy route redirects */}
-                <Route
-                  path="/graphs"
-                  element={<Navigate to="/projects" replace />}
-                />
-                <Route
-                  path="/graphs/:id"
-                  element={<Navigate to="/projects" replace />}
-                />
-                <Route
-                  path="/chats"
-                  element={<Navigate to="/projects" replace />}
-                />
-                <Route
-                  path="/repositories"
-                  element={<Navigate to="/projects" replace />}
-                />
-                <Route
-                  path="/knowledge"
-                  element={<Navigate to="/projects" replace />}
-                />
-                <Route path="/settings">
-                  <Route
-                    index
-                    element={<Navigate to="integrations" replace />}
-                  />
-                  <Route path="integrations" element={<IntegrationsPage />} />
-                </Route>
-                <Route
-                  path="/github-app/callback"
-                  element={<GitHubAppCallbackPage />}
-                />
-                <Route path="*" element={<ErrorComponent />} />
-              </Route>
-
-              {/* Group 2: Full-screen (no sidebar) */}
-              <Route path="/onboarding" element={<CreateProjectPage />} />
+              path="/projects/:projectId/graphs"
+              element={<GraphsListPage />}
+            />
+            <Route
+              path="/projects/:projectId/graphs/:id"
+              element={<GraphPage />}
+            />
+            <Route path="/projects/:projectId/chats" element={<ChatsPage />} />
+            <Route
+              path="/projects/:projectId/repositories"
+              element={<RepositoriesListPage />}
+            />
+            <Route
+              path="/projects/:projectId/knowledge"
+              element={<KnowledgeListPage />}
+            />
+            {/* Legacy route redirects */}
+            <Route
+              path="/graphs"
+              element={<Navigate to="/projects" replace />}
+            />
+            <Route
+              path="/graphs/:id"
+              element={<Navigate to="/projects" replace />}
+            />
+            <Route
+              path="/chats"
+              element={<Navigate to="/projects" replace />}
+            />
+            <Route
+              path="/repositories"
+              element={<Navigate to="/projects" replace />}
+            />
+            <Route
+              path="/knowledge"
+              element={<Navigate to="/projects" replace />}
+            />
+            <Route path="/settings" element={<SettingsLayout />}>
+              <Route index element={<Navigate to="integrations" replace />} />
+              <Route path="integrations" element={<IntegrationsPage />} />
             </Route>
             <Route
-              path="/login"
+              path="/github-app/callback"
+              element={<GitHubAppCallbackPage />}
+            />
+            <Route path="/storybook" element={<StorybookPage />} />
+            <Route
+              path="*"
               element={
-                <LoginPage
-                  authProvider={authProvider}
-                  useAuth={authModule.useAuth}
-                />
+                <div className="p-8 text-destructive">Page not found</div>
               }
             />
-          </Routes>
+          </Route>
 
-          <UnsavedChangesNotifier />
-          <DocumentTitleHandler />
-        </Refine>
-      </AntdApp>
+          {/* Group 2: Full-screen (no layout) */}
+          <Route path="/onboarding" element={<CreateProjectPage />} />
+        </Route>
+
+        {/* Public routes */}
+        <Route path="/login" element={<LoginPage authModule={authModule} />} />
+        <Route
+          path="/callback"
+          element={
+            <div className="flex h-screen items-center justify-center bg-background">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          }
+        />
+        <Route path="/silent-renew" element={<div />} />
+      </Routes>
     </BrowserRouter>
   );
 }

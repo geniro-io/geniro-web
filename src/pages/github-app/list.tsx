@@ -1,16 +1,18 @@
-import {
-  DisconnectOutlined,
-  GithubOutlined,
-  InfoCircleOutlined,
-} from '@ant-design/icons';
-import { Button, Space, Spin, Tag, Tooltip, Typography } from 'antd';
+import { Github, Info, Loader2, Unplug } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 import { extractApiErrorMessage } from '../../utils/errors';
 import type { GitHubAppInstallationDto, SetupInfoResponseDto } from './types';
 import { githubAppInstallationsApi } from './types';
-
-const { Text } = Typography;
 
 interface GitHubAppInstallationsSectionProps {
   githubAppEnabled: boolean;
@@ -86,32 +88,39 @@ export const GitHubAppInstallationsSection = ({
   }
 
   if (error) {
-    return (
-      <Text type="danger" style={{ display: 'block', marginBottom: 16 }}>
-        {error}
-      </Text>
-    );
+    return <p className="text-destructive text-sm mb-4">{error}</p>;
   }
 
   const connectedAccountLogin = activeInstallation?.accountLogin;
   const hasInstallations = installations.length > 0;
 
-  const renderStatusTag = () => {
+  const renderStatusBadge = () => {
     if (loading) {
-      return <Spin size="small" />;
+      return (
+        <Badge variant="outline" className="gap-1.5 text-muted-foreground">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          Loading...
+        </Badge>
+      );
     }
 
     if (hasInstallations) {
       return (
-        <Tag color="success">
+        <Badge
+          variant="outline"
+          className="gap-1.5 text-emerald-600 border-emerald-200 bg-emerald-50">
           {connectedAccountLogin
             ? `Connected: ${connectedAccountLogin}`
             : 'Connected'}
-        </Tag>
+        </Badge>
       );
     }
 
-    return <Tag color="default">Not connected</Tag>;
+    return (
+      <Badge variant="outline" className="gap-1.5 text-muted-foreground">
+        Not connected
+      </Badge>
+    );
   };
 
   const callbackUrl = setupInfo?.callbackPath
@@ -127,46 +136,53 @@ export const GitHubAppInstallationsSection = ({
   })();
 
   return (
-    <Space size="middle" align="center">
-      {renderStatusTag()}
+    <div className="flex items-center gap-3">
+      {renderStatusBadge()}
       {setupInfo?.configured && (
         <>
           {hasInstallations ? (
             <Button
-              danger
-              icon={<DisconnectOutlined />}
-              size="middle"
-              loading={disconnecting}
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5"
+              disabled={disconnecting}
               onClick={handleDisconnect}>
+              {disconnecting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Unplug className="w-3.5 h-3.5" />
+              )}
               Disconnect
             </Button>
           ) : (
             <>
-              <Button
-                type="primary"
-                icon={<GithubOutlined />}
-                size="middle"
-                href={installHref}>
-                Install GitHub App
+              <Button size="sm" className="gap-1.5" asChild>
+                <a href={installHref}>
+                  <Github className="w-3.5 h-3.5" />
+                  Install GitHub App
+                </a>
               </Button>
               {callbackUrl && (
-                <Tooltip
-                  title={
-                    <>
-                      Add <code>{callbackUrl}</code> as a <b>Callback URL</b> in
-                      your GitHub App settings and set{' '}
-                      <b>GITHUB_APP_CLIENT_ID</b> env var.
-                    </>
-                  }>
-                  <InfoCircleOutlined
-                    style={{ color: '#1677ff', cursor: 'help' }}
-                  />
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-4 h-4 text-primary cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs">
+                      <p className="text-xs">
+                        Add <code>{callbackUrl}</code> as a{' '}
+                        <strong>Callback URL</strong> in your GitHub App
+                        settings and set <strong>GITHUB_APP_CLIENT_ID</strong>{' '}
+                        env var.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </>
           )}
         </>
       )}
-    </Space>
+    </div>
   );
 };

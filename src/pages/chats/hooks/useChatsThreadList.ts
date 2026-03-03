@@ -14,8 +14,8 @@ import {
   buildTriggerNodes,
   type TriggerNodeInfo,
 } from '../../../utils/graphThreads';
+import type { ToastMessageApi } from '../../../utils/toastAdapter';
 import type {
-  AntdMessageApi,
   DraftThread,
   GraphCacheEntry,
   ThreadStatusTabKey,
@@ -28,11 +28,11 @@ import {
 } from '../utils/chatsPageUtils';
 
 interface UseChatsThreadListDeps {
-  antdMessage: AntdMessageApi;
+  toastMessage: ToastMessageApi;
 }
 
 export const useChatsThreadList = (deps: UseChatsThreadListDeps) => {
-  const { antdMessage } = deps;
+  const { toastMessage } = deps;
   const [threads, setThreads] = useState<ThreadDto[]>([]);
   const [threadsOffset, setThreadsOffset] = useState(0);
   const [threadsHasMore, setThreadsHasMore] = useState(true);
@@ -294,7 +294,7 @@ export const useChatsThreadList = (deps: UseChatsThreadListDeps) => {
           error,
           'Failed to load templates metadata',
         );
-        antdMessage.error(errorMessage);
+        toastMessage.error(errorMessage);
       } finally {
         if (mounted) setTemplatesLoading(false);
       }
@@ -304,7 +304,7 @@ export const useChatsThreadList = (deps: UseChatsThreadListDeps) => {
     return () => {
       mounted = false;
     };
-  }, [antdMessage]);
+  }, [toastMessage]);
 
   // --- Cleanup WS subscriptions ---
 
@@ -338,7 +338,7 @@ export const useChatsThreadList = (deps: UseChatsThreadListDeps) => {
           'Failed to load graphs',
         );
         setGraphPickerError(errorMessage);
-        antdMessage.error(errorMessage);
+        toastMessage.error(errorMessage);
       } finally {
         if (mounted) setGraphPickerLoading(false);
       }
@@ -348,7 +348,7 @@ export const useChatsThreadList = (deps: UseChatsThreadListDeps) => {
     return () => {
       mounted = false;
     };
-  }, [antdMessage, graphPickerOpen]);
+  }, [toastMessage, graphPickerOpen]);
 
   // --- Graph cache management ---
 
@@ -395,10 +395,10 @@ export const useChatsThreadList = (deps: UseChatsThreadListDeps) => {
           error,
           'Failed to load graph metadata for threads',
         );
-        antdMessage.error(errorMessage);
+        toastMessage.error(errorMessage);
       }
     },
-    [antdMessage, subscribeToGraph],
+    [toastMessage, subscribeToGraph],
   );
 
   useEffect(() => {
@@ -533,7 +533,7 @@ export const useChatsThreadList = (deps: UseChatsThreadListDeps) => {
           error,
           'Failed to load threads list',
         );
-        antdMessage.error(errorMessage);
+        toastMessage.error(errorMessage);
         setThreadsHasMore(false);
       } finally {
         if (isAppend) {
@@ -544,7 +544,7 @@ export const useChatsThreadList = (deps: UseChatsThreadListDeps) => {
       }
     },
     [
-      antdMessage,
+      toastMessage,
       ensureGraphsLoaded,
       sortThreadsByTimestampDesc,
       graphFilterId,
@@ -626,17 +626,17 @@ export const useChatsThreadList = (deps: UseChatsThreadListDeps) => {
         if (selectedThreadId === threadId) {
           setSelectedThreadId(undefined);
         }
-        antdMessage.success('Thread deleted successfully');
+        toastMessage.success('Thread deleted successfully');
       } catch (error) {
         console.error('Error deleting thread:', error);
         const errorMessage = extractApiErrorMessage(
           error,
           'Failed to delete thread',
         );
-        antdMessage.error(errorMessage);
+        toastMessage.error(errorMessage);
       }
     },
-    [antdMessage, selectedThreadId],
+    [toastMessage, selectedThreadId],
   );
 
   const createDraftThreadForGraph = useCallback(

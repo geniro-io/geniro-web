@@ -1,11 +1,8 @@
-import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  LoadingOutlined,
-} from '@ant-design/icons';
-import { Button, Result, Spin } from 'antd';
+import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
+
+import { Button } from '@/components/ui/button';
 
 import { extractApiErrorMessage } from '../../../utils/errors';
 import { githubAppInstallationsApi } from '../types';
@@ -25,7 +22,6 @@ const resolveInitialState = (
     return { status: 'request-pending' };
   }
 
-  // Either installation_id (direct install) or code (OAuth flow) is valid
   if (installationId) {
     const numericId = Number(installationId);
     if (!Number.isInteger(numericId) || numericId <= 0) {
@@ -72,12 +68,10 @@ export const GitHubAppCallbackPage = () => {
         let response;
 
         if (installationId) {
-          // Direct install flow: link by installation ID
           response = await githubAppInstallationsApi.link(
             Number(installationId),
           );
         } else if (code) {
-          // OAuth flow: exchange code and link
           response = await githubAppInstallationsApi.linkViaOAuthCode(code);
         } else {
           setState({ status: 'error', message: 'Missing parameters' });
@@ -106,66 +100,60 @@ export const GitHubAppCallbackPage = () => {
 
   if (state.status === 'linking') {
     return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '50vh',
-        }}>
-        <Spin
-          indicator={<LoadingOutlined style={{ fontSize: 36 }} spin />}
-          tip="Linking GitHub App installation..."
-          size="large">
-          <div style={{ padding: 50 }} />
-        </Spin>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+        <Loader2 className="w-9 h-9 text-primary animate-spin" />
+        <p className="text-muted-foreground">
+          Linking GitHub App installation...
+        </p>
       </div>
     );
   }
 
   if (state.status === 'success') {
     return (
-      <Result
-        icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-        title="GitHub App Installed Successfully"
-        subTitle={`Installation linked to ${state.accountLogin}.`}
-        extra={[
-          <Button type="primary" key="go" onClick={goToInstallations}>
-            Go to Settings
-          </Button>,
-        ]}
-      />
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center">
+        <CheckCircle2 className="w-16 h-16 text-emerald-500" />
+        <h2 className="text-2xl font-semibold text-foreground">
+          GitHub App Installed Successfully
+        </h2>
+        <p className="text-muted-foreground">
+          Installation linked to {state.accountLogin}.
+        </p>
+        <Button onClick={goToInstallations}>Go to Settings</Button>
+      </div>
     );
   }
 
   if (state.status === 'request-pending') {
     return (
-      <Result
-        title="Installation Request Pending"
-        subTitle="Your request to install the GitHub App has been sent to the organization admin. Once approved, the installation will appear here automatically."
-        extra={[
-          <Button type="primary" key="go" onClick={goToInstallations}>
-            Go to Settings
-          </Button>,
-        ]}
-      />
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center max-w-lg mx-auto">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <h2 className="text-2xl font-semibold text-foreground">
+          Installation Request Pending
+        </h2>
+        <p className="text-muted-foreground">
+          Your request to install the GitHub App has been sent to the
+          organization admin. Once approved, the installation will appear here
+          automatically.
+        </p>
+        <Button onClick={goToInstallations}>Go to Settings</Button>
+      </div>
     );
   }
 
   return (
-    <Result
-      icon={<CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
-      status="error"
-      title="Installation Failed"
-      subTitle={state.message}
-      extra={[
-        <Button
-          type="primary"
-          key="retry"
-          onClick={() => navigate('/settings/integrations', { replace: true })}>
-          Go to Settings
-        </Button>,
-      ]}
-    />
+    <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center max-w-lg mx-auto">
+      <XCircle className="w-16 h-16 text-destructive" />
+      <h2 className="text-2xl font-semibold text-foreground">
+        Installation Failed
+      </h2>
+      <p className="text-muted-foreground">{state.message}</p>
+      <Button
+        onClick={() => navigate('/settings/integrations', { replace: true })}>
+        Go to Settings
+      </Button>
+    </div>
   );
 };

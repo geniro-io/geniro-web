@@ -1,10 +1,11 @@
-import {
-  DownloadOutlined,
-  MessageOutlined,
-  RobotOutlined,
-} from '@ant-design/icons';
 import type { Viewport } from '@xyflow/react';
-import { App } from 'antd';
+import {
+  Download,
+  MessageCircle,
+  Pencil,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import {
   type Dispatch,
   type MutableRefObject,
@@ -34,6 +35,7 @@ import {
 } from '../../../services/GraphStorageService';
 import { GraphValidationService } from '../../../services/GraphValidationService';
 import { extractApiErrorMessage } from '../../../utils/errors';
+import { toastMessage } from '../../../utils/toastAdapter';
 import type {
   GraphEdge,
   GraphMetadata,
@@ -96,12 +98,14 @@ export const useGraphActions = ({
   saving,
   setSaving,
 }: UseGraphActionsOptions) => {
-  const { message } = App.useApp();
+  const message = toastMessage;
   const [isSavingName, setIsSavingName] = useState(false);
-  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditGraphDialogOpen, setIsEditGraphDialogOpen] = useState(false);
+  const [editingDescription, setEditingDescription] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [graphError, setGraphError] = useState<string | null>(null);
   const [draftNodeConfigVersion, setDraftNodeConfigVersion] = useState(0);
+  const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
 
   const handleSave = useCallback(async () => {
     if (!graph || !id) return;
@@ -297,10 +301,11 @@ export const useGraphActions = ({
     setEditingName(
       draftStateRef.current.draftState.graphName ?? (graph?.name || ''),
     );
-    setIsEditingName(true);
-  }, [draftStateRef, graph?.name, setEditingName]);
+    setEditingDescription(graph?.description || '');
+    setIsEditGraphDialogOpen(true);
+  }, [draftStateRef, graph?.name, graph?.description, setEditingName]);
 
-  const handleNameSave = useCallback(async () => {
+  const handleEditGraphSave = useCallback(async () => {
     if (!graph || !id) return;
 
     const nextName = editingName.trim();
@@ -311,23 +316,18 @@ export const useGraphActions = ({
 
     if (isSavingName) return;
 
-    if (nextName === graph.name) {
-      setEditingName(nextName);
-      setIsEditingName(false);
-      return;
-    }
-
     try {
       setIsSavingName(true);
       const response = await graphsApi.updateGraph(id, {
         name: nextName,
+        description: editingDescription.trim() || undefined,
         currentVersion: graph.version,
       });
       const updatedGraph = response.data.graph;
 
       setGraph(updatedGraph);
       setEditingName(updatedGraph.name);
-      setIsEditingName(false);
+      setIsEditGraphDialogOpen(false);
 
       draftStateRef.current.updateGraphName(updatedGraph.name);
 
@@ -348,12 +348,12 @@ export const useGraphActions = ({
         });
       }
 
-      message.success('Graph name updated');
+      message.success('Graph updated');
     } catch (error) {
-      console.error('Error updating graph name:', error);
+      console.error('Error updating graph:', error);
       const errorMessage = extractApiErrorMessage(
         error,
-        'Failed to update graph name',
+        'Failed to update graph',
       );
       message.error(errorMessage);
     } finally {
@@ -362,6 +362,7 @@ export const useGraphActions = ({
   }, [
     draftStateRef,
     editingName,
+    editingDescription,
     graph,
     id,
     isSavingName,
@@ -372,12 +373,9 @@ export const useGraphActions = ({
     setServerGraphState,
   ]);
 
-  const handleNameCancel = useCallback(() => {
-    setEditingName(
-      draftStateRef.current.draftState.graphName ?? (graph?.name || ''),
-    );
-    setIsEditingName(false);
-  }, [draftStateRef, graph?.name, setEditingName]);
+  const handleEditGraphClose = useCallback(() => {
+    setIsEditGraphDialogOpen(false);
+  }, []);
 
   const handleGraphAction = useCallback(async () => {
     if (!graph || !id) return;
@@ -428,36 +426,76 @@ export const useGraphActions = ({
     }
   }, [fetchCompiledNodes, graph, id, message, setGraph]);
 
+  const handleDeleteGraphConfirm = useCallback(async () => {
+    if (!id) return;
+    try {
+      await graphsApi.deleteGraph(id);
+      message.success('Graph deleted');
+      navigate('..', { relative: 'path' });
+    } catch (e: unknown) {
+      const errorMessage = extractApiErrorMessage(e, 'Failed to delete graph');
+      message.error(errorMessage);
+    } finally {
+      setIsDeleteConfirmVisible(false);
+    }
+  }, [id, message, navigate]);
+
+  const handleDeleteGraphCancel = useCallback(() => {
+    setIsDeleteConfirmVisible(false);
+  }, []);
+
   const graphMenuItems = useMemo(
     () => [
+      {
+        key: 'rename',
+        disabled: !graph,
+        label: (
+          <span className="flex items-center gap-2">
+            <Pencil className="w-3.5 h-3.5" />
+            Edit graph
+          </span>
+        ),
+      },
       {
         key: 'download',
         disabled: !graph,
         label: (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <DownloadOutlined />
+          <span className="flex items-center gap-2">
+            <Download className="w-3.5 h-3.5" />
             Download graph
-          </div>
+          </span>
         ),
       },
       {
         key: 'chats',
         disabled: !graph,
         label: (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <MessageOutlined />
+          <span className="flex items-center gap-2">
+            <MessageCircle className="w-3.5 h-3.5" />
             Open chats
-          </div>
+          </span>
         ),
       },
       {
         key: 'improve',
         disabled: !hasAgentNodes,
         label: (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <RobotOutlined />
+          <span className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5" />
             Improve workflow
-          </div>
+          </span>
+        ),
+      },
+      {
+        key: 'delete',
+        disabled: !graph,
+        separator: true,
+        className: 'text-destructive focus:text-destructive',
+        label: (
+          <span className="flex items-center gap-2">
+            <Trash2 className="w-3.5 h-3.5" />
+            Delete graph
+          </span>
         ),
       },
     ],
@@ -466,6 +504,9 @@ export const useGraphActions = ({
 
   const handleGraphMenuAction = useCallback(
     (key: string) => {
+      if (key === 'rename') {
+        handleNameEdit();
+      }
       if (key === 'download') {
         if (!graph) return;
         handleDownloadGraphBackup();
@@ -477,25 +518,37 @@ export const useGraphActions = ({
       if (key === 'improve') {
         handleOpenGraphAiModal();
       }
+      if (key === 'delete') {
+        setIsDeleteConfirmVisible(true);
+      }
     },
-    [graph, handleDownloadGraphBackup, handleOpenGraphAiModal, navigate],
+    [
+      graph,
+      handleNameEdit,
+      handleDownloadGraphBackup,
+      handleOpenGraphAiModal,
+      navigate,
+    ],
   );
 
   return {
     saving,
     isSavingName,
-    isEditingName,
-    editingName,
-    setEditingName,
+    isEditGraphDialogOpen,
+    editingDescription,
+    setEditingDescription,
     actionLoading,
     graphError,
     draftNodeConfigVersion,
     handleSave,
     handleNameEdit,
-    handleNameSave,
-    handleNameCancel,
+    handleEditGraphSave,
+    handleEditGraphClose,
     handleGraphAction,
     graphMenuItems,
     handleGraphMenuAction,
+    isDeleteConfirmVisible,
+    handleDeleteGraphConfirm,
+    handleDeleteGraphCancel,
   };
 };

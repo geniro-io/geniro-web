@@ -1,4 +1,3 @@
-import { App } from 'antd';
 import {
   type Dispatch,
   type MutableRefObject,
@@ -15,6 +14,7 @@ import {
   GraphStorageService,
 } from '../../../services/GraphStorageService';
 import { extractApiErrorMessage } from '../../../utils/errors';
+import { toastMessage } from '../../../utils/toastAdapter';
 import type { GraphEdge, GraphNode } from '../types';
 import { buildGraphDiffState } from '../utils/graphPageUtils';
 
@@ -43,7 +43,7 @@ export const useGraphLoader = ({
   setEdges,
   setServerGraphState,
 }: UseGraphLoaderOptions) => {
-  const { message } = App.useApp();
+  const message = toastMessage;
   useEffect(() => {
     if (!graphId) return;
 

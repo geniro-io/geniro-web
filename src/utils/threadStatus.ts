@@ -4,13 +4,22 @@ export const THREAD_STATUS_STYLES: Record<
   ThreadDto['status'],
   { label: string; color: string }
 > = {
-  [ThreadDtoStatusEnum.Running]: { label: 'Running', color: '#1890ff' },
-  [ThreadDtoStatusEnum.Done]: { label: 'Done', color: '#52c41a' },
+  [ThreadDtoStatusEnum.Running]: {
+    label: 'Running',
+    color: 'var(--color-blue-500)',
+  },
+  [ThreadDtoStatusEnum.Done]: {
+    label: 'Done',
+    color: 'var(--color-green-500)',
+  },
   [ThreadDtoStatusEnum.NeedMoreInfo]: {
     label: 'Need More Info',
-    color: '#faad14',
+    color: 'var(--color-amber-500)',
   },
-  [ThreadDtoStatusEnum.Stopped]: { label: 'Stopped', color: '#ff4d4f' },
+  [ThreadDtoStatusEnum.Stopped]: {
+    label: 'Stopped',
+    color: 'var(--muted-foreground)',
+  },
 } as const;
 
 export const getThreadStatusDisplay = (status?: ThreadDto['status']) => {
@@ -18,7 +27,19 @@ export const getThreadStatusDisplay = (status?: ThreadDto['status']) => {
   return (
     THREAD_STATUS_STYLES[status] ?? {
       label: status.replace(/_/g, ' '),
-      color: '#d9d9d9',
+      color: 'var(--muted-foreground)',
     }
   );
 };
+
+export function getStatusBadgeClass(label: string): string {
+  if (label === 'Done' || label === 'done')
+    return 'bg-green-100 text-green-700 hover:bg-green-100';
+  if (label === 'Running' || label === 'running')
+    return 'bg-blue-100 text-blue-700 hover:bg-blue-100';
+  if (label === 'Need More Info')
+    return 'bg-amber-100 text-amber-700 hover:bg-amber-100';
+  if (label === 'Stopped' || label === 'stopped')
+    return 'bg-muted text-muted-foreground hover:bg-muted';
+  return 'bg-muted text-muted-foreground hover:bg-muted';
+}

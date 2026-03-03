@@ -1,10 +1,9 @@
-import { AuthProvider as RefineAuthProvider } from '@refinedev/core';
 import { createZitadelAuth, ZitadelConfig } from '@zitadel/react';
 import axios from 'axios';
 import { ReactNode, useEffect, useState } from 'react';
 
 import { GraphStorageService } from '../services/GraphStorageService';
-import type { AuthModule } from './types';
+import type { AuthModule, AuthProvider } from './types';
 
 export function createZitadelModule({
   issuer,
@@ -74,7 +73,7 @@ export function createZitadelModule({
     return { token, initialized, userInfo };
   };
 
-  const createAuthProvider = (): RefineAuthProvider => ({
+  const createAuthProvider = (): AuthProvider => ({
     login: async () => {
       await zitadelAuth.authorize();
       return { success: false, error: new Error('Login failed') };

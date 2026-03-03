@@ -1,6 +1,6 @@
-import { Tag } from 'antd';
 import React from 'react';
 
+import { Badge } from '../../../../components/ui/badge';
 import { TAG_STYLE } from './blockStyles';
 import type { ToolRenderStatus } from './threadMessagesTypes';
 
@@ -14,25 +14,35 @@ interface StatusTagProps {
 export const StatusTag: React.FC<StatusTagProps> = ({ status, hasError }) => {
   if (status === 'executed' && !hasError) {
     return (
-      <Tag color="success" style={TAG_STYLE}>
+      <Badge
+        variant="outline"
+        className="border-green-300 bg-green-50 text-green-700"
+        style={TAG_STYLE}>
         done
-      </Tag>
+      </Badge>
     );
   }
   if (status === 'executed' && hasError) {
     return (
-      <Tag color="error" style={TAG_STYLE}>
+      <Badge variant="destructive" style={TAG_STYLE}>
         error
-      </Tag>
+      </Badge>
     );
   }
   if (status === 'stopped') {
-    return <Tag style={TAG_STYLE}>stopped</Tag>;
+    return (
+      <Badge variant="outline" style={TAG_STYLE}>
+        stopped
+      </Badge>
+    );
   }
   return (
-    <Tag color="processing" style={TAG_STYLE}>
+    <Badge
+      variant="outline"
+      className="border-blue-300 bg-blue-50 text-blue-700"
+      style={TAG_STYLE}>
       running
-    </Tag>
+    </Badge>
   );
 };
 

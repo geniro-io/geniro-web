@@ -52,8 +52,3 @@ export type TemplateSchema = JSONSchema7 & {
   properties: Record<string, SchemaProperty>;
   definitions?: Record<string, NonBooleanSchema>;
 };
-
-export interface KeyValuePair {
-  key: string;
-  value: string;
-}

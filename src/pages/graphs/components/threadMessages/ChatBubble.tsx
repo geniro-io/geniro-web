@@ -1,6 +1,17 @@
-import { CopyOutlined } from '@ant-design/icons';
-import { App, Avatar, Tooltip } from 'antd';
+import { Copy } from 'lucide-react';
 import React from 'react';
+import { toast } from 'sonner';
+
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '../../../../components/ui/avatar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '../../../../components/ui/tooltip';
 
 interface ChatBubbleProps {
   isHuman: boolean;
@@ -28,16 +39,14 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
     containerStyle,
     copyContent,
   }) => {
-    const { message } = App.useApp();
-
     const handleCopy = async () => {
       if (!copyContent) return;
 
       try {
         await navigator.clipboard.writeText(copyContent);
-        message.success('Message copied to clipboard');
+        toast.success('Message copied to clipboard');
       } catch (_error) {
-        message.error('Failed to copy message');
+        toast.error('Failed to copy message');
       }
     };
 
@@ -52,32 +61,59 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
     const mergedContainer = { ...baseContainer, ...containerStyle };
 
     const baseBubbleStyle: React.CSSProperties = {
-      backgroundColor: isHuman ? '#f0f8ff' : '#f3f3f3',
-      borderRadius: '5px',
-      padding: '8px 24px 8px 12px',
+      borderRadius: '12px',
+      padding: '12px 16px',
       wordBreak: 'break-word',
       minWidth: '100px',
       maxWidth: '100%',
       overflowX: 'auto',
       position: 'relative',
+      ...(!isHuman
+        ? {
+            backgroundColor: 'var(--muted)',
+            color: 'var(--foreground)',
+          }
+        : {}),
     };
+
+    const bubbleClassName = isHuman
+      ? 'bg-blue-50 text-blue-900 border border-blue-100'
+      : '';
 
     const mergedBubbleStyle = {
       ...baseBubbleStyle,
-      ...(copyContent ? null : { padding: '8px 12px' }),
       ...bubbleStyle,
     };
+
+    const avatarElement = (
+      <Avatar
+        className="shrink-0"
+        style={{
+          width: 27,
+          height: 27,
+          ...(!isHuman ? {} : { backgroundColor: avatarColor }),
+        }}>
+        {avatarSrc && <AvatarImage src={avatarSrc} />}
+        <AvatarFallback
+          className="text-[10px]"
+          style={isHuman ? { backgroundColor: avatarColor } : undefined}>
+          {avatarLabel}
+        </AvatarFallback>
+      </Avatar>
+    );
 
     const ContentWrapper = (
       <div
         style={{
-          maxWidth: '90%',
+          maxWidth: '76%',
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
           alignItems: isHuman ? 'flex-end' : 'flex-start',
         }}>
-        <div style={mergedBubbleStyle}>{children}</div>
+        <div className={bubbleClassName} style={mergedBubbleStyle}>
+          {children}
+        </div>
         {(footer || copyContent) && (
           <div
             style={{
@@ -88,17 +124,21 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
             }}>
             {footer}
             {copyContent && (
-              <Tooltip title="Copy message">
-                <CopyOutlined
-                  onClick={handleCopy}
-                  style={{
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                    color: '#9ca3af',
-                    position: 'relative',
-                    top: '2px',
-                  }}
-                />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Copy
+                    onClick={handleCopy}
+                    style={{
+                      cursor: 'pointer',
+                      width: 11,
+                      height: 11,
+                      color: 'var(--muted-foreground)',
+                      position: 'relative',
+                      top: '2px',
+                    }}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>Copy message</TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -108,24 +148,25 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
 
     return (
       <div style={mergedContainer}>
-        {!isHuman && (
-          <Tooltip title={avatarTooltip} placement="right">
-            <Avatar src={avatarSrc} style={{ flexShrink: 0 }} size={27}>
-              {avatarLabel}
-            </Avatar>
-          </Tooltip>
-        )}
+        {!isHuman &&
+          (avatarTooltip ? (
+            <Tooltip>
+              <TooltipTrigger asChild>{avatarElement}</TooltipTrigger>
+              <TooltipContent side="right">{avatarTooltip}</TooltipContent>
+            </Tooltip>
+          ) : (
+            avatarElement
+          ))}
         {ContentWrapper}
-        {isHuman && (
-          <Tooltip title={avatarTooltip} placement="left">
-            <Avatar
-              src={avatarSrc}
-              style={{ backgroundColor: avatarColor, flexShrink: 0 }}
-              size={27}>
-              {avatarLabel}
-            </Avatar>
-          </Tooltip>
-        )}
+        {isHuman &&
+          (avatarTooltip ? (
+            <Tooltip>
+              <TooltipTrigger asChild>{avatarElement}</TooltipTrigger>
+              <TooltipContent side="left">{avatarTooltip}</TooltipContent>
+            </Tooltip>
+          ) : (
+            avatarElement
+          ))}
       </div>
     );
   },

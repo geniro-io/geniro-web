@@ -1,9 +1,14 @@
-import { Button, Empty, Modal, Typography } from 'antd';
 import type { FC } from 'react';
 
+import { Button } from '../../../components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../components/ui/dialog';
 import type { ThreadSocketEventEntry } from '../types';
-
-const { Text } = Typography;
 
 interface SocketEventsModalProps {
   open: boolean;
@@ -21,35 +26,34 @@ export const SocketEventsModal: FC<SocketEventsModalProps> = ({
   onCopyJson,
 }) => {
   return (
-    <Modal
-      title="Thread Socket Events"
-      open={open}
-      onCancel={onClose}
-      destroyOnClose
-      footer={[
-        <Button key="close" onClick={onClose}>
-          Close
-        </Button>,
-      ]}
-      width={900}>
-      {threadId ? (
-        <>
-          <Text type="secondary">
-            {events.length} event
-            {events.length === 1 ? '' : 's'} recorded for this thread.
-          </Text>
-          <div style={{ marginTop: 12 }}>
-            <Button
-              type="primary"
-              onClick={onCopyJson}
-              disabled={events.length === 0}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="sm:max-w-[900px]">
+        <DialogHeader>
+          <DialogTitle>Thread Socket Events</DialogTitle>
+        </DialogHeader>
+        {threadId ? (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {events.length} event
+              {events.length === 1 ? '' : 's'} recorded for this thread.
+            </p>
+            <Button onClick={onCopyJson} disabled={events.length === 0}>
               Copy events JSON
             </Button>
           </div>
-        </>
-      ) : (
-        <Empty description="Select a thread to view events" />
-      )}
-    </Modal>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8">
+            <p className="text-sm text-muted-foreground">
+              Select a thread to view events
+            </p>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

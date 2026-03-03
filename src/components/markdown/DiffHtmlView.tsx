@@ -7,12 +7,15 @@ export interface DiffHtmlViewProps {
   diff: string;
   style?: React.CSSProperties;
   className?: string;
+  /** When true, wraps long lines instead of allowing horizontal scroll. */
+  wrapLines?: boolean;
 }
 
 export const DiffHtmlView: React.FC<DiffHtmlViewProps> = ({
   diff,
   style,
   className,
+  wrapLines = false,
 }) => {
   const html = useMemo(() => {
     const normalized = (diff ?? '').trimEnd();
@@ -66,6 +69,31 @@ export const DiffHtmlView: React.FC<DiffHtmlViewProps> = ({
           .ai-diff-view .d2h-diff-table {
             margin: 0 !important;
             padding: 0 !important;
+          }
+
+          ${
+            wrapLines
+              ? `
+          /* Wrap long code lines so the container doesn't overflow horizontally */
+          .ai-diff-view .d2h-code-line-ctn {
+            white-space: pre-wrap !important;
+            word-break: break-all !important;
+          }`
+              : ''
+          }
+
+          /* Background for wrapper elements only — do NOT override ins/del row colors */
+          .ai-diff-view,
+          .ai-diff-view .d2h-wrapper,
+          .ai-diff-view .d2h-file-wrapper,
+          .ai-diff-view .d2h-code-wrapper,
+          .ai-diff-view .d2h-diff-table {
+            background-color: var(--card) !important;
+          }
+
+          /* Context (unchanged) lines */
+          .ai-diff-view tr.d2h-cntx td {
+            background-color: var(--card) !important;
           }
         `}
       </style>

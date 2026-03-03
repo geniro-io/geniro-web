@@ -1,6 +1,10 @@
-import { Popover, Space, Typography } from 'antd';
 import React from 'react';
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '../../../components/ui/popover';
 import type { ThreadTokenUsageSnapshot } from '../types';
 import {
   clampPercent,
@@ -8,8 +12,6 @@ import {
   formatUsd,
 } from '../utils/chatsPageUtils';
 import { ContextUsageGauge } from './ContextUsageGauge';
-
-const { Text } = Typography;
 
 export const ThreadTokenUsageLine: React.FC<{
   usage?: ThreadTokenUsageSnapshot | null;
@@ -33,16 +35,11 @@ export const ThreadTokenUsageLine: React.FC<{
         : undefined;
 
   const line = (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
-      }}>
-      <Text type="secondary" style={{ fontSize: 12, margin: 0 }}>
+    <span className="inline-flex items-center gap-2">
+      <span className="text-xs text-muted-foreground">
         Token usage: {formatCompactNumber(totalTokens)} ({formatUsd(totalPrice)}
         )
-      </Text>
+      </span>
       {typeof percent === 'number' && <ContextUsageGauge percent={percent} />}
     </span>
   );
@@ -50,47 +47,49 @@ export const ThreadTokenUsageLine: React.FC<{
   if (!withPopover) return line;
 
   const popoverContent = (
-    <Space direction="vertical" size={2} style={{ maxWidth: 340 }}>
-      <Text type="secondary" style={{ fontSize: 12 }}>
-        Input tokens: {usage?.inputTokens ?? '—'}
-      </Text>
-      <Text type="secondary" style={{ fontSize: 12 }}>
-        Cached input tokens: {usage?.cachedInputTokens ?? '—'}
-      </Text>
-      <Text type="secondary" style={{ fontSize: 12 }}>
-        Output tokens: {usage?.outputTokens ?? '—'}
-      </Text>
-      <Text type="secondary" style={{ fontSize: 12 }}>
-        Reasoning tokens: {usage?.reasoningTokens ?? '—'}
-      </Text>
-      <Text type="secondary" style={{ fontSize: 12 }}>
-        Total tokens: {usage?.totalTokens ?? '—'}
-      </Text>
-      <Text type="secondary" style={{ fontSize: 12 }}>
+    <div className="flex flex-col gap-0.5 max-w-[340px]">
+      <span className="text-xs text-muted-foreground">
+        Input tokens: {usage?.inputTokens ?? '\u2014'}
+      </span>
+      <span className="text-xs text-muted-foreground">
+        Cached input tokens: {usage?.cachedInputTokens ?? '\u2014'}
+      </span>
+      <span className="text-xs text-muted-foreground">
+        Output tokens: {usage?.outputTokens ?? '\u2014'}
+      </span>
+      <span className="text-xs text-muted-foreground">
+        Reasoning tokens: {usage?.reasoningTokens ?? '\u2014'}
+      </span>
+      <span className="text-xs text-muted-foreground">
+        Total tokens: {usage?.totalTokens ?? '\u2014'}
+      </span>
+      <span className="text-xs text-muted-foreground">
         Total cost: {formatUsd(usage?.totalPrice)}
-      </Text>
-      <Text type="secondary" style={{ fontSize: 12 }}>
-        Current context: {usage?.currentContext ?? '—'}
-      </Text>
+      </span>
+      <span className="text-xs text-muted-foreground">
+        Current context: {usage?.currentContext ?? '\u2014'}
+      </span>
       {typeof percent === 'number' && (
-        <Text type="secondary" style={{ fontSize: 12 }}>
+        <span className="text-xs text-muted-foreground">
           Context usage: {Math.round(clampPercent(percent))}%
           {typeof contextMaxTokens === 'number' &&
             Number.isFinite(contextMaxTokens) &&
             contextMaxTokens > 0 && (
               <> ({formatCompactNumber(contextMaxTokens)})</>
             )}
-        </Text>
+        </span>
       )}
-    </Space>
+    </div>
   );
 
   return (
-    <Popover
-      content={popoverContent}
-      trigger={['hover']}
-      placement="bottomLeft">
-      <span style={{ display: 'inline-block' }}>{line}</span>
+    <Popover>
+      <PopoverTrigger asChild>
+        <span className="inline-block cursor-help">{line}</span>
+      </PopoverTrigger>
+      <PopoverContent side="bottom" align="start" className="w-auto p-3">
+        {popoverContent}
+      </PopoverContent>
     </Popover>
   );
 };

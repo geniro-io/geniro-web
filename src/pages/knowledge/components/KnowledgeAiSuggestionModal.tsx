@@ -1,10 +1,21 @@
-import { Button, Input, Modal, Select, Space, Tag, Typography } from 'antd';
 import { createTwoFilesPatch } from 'diff';
-import { useMemo } from 'react';
+import { Loader2, Send, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 import { MarkdownSplitEditor } from '../../../components/markdown/MarkdownSplitEditor';
-
-const { Text } = Typography;
 
 export type KnowledgeSuggestionState = {
   currentTitle: string;
@@ -38,6 +49,66 @@ type KnowledgeAiSuggestionModalProps = {
   onSuggestedTitleChange: (value: string) => void;
   onSuggestedTagsChange: (value: string[]) => void;
 };
+
+function TagsInput({
+  tags,
+  onChange,
+}: {
+  tags: string[];
+  onChange: (tags: string[]) => void;
+}) {
+  const [input, setInput] = useState('');
+
+  const addTag = (raw: string) => {
+    const parts = raw
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+    onChange([...new Set([...tags, ...parts])]);
+    setInput('');
+  };
+
+  const removeTag = (tag: string) => onChange(tags.filter((t) => t !== tag));
+
+  return (
+    <div className="border border-border rounded-md px-3 py-2 flex flex-wrap gap-1.5 min-h-[38px] focus-within:ring-1 focus-within:ring-ring cursor-text">
+      {tags.map((tag) => (
+        <Badge
+          key={tag}
+          variant="secondary"
+          className="gap-1 px-2 py-0.5 text-xs">
+          {tag}
+          <button
+            type="button"
+            onClick={() => removeTag(tag)}
+            className="ml-0.5 hover:text-destructive transition-colors">
+            <X className="w-3 h-3" />
+          </button>
+        </Badge>
+      ))}
+      <input
+        className="flex-1 min-w-[140px] text-sm outline-none bg-transparent placeholder:text-muted-foreground"
+        placeholder={
+          tags.length === 0 ? 'Add tag, press Enter or comma' : 'Add more...'
+        }
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            if (input.trim()) addTag(input);
+          }
+          if (e.key === 'Backspace' && !input && tags.length) {
+            removeTag(tags[tags.length - 1]);
+          }
+        }}
+        onBlur={() => {
+          if (input.trim()) addTag(input);
+        }}
+      />
+    </div>
+  );
+}
 
 export const KnowledgeAiSuggestionModal = ({
   open,
@@ -83,183 +154,157 @@ export const KnowledgeAiSuggestionModal = ({
   }
 
   return (
-    <Modal
-      title="Improve knowledge with AI"
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      destroyOnClose
-      width={1000}>
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <div>
-          <Text strong style={{ display: 'block', marginBottom: 6 }}>
-            Current knowledge
-          </Text>
-          <Space direction="vertical" size={6} style={{ width: '100%' }}>
-            <Text>
-              <Text type="secondary">Title:</Text>{' '}
-              {state.currentTitle || 'Untitled'}
-            </Text>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {state.currentTags.length > 0 ? (
-                state.currentTags.map((tag) => (
-                  <Tag key={tag} style={{ margin: 0 }}>
-                    {tag}
-                  </Tag>
-                ))
-              ) : (
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  No tags
-                </Text>
-              )}
-            </div>
-          </Space>
-        </div>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Improve knowledge with AI</DialogTitle>
+        </DialogHeader>
 
-        <div>
-          <Text strong style={{ display: 'block', marginBottom: 6 }}>
-            Content preview
-          </Text>
-          {state.isEditingSuggestion ? (
-            <Space direction="vertical" style={{ width: '100%' }}>
+        <div className="space-y-6">
+          {/* Current knowledge */}
+          <div>
+            <p className="text-sm font-semibold mb-2">Current knowledge</p>
+            <div className="space-y-2">
+              <p className="text-sm">
+                <span className="text-muted-foreground">Title:</span>{' '}
+                {state.currentTitle || 'Untitled'}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {state.currentTags.length > 0 ? (
+                  state.currentTags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-xs text-muted-foreground">No tags</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Content preview */}
+          <div>
+            <p className="text-sm font-semibold mb-2">Content preview</p>
+            {state.isEditingSuggestion ? (
+              <div className="space-y-2">
+                <MarkdownSplitEditor
+                  value={
+                    state.editSuggestionDraft ??
+                    state.suggestedContent ??
+                    state.currentContent
+                  }
+                  onChange={onEditDraftChange}
+                  height={360}
+                  placeholder="Edit suggested content..."
+                  initialMode="split"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onCancelEditSuggested}>
+                    Cancel
+                  </Button>
+                  <Button size="sm" onClick={onApplyEditSuggested}>
+                    Apply
+                  </Button>
+                </div>
+              </div>
+            ) : state.suggestedContent ? (
               <MarkdownSplitEditor
-                value={
-                  state.editSuggestionDraft ??
-                  state.suggestedContent ??
-                  state.currentContent
-                }
-                onChange={onEditDraftChange}
+                value={suggestionDiffMarkdown ?? ''}
+                readOnly
                 height={360}
-                placeholder="Edit suggested content…"
+                initialMode="split"
+                previewValue={state.suggestedContent}
+                onModeChange={(nextMode) => {
+                  if (nextMode === 'edit') {
+                    onStartEditSuggested();
+                  }
+                }}
+                shouldChangeMode={(nextMode) => nextMode !== 'edit'}
+              />
+            ) : (
+              <MarkdownSplitEditor
+                value={state.currentContent}
+                readOnly
+                height={300}
                 initialMode="split"
               />
-              <Space>
-                <Button onClick={onCancelEditSuggested} size="small">
-                  Cancel
-                </Button>
-                <Button
-                  type="primary"
-                  size="small"
-                  onClick={onApplyEditSuggested}>
-                  Apply
-                </Button>
-              </Space>
-            </Space>
-          ) : state.suggestedContent ? (
-            <MarkdownSplitEditor
-              value={suggestionDiffMarkdown ?? ''}
-              readOnly
-              height={360}
-              initialMode="split"
-              previewValue={state.suggestedContent}
-              onModeChange={(nextMode) => {
-                if (nextMode === 'edit') {
-                  onStartEditSuggested();
-                }
-              }}
-              shouldChangeMode={(nextMode) => nextMode !== 'edit'}
-            />
-          ) : (
-            <MarkdownSplitEditor
-              value={state.currentContent}
-              readOnly
-              height={300}
-              initialMode="split"
-            />
-          )}
-        </div>
-
-        <div>
-          <Text strong style={{ display: 'block', marginBottom: 6 }}>
-            Model
-          </Text>
-          <Select
-            value={state.model}
-            onChange={(value) => onModelChange(value)}
-            allowClear
-            showSearch
-            loading={modelsLoading}
-            notFoundContent={
-              modelsLoading ? 'Loading models...' : 'No models available'
-            }
-            filterOption={(input, option) =>
-              (option?.label ?? '')
-                .toString()
-                .toLowerCase()
-                .includes(input.toLowerCase())
-            }
-            options={models}
-            placeholder="Select model"
-            style={{ width: '100%' }}
-          />
-        </div>
-
-        <div>
-          <Text strong style={{ display: 'block', marginBottom: 6 }}>
-            What should be improved?
-          </Text>
-          <Input.TextArea
-            value={state.userRequest}
-            onChange={(e) => onUserRequestChange(e.target.value)}
-            placeholder="Describe what you want to change or add"
-            autoSize={{ minRows: 3, maxRows: 6 }}
-          />
-          <div
-            style={{
-              marginTop: 8,
-              display: 'flex',
-              justifyContent: 'flex-end',
-            }}>
-            <Button
-              type="primary"
-              onClick={onSubmit}
-              loading={state.loading}
-              disabled={state.loading || !state.userRequest.trim()}>
-              Send
-            </Button>
+            )}
           </div>
-        </div>
 
-        {hasAiSuggestion && (
+          {/* Model */}
           <div>
-            <Text strong style={{ display: 'block', marginBottom: 6 }}>
-              Suggested knowledge
-            </Text>
-            <Space direction="vertical" size={12} style={{ width: '100%' }}>
+            <Label className="text-sm font-semibold mb-2 block">Model</Label>
+            <select
+              value={state.model || ''}
+              onChange={(e) => onModelChange(e.target.value || undefined)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+              <option value="">
+                {modelsLoading ? 'Loading models...' : 'Select model'}
+              </option>
+              {models.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* User request */}
+          <div>
+            <Label className="text-sm font-semibold mb-2 block">
+              What should be improved?
+            </Label>
+            <Textarea
+              value={state.userRequest}
+              onChange={(e) => onUserRequestChange(e.target.value)}
+              placeholder="Describe what you want to change or add"
+              className="min-h-[80px] resize-none text-sm"
+            />
+            <div className="mt-2 flex justify-end">
+              <Button
+                onClick={onSubmit}
+                disabled={state.loading || !state.userRequest.trim()}
+                className="gap-2">
+                {state.loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+                Send
+              </Button>
+            </div>
+          </div>
+
+          {/* Suggested knowledge */}
+          {hasAiSuggestion && (
+            <div className="space-y-3">
+              <p className="text-sm font-semibold">Suggested knowledge</p>
               <Input
                 value={state.suggestedTitle ?? ''}
                 placeholder="Suggested title"
                 onChange={(e) => onSuggestedTitleChange(e.target.value)}
               />
-              <Select
-                mode="tags"
-                placeholder="Suggested tags"
-                value={state.suggestedTags ?? []}
-                onChange={(nextTags) =>
-                  onSuggestedTagsChange(nextTags as string[])
-                }
-                tokenSeparators={[',']}
+              <TagsInput
+                tags={state.suggestedTags ?? []}
+                onChange={(nextTags) => onSuggestedTagsChange(nextTags)}
               />
-            </Space>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         {hasAiSuggestion && (
-          <div
-            style={{
-              marginTop: 12,
-              display: 'flex',
-              justifyContent: 'flex-end',
-            }}>
-            <Space>
-              <Button onClick={onClose}>Close</Button>
-              <Button type="primary" onClick={onApplySuggestion}>
-                Apply to form
-              </Button>
-            </Space>
-          </div>
+          <DialogFooter className="gap-2 mt-4">
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+            <Button onClick={onApplySuggestion}>Apply to form</Button>
+          </DialogFooter>
         )}
-      </Space>
-    </Modal>
+      </DialogContent>
+    </Dialog>
   );
 };

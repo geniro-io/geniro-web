@@ -4,7 +4,8 @@ import { threadsApi } from '../../../api';
 import { useThreadMessageStore } from '../../../hooks/useThreadMessageStore';
 import { extractApiErrorMessage } from '../../../utils/errors';
 import { mergeMessagesReplacingStreaming } from '../../../utils/threadMessages';
-import type { AntdMessageApi, MessageMeta } from '../types';
+import type { ToastMessageApi } from '../../../utils/toastAdapter';
+import type { MessageMeta } from '../types';
 import {
   DEFAULT_MESSAGE_META,
   isDraftThreadId,
@@ -12,11 +13,11 @@ import {
 } from '../utils/chatsPageUtils';
 
 interface UseChatsMessagesDeps {
-  antdMessage: AntdMessageApi;
+  toastMessage: ToastMessageApi;
 }
 
 export const useChatsMessages = (deps: UseChatsMessagesDeps) => {
-  const { antdMessage } = deps;
+  const { toastMessage } = deps;
   const {
     messages,
     updateMessages,
@@ -126,7 +127,7 @@ export const useChatsMessages = (deps: UseChatsMessagesDeps) => {
           error,
           'Failed to load messages',
         );
-        antdMessage.error(errorMessage);
+        toastMessage.error(errorMessage);
         updateMessageMeta(threadId, (prev) => ({
           ...prev,
           loading: false,
@@ -139,7 +140,7 @@ export const useChatsMessages = (deps: UseChatsMessagesDeps) => {
       }
     },
     [
-      antdMessage,
+      toastMessage,
       getMessageMeta,
       updateMessageMeta,
       updateMessages,
@@ -197,7 +198,7 @@ export const useChatsMessages = (deps: UseChatsMessagesDeps) => {
           error,
           'Failed to load more messages',
         );
-        antdMessage.error(errorMessage);
+        toastMessage.error(errorMessage);
         updateMessageMeta(threadId, (prev) => ({
           ...prev,
           loadingMore: false,
@@ -205,7 +206,7 @@ export const useChatsMessages = (deps: UseChatsMessagesDeps) => {
         }));
       }
     },
-    [antdMessage, getMessageMeta, updateMessageMeta, updateMessages],
+    [toastMessage, getMessageMeta, updateMessageMeta, updateMessages],
   );
 
   return {

@@ -54,7 +54,7 @@ export const REVISION_STATUS_STYLES: Record<
   },
   applied: {
     label: 'Applied',
-    color: '#52c41a',
+    color: '#d4915e',
   },
   failed: {
     label: 'Failed',

@@ -1,4 +1,3 @@
-import { Input, Typography } from 'antd';
 import React, { useMemo, useState } from 'react';
 
 import { DiffHtmlView } from './DiffHtmlView';
@@ -25,8 +24,6 @@ export interface MarkdownSplitEditorProps {
     currentMode: MarkdownSplitEditorMode,
   ) => boolean;
 }
-
-const { Text } = Typography;
 
 const MODE_LABELS: Record<MarkdownSplitEditorMode, string> = {
   split: 'Split',
@@ -80,15 +77,7 @@ export const MarkdownSplitEditor: React.FC<MarkdownSplitEditorProps> = ({
     <div
       role="tablist"
       aria-label="Markdown editor mode"
-      style={{
-        background: '#f2f2f7',
-        borderRadius: 999,
-        padding: 4,
-        display: 'flex',
-        gap: 6,
-        width: 'fit-content',
-        flexShrink: 0,
-      }}>
+      className="bg-muted rounded-full p-1 flex gap-1.5 w-fit shrink-0">
       {(Object.keys(MODE_LABELS) as MarkdownSplitEditorMode[]).map((key) => {
         const isActive = mode === key;
         return (
@@ -105,17 +94,11 @@ export const MarkdownSplitEditor: React.FC<MarkdownSplitEditorProps> = ({
               }
               onModeChange?.(key);
             }}
-            style={{
-              border: 'none',
-              background: isActive ? '#ffffff' : 'transparent',
-              padding: '4px 10px',
-              borderRadius: 999,
-              fontWeight: 600,
-              fontSize: 13,
-              color: isActive ? '#111' : '#555',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}>
+            className={`border-none px-2.5 py-1 rounded-full font-semibold text-[13px] cursor-pointer transition-all ${
+              isActive
+                ? 'bg-background text-foreground shadow-sm'
+                : 'bg-transparent text-muted-foreground hover:text-foreground'
+            }`}>
             {MODE_LABELS[key]}
           </button>
         );
@@ -125,14 +108,8 @@ export const MarkdownSplitEditor: React.FC<MarkdownSplitEditorProps> = ({
 
   const editor = readOnly ? (
     <div
-      style={{
-        height: '100%',
-        overflow: 'auto',
-        border: '1px solid #f0f0f0',
-        borderRadius: 6,
-        padding: fencedDiff ? 0 : 12,
-        background: '#fff',
-      }}>
+      className="h-full overflow-auto border border-border rounded-md bg-background"
+      style={{ padding: fencedDiff ? 0 : 12 }}>
       {value.trim().length > 0 ? (
         fencedDiff ? (
           <DiffHtmlView diff={fencedDiff} />
@@ -140,62 +117,47 @@ export const MarkdownSplitEditor: React.FC<MarkdownSplitEditorProps> = ({
           <MarkdownContent content={value} />
         )
       ) : (
-        <Text type="secondary">Nothing to display.</Text>
+        <span className="text-muted-foreground text-sm">
+          Nothing to display.
+        </span>
       )}
     </div>
   ) : (
-    <Input.TextArea
+    <textarea
       value={value}
       onChange={(e) => handleChange(e.target.value)}
       readOnly={readOnly}
       rows={10}
       placeholder={placeholder}
-      style={{
-        height: '100%',
-        resize: 'none',
-        fontFamily: editorFontFamily,
-      }}
+      className="flex w-full h-full rounded-md border border-border bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+      style={{ fontFamily: editorFontFamily }}
     />
   );
 
   const preview = (
-    <div
-      style={{
-        height: '100%',
-        overflow: 'auto',
-        border: '1px solid #f0f0f0',
-        borderRadius: 6,
-        padding: 12,
-        background: '#fff',
-      }}>
+    <div className="h-full overflow-auto border border-border rounded-md p-3 bg-background">
       {previewContent.trim().length > 0 ? (
         <MarkdownContent content={previewContent} />
       ) : (
-        <Text type="secondary">Nothing to preview.</Text>
+        <span className="text-muted-foreground text-sm">
+          Nothing to preview.
+        </span>
       )}
     </div>
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
-          alignItems: 'center',
-          gap: 12,
-        }}>
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div />
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          {tabBar}
-        </div>
+        <div className="flex justify-center">{tabBar}</div>
       </div>
 
       <div style={{ height: containerHeight, minHeight: 0 }}>
         {mode === 'split' ? (
-          <div style={{ display: 'flex', gap: 12, height: '100%' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>{editor}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>{preview}</div>
+          <div className="flex gap-3 h-full">
+            <div className="flex-1 min-w-0">{editor}</div>
+            <div className="flex-1 min-w-0">{preview}</div>
           </div>
         ) : mode === 'edit' ? (
           editor

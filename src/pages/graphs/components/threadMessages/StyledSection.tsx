@@ -1,4 +1,4 @@
-import { DownOutlined, RightOutlined } from '@ant-design/icons';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 import { MarkdownContent } from '../../../../components/markdown/MarkdownContent';
@@ -87,7 +87,7 @@ const VARIANT_STYLES = Object.fromEntries(
   }
 >;
 
-/** ~10 lines at 12px font size × 1.4 line-height ≈ 168px, plus some margin for paragraphs. */
+/** ~10 lines at 12px font size x 1.4 line-height = 168px, plus some margin for paragraphs. */
 const COLLAPSED_MAX_HEIGHT = 180;
 
 export type StyledSectionVariant = keyof typeof THEMES;
@@ -155,12 +155,12 @@ export const StyledSection: React.FC<StyledSectionProps> = ({
         <div onClick={toggle} style={EXPAND_TOGGLE_STYLE}>
           {expanded ? (
             <>
-              <DownOutlined style={{ fontSize: 9 }} />
+              <ChevronDown style={{ width: 9, height: 9 }} />
               Show less
             </>
           ) : (
             <>
-              <RightOutlined style={{ fontSize: 9 }} />
+              <ChevronRight style={{ width: 9, height: 9 }} />
               Show more
             </>
           )}

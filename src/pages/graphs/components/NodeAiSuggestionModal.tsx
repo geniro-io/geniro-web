@@ -1,14 +1,31 @@
-import { Alert, Button, Input, Modal, Select, Space, Typography } from 'antd';
+import { createTwoFilesPatch } from 'diff';
+import { AlertTriangle } from 'lucide-react';
 import type { FC } from 'react';
 import { useCallback, useMemo } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
-import { simpleMarkdownComponents } from '../../../components/markdown/markdownComponentOverrides';
-import { MarkdownSplitEditor } from '../../../components/markdown/MarkdownSplitEditor';
+import { DiffHtmlView } from '../../../components/markdown/DiffHtmlView';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '../../../components/ui/alert';
+import { Button } from '../../../components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../../../components/ui/dialog';
+import { MdEditor } from '../../../components/ui/md-editor';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../components/ui/select';
+import { Textarea } from '../../../components/ui/textarea';
 import type { AiSuggestionState } from './NodeEditSidebar';
-
-const { Text } = Typography;
 
 interface NodeAiSuggestionModalProps {
   aiSuggestionState: AiSuggestionState | null;
@@ -34,7 +51,6 @@ export const NodeAiSuggestionModal: FC<NodeAiSuggestionModalProps> = ({
   aiSuggestionState,
   setAiSuggestionState,
   nodeDirtyWarning,
-  suggestionDiffMarkdown,
   liteLlmModelOptions,
   litellmModelsLoading,
   isGraphRunning,
@@ -76,189 +92,194 @@ export const NodeAiSuggestionModal: FC<NodeAiSuggestionModalProps> = ({
     [setAiSuggestionState],
   );
 
-  const currentContentSection = useMemo(() => {
+  const suggested = aiSuggestionState
+    ? (aiSuggestionState.manualSuggestedOverride ??
+      aiSuggestionState.lastSuggestedInstructions)
+    : null;
+
+  const diffText = useMemo(() => {
+    if (!aiSuggestionState || !suggested) return '';
+    return createTwoFilesPatch(
+      'Current',
+      'Suggested',
+      aiSuggestionState.initialInstructions,
+      suggested,
+      '',
+      '',
+      { context: Number.MAX_SAFE_INTEGER },
+    ).trimEnd();
+  }, [aiSuggestionState, suggested]);
+
+  const contentSection = useMemo(() => {
     if (!aiSuggestionState) return null;
 
-    if (
-      aiSuggestionState.lastSuggestedInstructions &&
-      (aiSuggestionState.manualSuggestedOverride || suggestionDiffMarkdown)
-    ) {
+    if (suggested) {
       if (aiSuggestionState.isEditingSuggestion) {
         return (
-          <Space direction="vertical" style={{ width: '100%' }}>
-            <MarkdownSplitEditor
+          <div className="flex flex-col gap-3 w-full">
+            <MdEditor
               value={
                 aiSuggestionState.editSuggestionDraft ??
                 aiSuggestionState.manualSuggestedOverride ??
-                aiSuggestionState.lastSuggestedInstructions
+                aiSuggestionState.lastSuggestedInstructions ??
+                ''
               }
               onChange={handleEditDraftChange}
               height={360}
-              placeholder="Edit suggested content…"
-              initialMode="split"
+              placeholder="Edit suggested content..."
             />
-            <Space>
-              <Button onClick={onCancelEditSuggested} size="small">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onCancelEditSuggested}>
                 Cancel
               </Button>
-              <Button
-                type="primary"
-                size="small"
-                onClick={onApplyEditSuggested}>
+              <Button size="sm" onClick={onApplyEditSuggested}>
                 Apply
               </Button>
-            </Space>
-          </Space>
+            </div>
+          </div>
         );
       }
+
       return (
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <MarkdownSplitEditor
-            value={suggestionDiffMarkdown ?? ''}
-            readOnly
-            height={360}
-            initialMode="split"
-            previewValue={
-              aiSuggestionState.manualSuggestedOverride ??
-              aiSuggestionState.lastSuggestedInstructions ??
-              ''
-            }
-            onModeChange={(nextMode) => {
-              if (nextMode === 'edit') {
-                onStartEditSuggested();
-              }
-            }}
-            shouldChangeMode={(nextMode) => nextMode !== 'edit'}
-          />
-        </Space>
+        <div className="w-full">
+          <div
+            className="rounded-md border border-border overflow-auto"
+            style={{ maxHeight: 420 }}>
+            <DiffHtmlView diff={diffText} wrapLines />
+          </div>
+          <div className="mt-2">
+            <Button variant="outline" size="sm" onClick={onStartEditSuggested}>
+              Edit suggestion
+            </Button>
+          </div>
+        </div>
       );
     }
 
     if (aiSuggestionState.currentInstructions.trim()) {
       return (
-        <div style={{ maxHeight: 280, overflowY: 'auto' }}>
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={simpleMarkdownComponents}>
-            {aiSuggestionState.currentInstructions}
-          </ReactMarkdown>
-        </div>
+        <MdEditor
+          value={aiSuggestionState.currentInstructions}
+          readOnly
+          height={280}
+        />
       );
     }
 
-    return <Text type="secondary">No content available.</Text>;
+    return (
+      <span className="text-sm text-muted-foreground">
+        No content available.
+      </span>
+    );
   }, [
     aiSuggestionState,
+    diffText,
     handleEditDraftChange,
     onApplyEditSuggested,
     onCancelEditSuggested,
     onStartEditSuggested,
-    suggestionDiffMarkdown,
+    suggested,
   ]);
 
   return (
-    <Modal
-      title={title}
+    <Dialog
       open={!!aiSuggestionState}
-      footer={null}
-      onCancel={onClose}
-      destroyOnClose
-      width={1100}>
-      {aiSuggestionState && (
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          {nodeDirtyWarning && (
-            <Alert
-              type="warning"
-              showIcon
-              message="Unsaved changes for this node"
-              description="AI suggestions use the current value from the database. Save this node first if you want your latest edits included."
-            />
-          )}
+      onOpenChange={(openState) => !openState && onClose()}>
+      <DialogContent className="sm:max-w-[1100px] max-h-[90vh] overflow-y-auto overflow-x-hidden">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        {aiSuggestionState && (
+          <div className="flex flex-col gap-6">
+            {nodeDirtyWarning && (
+              <Alert>
+                <AlertTriangle className="size-4" />
+                <AlertTitle>Unsaved changes for this node</AlertTitle>
+                <AlertDescription>
+                  AI suggestions use the current value from the database. Save
+                  this node first if you want your latest edits included.
+                </AlertDescription>
+              </Alert>
+            )}
 
-          <div>
-            <Text strong style={{ display: 'block', marginBottom: 6 }}>
-              Current instructions
-            </Text>
-            {currentContentSection}
-          </div>
-
-          <div>
-            <Text strong style={{ display: 'block', marginBottom: 6 }}>
-              Model
-            </Text>
-            <Select
-              value={aiSuggestionState.model}
-              onChange={handleModelChange}
-              allowClear
-              showSearch
-              loading={litellmModelsLoading}
-              notFoundContent={
-                litellmModelsLoading
-                  ? 'Loading models...'
-                  : 'No models available'
-              }
-              filterOption={(input, option) =>
-                (option?.label ?? '')
-                  .toString()
-                  .toLowerCase()
-                  .includes(input.toLowerCase())
-              }
-              options={liteLlmModelOptions}
-              disabled={aiSuggestionState.loading}
-              placeholder="Select model"
-              style={{ width: '100%' }}
-            />
-          </div>
-
-          <div>
-            <Text strong style={{ display: 'block', marginBottom: 6 }}>
-              What should be improved?
-            </Text>
-            <Input.TextArea
-              value={aiSuggestionState.userRequest}
-              onChange={handleUserRequestChange}
-              placeholder="Describe what you want to change or add"
-              autoSize={{ minRows: 3, maxRows: 6 }}
-            />
-            <div
-              style={{
-                marginTop: 8,
-                display: 'flex',
-                justifyContent: 'flex-end',
-              }}>
-              <Button
-                type="primary"
-                onClick={onSubmit}
-                loading={aiSuggestionState.loading}
-                disabled={
-                  !isGraphRunning ||
-                  aiSuggestionState.loading ||
-                  !aiSuggestionState.userRequest.trim() ||
-                  !graphId ||
-                  !nodeId
-                }>
-                Send
-              </Button>
+            <div>
+              <span className="text-sm font-semibold block mb-1.5">
+                {suggested ? 'Suggested changes' : 'Current instructions'}
+              </span>
+              {contentSection}
             </div>
-          </div>
 
-          {aiSuggestionState.suggestedInstructions && (
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                justifyContent: 'flex-end',
-              }}>
-              <Space>
-                <Button onClick={onClose}>Close</Button>
-                <Button type="primary" onClick={onApply}>
-                  Apply to field
+            <div>
+              <span className="text-sm font-semibold block mb-1.5">Model</span>
+              <Select
+                value={aiSuggestionState.model ?? ''}
+                onValueChange={handleModelChange}
+                disabled={aiSuggestionState.loading}>
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={
+                      litellmModelsLoading
+                        ? 'Loading models...'
+                        : 'Select model'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {liteLlmModelOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <span className="text-sm font-semibold block mb-1.5">
+                What should be improved?
+              </span>
+              <Textarea
+                value={aiSuggestionState.userRequest}
+                onChange={handleUserRequestChange}
+                placeholder="Describe what you want to change or add"
+                rows={3}
+              />
+              <div className="mt-2 flex justify-end">
+                <Button
+                  onClick={onSubmit}
+                  disabled={
+                    !isGraphRunning ||
+                    aiSuggestionState.loading ||
+                    !aiSuggestionState.userRequest.trim() ||
+                    !graphId ||
+                    !nodeId
+                  }>
+                  {aiSuggestionState.loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      Send
+                    </span>
+                  ) : (
+                    'Send'
+                  )}
                 </Button>
-              </Space>
+              </div>
             </div>
-          )}
-        </Space>
-      )}
-    </Modal>
+
+            {aiSuggestionState.suggestedInstructions && (
+              <div className="flex justify-end gap-2 pt-1 border-t border-border">
+                <Button variant="outline" onClick={onClose}>
+                  Close
+                </Button>
+                <Button onClick={onApply}>Apply to field</Button>
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };

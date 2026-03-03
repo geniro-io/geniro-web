@@ -1,10 +1,4 @@
-import type { MessageInstance } from 'antd/es/message/interface';
-
 import type { SocketNotification } from '../../../services/WebSocketTypes';
-
-/** Context-bound antd message API from App.useApp() */
-export type AntdMessageApi = MessageInstance;
-
 export type ThreadTokenUsageSnapshot = {
   inputTokens?: number;
   cachedInputTokens?: number;

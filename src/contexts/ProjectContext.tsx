@@ -55,7 +55,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [projects, setProjects] = useState<ProjectDto[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentProjectId, setCurrentProjectIdState] = useState<string | null>(
     () => readStoredProjectId(),
   );
@@ -82,11 +82,16 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     void loadProjects();
   }, [loadProjects]);
 
-  // Validate stored project ID against loaded projects
+  // Validate stored project ID against loaded projects,
+  // and auto-select the first project if none is selected
   useEffect(() => {
     if (loading || projects.length === 0) return;
     if (currentProjectId && !projects.some((p) => p.id === currentProjectId)) {
-      setCurrentProjectId(null);
+      // Stored project no longer exists — pick the first one
+      setCurrentProjectId(projects[0].id);
+    } else if (!currentProjectId) {
+      // No project selected — auto-select the first one
+      setCurrentProjectId(projects[0].id);
     }
   }, [projects, loading, currentProjectId, setCurrentProjectId]);
 

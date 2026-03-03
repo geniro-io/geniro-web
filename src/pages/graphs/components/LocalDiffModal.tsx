@@ -1,6 +1,10 @@
-import { Modal, Typography } from 'antd';
-
 import { DiffHtmlView } from '../../../components/markdown/DiffHtmlView';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../../../components/ui/dialog';
 
 interface LocalDiffModalProps {
   visible: boolean;
@@ -15,25 +19,24 @@ export const LocalDiffModal = ({
   diffPatch,
   graphVersion,
 }: LocalDiffModalProps) => (
-  <Modal
-    open={visible}
-    onCancel={onClose}
-    footer={null}
-    title={
-      graphVersion
-        ? `Local changes diff (v${graphVersion})`
-        : 'Local changes diff'
-    }
-    width={720}
-    destroyOnClose>
-    {diffPatch ? (
-      <div style={{ maxHeight: '60vh', overflow: 'auto' }}>
-        <DiffHtmlView diff={diffPatch} />
-      </div>
-    ) : (
-      <Typography.Text type="secondary">
-        No local changes to display.
-      </Typography.Text>
-    )}
-  </Modal>
+  <Dialog open={visible} onOpenChange={(open) => !open && onClose()}>
+    <DialogContent
+      className="max-w-2xl p-0 gap-0 flex flex-col bg-white overflow-hidden"
+      style={{ maxHeight: '80vh' }}>
+      <DialogHeader className="px-5 py-4 border-b border-border flex-shrink-0">
+        <DialogTitle className="text-sm font-semibold">
+          {graphVersion ? `Local changes (v${graphVersion})` : 'Local changes'}
+        </DialogTitle>
+      </DialogHeader>
+      {diffPatch ? (
+        <div className="overflow-y-auto overflow-x-auto flex-1">
+          <DiffHtmlView diff={diffPatch} />
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground px-5 py-4">
+          No local changes to display.
+        </p>
+      )}
+    </DialogContent>
+  </Dialog>
 );

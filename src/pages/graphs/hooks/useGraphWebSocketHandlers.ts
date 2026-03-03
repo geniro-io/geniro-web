@@ -1,5 +1,4 @@
 import type { Viewport } from '@xyflow/react';
-import { App } from 'antd';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import { graphsApi } from '../../../api';
@@ -22,6 +21,7 @@ import type {
   GraphRevisionProgressNotification,
   GraphUpdateNotification,
 } from '../../../services/WebSocketTypes';
+import { toastMessage } from '../../../utils/toastAdapter';
 import type { GraphNode, GraphNodeData } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ export const useGraphWebSocketHandlers = ({
   revisionActions,
   refs,
 }: UseGraphWebSocketHandlersOptions): void => {
-  const { message } = App.useApp();
+  const message = toastMessage;
   const { id, nodes } = graphState;
 
   const { setGraph, setCompiledNodesMap, setServerGraphState } = setters;
