@@ -8,20 +8,13 @@ import {
   Bot,
   CheckCircle2,
   ChevronDown,
-  ChevronRight,
   ChevronUp,
   Copy,
   Loader2,
   Terminal,
   XCircle,
 } from 'lucide-react';
-import React, {
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useMemo, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { toast } from 'sonner';
@@ -32,12 +25,15 @@ import { Badge } from './badge';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import {
   CopyButton,
+  fmtK,
+  formatDuration,
+  formatUsd,
   type RawTokenUsage,
-  StatisticsBar,
   StatRow,
   TokenBadge,
   type TokenInfo,
   TokenUsageDetail,
+  toTokenInfo,
 } from './token-display';
 
 export type { TokenInfo } from './token-display';
@@ -245,6 +241,16 @@ export function JsonDisplay({
 
 // ─── InlineText ───────────────────────────────────────────────────────────────
 
+// Static map so Tailwind JIT can detect the full class names.
+const LINE_CLAMP: Record<number, string> = {
+  1: 'line-clamp-1',
+  2: 'line-clamp-2',
+  3: 'line-clamp-3',
+  4: 'line-clamp-4',
+  5: 'line-clamp-5',
+  6: 'line-clamp-6',
+};
+
 export function InlineText({
   text,
   lines = 3,
@@ -257,13 +263,11 @@ export function InlineText({
   const [expanded, setExpanded] = useState(false);
   const lineCount = text.split('\n').length;
   const isLong = lineCount > lines || text.length > lines * 80;
+  const clampClass = LINE_CLAMP[lines] ?? 'line-clamp-3';
   return (
     <div
       className={`text-[11px] rounded-lg px-3 py-2.5 leading-relaxed ${accentClass ?? 'bg-muted/40 border border-border/50 text-foreground font-mono'}`}>
-      <p
-        className={
-          !expanded && isLong ? `line-clamp-${lines}` : 'whitespace-pre-wrap'
-        }>
+      <p className={!expanded && isLong ? clampClass : 'whitespace-pre-wrap'}>
         {text}
       </p>
       {isLong && (
@@ -294,181 +298,6 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
     <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
       {children}
     </p>
-  );
-}
-
-// ─── ContentSection (replaces custom StyledSection) ──────────────────────────
-
-interface ContentSectionTheme {
-  background: string;
-  border: string;
-  labelColor: string;
-  contentColor: string;
-}
-
-const SECTION_THEMES: Record<string, ContentSectionTheme> = {
-  task: {
-    background: '#f0f5ff',
-    border: '#adc6ff',
-    labelColor: '#1d39c4',
-    contentColor: '#000000',
-  },
-  instruction: {
-    background: '#f9f0ff',
-    border: '#d3adf7',
-    labelColor: '#722ed1',
-    contentColor: '#000000',
-  },
-  error: {
-    background: '#fff2f0',
-    border: '#ffccc7',
-    labelColor: '#cf1322',
-    contentColor: '#cf1322',
-  },
-  result: {
-    background: '#f6ffed',
-    border: '#b7eb8f',
-    labelColor: '#389e0d',
-    contentColor: '#135200',
-  },
-};
-
-const SECTION_STYLES = Object.fromEntries(
-  Object.entries(SECTION_THEMES).map(([key, theme]) => [
-    key,
-    {
-      wrapper: {
-        padding: '6px 10px',
-        fontSize: 12,
-        backgroundColor: theme.background,
-        borderRadius: 6,
-        border: `1px solid ${theme.border}`,
-        lineHeight: 1.5,
-      } as React.CSSProperties,
-      header: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 6,
-        paddingBottom: 6,
-        borderBottom: `1px solid ${theme.border}`,
-      } as React.CSSProperties,
-      label: {
-        fontSize: 12,
-        fontWeight: 600,
-        color: theme.labelColor,
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px',
-      } as React.CSSProperties,
-      content: {
-        fontSize: '12px',
-        lineHeight: '1.4',
-        color: theme.contentColor,
-      } as React.CSSProperties,
-    },
-  ]),
-) as Record<
-  string,
-  {
-    wrapper: React.CSSProperties;
-    header: React.CSSProperties;
-    label: React.CSSProperties;
-    content: React.CSSProperties;
-  }
->;
-
-const COLLAPSED_MAX_HEIGHT = 180;
-
-export type ContentSectionVariant = 'task' | 'instruction' | 'error' | 'result';
-
-export function ContentSection({
-  variant,
-  label,
-  content,
-  children,
-  collapsible = false,
-}: {
-  variant: ContentSectionVariant;
-  label: string;
-  content?: string;
-  children?: React.ReactNode;
-  collapsible?: boolean;
-}) {
-  const styles = SECTION_STYLES[variant];
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [expanded, setExpanded] = useState(false);
-  const [overflows, setOverflows] = useState(false);
-
-  useLayoutEffect(() => {
-    if (!collapsible || !contentRef.current) return;
-    setOverflows(contentRef.current.scrollHeight > COLLAPSED_MAX_HEIGHT);
-  }, [collapsible, content, children]);
-
-  const toggle = useCallback(() => setExpanded((prev) => !prev), []);
-  const shouldClamp = collapsible && overflows && !expanded;
-
-  return (
-    <div style={styles.wrapper}>
-      <div style={styles.header}>
-        <span style={styles.label}>{label}</span>
-      </div>
-      <div
-        ref={contentRef}
-        style={
-          shouldClamp
-            ? {
-                maxHeight: COLLAPSED_MAX_HEIGHT,
-                overflow: 'hidden',
-                position: 'relative',
-              }
-            : undefined
-        }>
-        {children ?? (
-          <div style={styles.content}>
-            <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{content}</p>
-          </div>
-        )}
-        {shouldClamp && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 32,
-              background: `linear-gradient(transparent, ${SECTION_THEMES[variant].background})`,
-              pointerEvents: 'none',
-            }}
-          />
-        )}
-      </div>
-      {collapsible && overflows && (
-        <div
-          onClick={toggle}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            marginTop: 4,
-            cursor: 'pointer',
-            fontSize: 11,
-            color: '#8c8c8c',
-            userSelect: 'none',
-          }}>
-          {expanded ? (
-            <>
-              <ChevronDown style={{ width: 9, height: 9 }} />
-              Show less
-            </>
-          ) : (
-            <>
-              <ChevronRight style={{ width: 9, height: 9 }} />
-              Show more
-            </>
-          )}
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -530,122 +359,356 @@ export function ReasoningBlock({
   );
 }
 
-// ─── ToolBlock ────────────────────────────────────────────────────────────────
+// ─── ToolPopoverPanel ─────────────────────────────────────────────────────────
 
-export function ToolBlock({
-  toolName,
+/** Renders a RawTokenUsage as two-column StatRow entries matching the header popover style. */
+function UsageRows({ usage, label }: { usage: RawTokenUsage; label?: string }) {
+  const fmt = (n?: number) =>
+    typeof n === 'number' ? n.toLocaleString() : '—';
+  return (
+    <>
+      {label && (
+        <p className="font-semibold text-muted-foreground text-[11px]">
+          {label}
+        </p>
+      )}
+      {typeof usage.inputTokens === 'number' && (
+        <StatRow label="Input" value={fmt(usage.inputTokens)} />
+      )}
+      {typeof usage.cachedInputTokens === 'number' && (
+        <StatRow label="Cached input" value={fmt(usage.cachedInputTokens)} />
+      )}
+      {typeof usage.outputTokens === 'number' && (
+        <StatRow label="Output" value={fmt(usage.outputTokens)} />
+      )}
+      {typeof usage.reasoningTokens === 'number' &&
+        usage.reasoningTokens > 0 && (
+          <StatRow label="Reasoning" value={fmt(usage.reasoningTokens)} />
+        )}
+      {typeof usage.currentContext === 'number' && (
+        <StatRow label="Current context" value={fmt(usage.currentContext)} />
+      )}
+      <div className="border-t border-border my-1" />
+      <StatRow label="Total" value={fmtK(usage.totalTokens ?? 0)} bold />
+      <StatRow label="Cost" value={formatUsd(usage.totalPrice)} bold />
+    </>
+  );
+}
+
+/**
+ * Shared popover content panel for tool call inspection.
+ * Renders tool label, input args, output, and token usage using shared
+ * sub-components (SectionLabel, JsonDisplay, StatusBadge, TokenUsageDetail).
+ *
+ * Used inside ToolBlock popover and as pre-rendered popoverContent for
+ * SubagentBlock / CommunicationBlock.
+ */
+export function ToolPopoverPanel({
+  toolLabel,
   status,
   args,
-  result,
+  resultContent,
+  resultString,
   tokens,
+  usageIn,
+  usageOut,
+  durationMs,
 }: {
-  toolName: string;
-  status: 'running' | 'done' | 'error';
-  args: Record<string, unknown>;
-  result?: string;
+  toolLabel?: string;
+  status?: 'running' | 'done' | 'error';
+  args?: Record<string, unknown>;
+  /** Raw result content (object, string, or primitive) from consumer mode. */
+  resultContent?: unknown;
+  /** Pre-stringified result from storybook mode. */
+  resultString?: string;
   tokens?: TokenInfo;
+  usageIn?: RawTokenUsage | null;
+  usageOut?: RawTokenUsage | null;
+  durationMs?: number;
 }) {
-  const isFinish = toolName === 'finish';
-  const parsedResult = result ? tryParseJsonObject(result) : null;
+  // Resolve result to displayable form
+  const resolvedResult = useMemo((): {
+    parsed: Record<string, unknown> | unknown[] | null;
+    raw: string | null;
+  } => {
+    // Prefer resultString (storybook mode)
+    if (resultString) {
+      return { parsed: tryParseJsonObject(resultString), raw: resultString };
+    }
+    // Consumer mode: resultContent can be object, string, or primitive
+    if (resultContent === undefined || resultContent === null) {
+      return { parsed: null, raw: null };
+    }
+    if (typeof resultContent === 'string') {
+      const p = tryParseJsonObject(resultContent);
+      return { parsed: p, raw: resultContent };
+    }
+    if (typeof resultContent === 'object') {
+      return { parsed: resultContent as Record<string, unknown>, raw: null };
+    }
+    return { parsed: null, raw: String(resultContent) };
+  }, [resultString, resultContent]);
+
+  const hasUsage = usageIn || usageOut;
+  const hasContent = args || resolvedResult.parsed || resolvedResult.raw;
+
+  if (!hasContent && !tokens && !hasUsage) return null;
+
+  const effectiveOut =
+    usageOut && usageIn
+      ? usageOut.totalTokens !== usageIn.totalTokens ||
+        usageOut.inputTokens !== usageIn.inputTokens ||
+        usageOut.outputTokens !== usageIn.outputTokens ||
+        usageOut.totalPrice !== usageIn.totalPrice
+        ? usageOut
+        : null
+      : (usageOut ?? null);
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <div
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors cursor-pointer ${
-            status === 'error'
-              ? 'bg-red-50 border-red-200 hover:bg-red-100'
-              : 'bg-muted/40 border-border/50 hover:bg-muted/70'
-          }`}>
-          {status === 'running' ? (
-            <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin flex-shrink-0" />
-          ) : status === 'done' ? (
-            <CheckCircle2
-              className={`w-3.5 h-3.5 flex-shrink-0 ${isFinish ? 'text-green-600' : 'text-green-500'}`}
-            />
-          ) : (
-            <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-          )}
-          <span
-            className={`text-xs font-mono ${isFinish ? 'font-semibold text-foreground' : status === 'error' ? 'text-red-700' : 'text-foreground'}`}>
-            {toolName}
-          </span>
-          {status === 'running' && (
-            <span className="text-[10px] text-muted-foreground italic">
-              executing…
-            </span>
-          )}
-          {status === 'error' && (
-            <span className="text-[10px] text-red-500 italic">failed</span>
-          )}
-          <div className="ml-auto">
-            {tokens && <TokenBadge tokens={tokens} />}
-          </div>
-        </div>
-      </PopoverTrigger>
-      <PopoverContent className="w-[420px] p-0 overflow-hidden" align="start">
+    <div className="max-w-[520px]">
+      {(toolLabel || status) && (
         <div className="px-3 pt-3 pb-1 border-b border-border flex items-center gap-2">
           {status === 'error' && (
             <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
           )}
-          <p className="font-semibold text-sm font-mono">{toolName}</p>
-          <StatusBadge
-            status={
-              status === 'running'
-                ? 'running'
-                : status === 'done'
-                  ? 'done'
-                  : 'error'
-            }
-          />
+          {toolLabel && (
+            <p className="font-semibold text-sm font-mono">{toolLabel}</p>
+          )}
+          {status && <StatusBadge status={status} />}
         </div>
-        <div className="p-3 space-y-3 max-h-[520px] overflow-y-auto">
+      )}
+      <div className="p-3 space-y-3 max-h-[520px] overflow-y-auto">
+        {args && Object.keys(args).length > 0 && (
           <div>
             <SectionLabel>Input</SectionLabel>
             <JsonDisplay data={args} />
           </div>
-          {result && (
-            <div>
-              <SectionLabel>Output</SectionLabel>
-              {parsedResult !== null ? (
-                <JsonDisplay data={parsedResult} />
-              ) : (
-                <pre
-                  className={`rounded-lg p-2.5 text-[10px] overflow-x-auto max-h-40 overflow-y-auto whitespace-pre-wrap ${status === 'error' ? 'bg-red-50 text-red-700' : 'bg-muted'}`}>
-                  {result}
-                </pre>
+        )}
+        {(resolvedResult.parsed || resolvedResult.raw) && (
+          <div>
+            <SectionLabel>Output</SectionLabel>
+            {resolvedResult.parsed ? (
+              <JsonDisplay data={resolvedResult.parsed} />
+            ) : (
+              <pre
+                className={`rounded-lg p-2.5 text-[10px] overflow-x-auto max-h-40 overflow-y-auto whitespace-pre-wrap ${status === 'error' ? 'bg-red-50 text-red-700' : 'bg-muted'}`}>
+                {resolvedResult.raw}
+              </pre>
+            )}
+          </div>
+        )}
+        {tokens && (
+          <div>
+            <SectionLabel>Statistics</SectionLabel>
+            <div className="text-xs space-y-1">
+              {tokens.input !== undefined && (
+                <StatRow label="Input" value={tokens.input.toLocaleString()} />
+              )}
+              {tokens.output !== undefined && (
+                <StatRow
+                  label="Output"
+                  value={tokens.output.toLocaleString()}
+                />
+              )}
+              <div className="border-t border-border my-1" />
+              <StatRow
+                label="Total"
+                value={tokens.total.toLocaleString()}
+                bold
+              />
+              <StatRow label="Cost" value={tokens.cost} bold />
+              {tokens.duration && (
+                <StatRow label="Duration" value={tokens.duration} />
               )}
             </div>
-          )}
-          {tokens && (
-            <div>
-              <SectionLabel>Statistics</SectionLabel>
-              <div className="bg-muted rounded-lg p-2.5 text-[11px] space-y-1">
-                {tokens.input !== undefined && (
-                  <StatRow
-                    label="Input tokens"
-                    value={tokens.input.toLocaleString()}
-                  />
-                )}
-                {tokens.output !== undefined && (
-                  <StatRow
-                    label="Output tokens"
-                    value={tokens.output.toLocaleString()}
-                  />
-                )}
-                <StatRow
-                  label="Total tokens"
-                  value={tokens.total.toLocaleString()}
-                  bold
+          </div>
+        )}
+        {!tokens && (usageIn || effectiveOut) && (
+          <div>
+            <SectionLabel>Statistics</SectionLabel>
+            <div className="text-xs space-y-1">
+              {usageIn && (
+                <UsageRows
+                  usage={usageIn}
+                  label={effectiveOut ? 'Input' : undefined}
                 />
-                <StatRow label="Cost" value={tokens.cost} bold />
-                {tokens.duration && (
-                  <StatRow label="Duration" value={tokens.duration} />
-                )}
-              </div>
+              )}
+              {effectiveOut && (
+                <UsageRows usage={effectiveOut} label="Output" />
+              )}
+              {typeof durationMs === 'number' && durationMs > 0 && (
+                <StatRow
+                  label="Duration"
+                  value={
+                    durationMs < 1000
+                      ? `${Math.round(durationMs)}ms`
+                      : `${(durationMs / 1000).toFixed(1)}s`
+                  }
+                />
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── ToolBlock ────────────────────────────────────────────────────────────────
+
+export interface ToolBlockProps {
+  // --- Storybook mode (self-contained) ---
+  toolName: string;
+  status: 'running' | 'done' | 'error';
+  args?: Record<string, unknown>;
+  result?: string;
+  tokens?: TokenInfo;
+
+  // --- Consumer mode (ThreadMessagesView) ---
+  /** Raw status from the thread message ('calling'|'executed'|'stopped'). Mapped internally. */
+  rawStatus?: 'calling' | 'executed' | 'stopped';
+  /** Raw result content (object, string, or primitive). Alternative to `result` string. */
+  resultContent?: unknown;
+  /** Tool options / arguments object. Alternative to `args`. */
+  toolOptions?: Record<string, unknown>;
+  /** Custom display title override (replaces the default "toolName is status" text). */
+  titleText?: string;
+  /** Token usage from the AI request (input side). */
+  requestTokenUsageIn?: RawTokenUsage | null;
+  /** Token usage from the tool result (output side). */
+  requestTokenUsageOut?: RawTokenUsage | null;
+  /** LLM request duration in milliseconds. */
+  durationMs?: number;
+  /** Text alignment for the trigger line. */
+  align?: 'left' | 'center';
+  /** Error text extraction function (consumer provides). */
+  errorText?: string;
+}
+
+export function ToolBlock(props: ToolBlockProps) {
+  const {
+    toolName,
+    args,
+    result,
+    tokens,
+    // Consumer-mode props
+    rawStatus,
+    resultContent,
+    toolOptions,
+    titleText,
+    requestTokenUsageIn,
+    requestTokenUsageOut,
+    durationMs,
+    align,
+    errorText,
+  } = props;
+
+  const isConsumerMode = rawStatus !== undefined;
+
+  // Resolve status: consumer-mode rawStatus mapped, or direct status prop
+  const resolvedStatus: 'running' | 'done' | 'error' = isConsumerMode
+    ? mapToolStatus(rawStatus, Boolean(errorText))
+    : props.status;
+
+  // Resolve args/options
+  const resolvedArgs = args ?? toolOptions;
+
+  // Determine if the trigger should have popover
+  const hasPopoverContent = isConsumerMode
+    ? (rawStatus !== 'calling' && resultContent !== undefined) ||
+      (resolvedArgs && Object.keys(resolvedArgs).length > 0)
+    : true; // storybook mode always has popover
+
+  // Build status text for trigger
+  const statusText =
+    resolvedStatus === 'running'
+      ? 'executing\u2026'
+      : resolvedStatus === 'error'
+        ? 'failed'
+        : undefined;
+
+  // Build display title for consumer mode
+  const displayTitle = useMemo(() => {
+    if (!isConsumerMode) return undefined;
+
+    const base =
+      titleText ??
+      (toolOptions?.purpose
+        ? `${toolName} | ${String(toolOptions.purpose)}`
+        : undefined);
+
+    if (base) {
+      const withError = errorText ? `${base} - ${errorText}` : base;
+      const firstNewline = withError.indexOf('\n');
+      return firstNewline >= 0
+        ? `${withError.slice(0, firstNewline)}\u2026`
+        : withError;
+    }
+
+    return undefined;
+  }, [isConsumerMode, titleText, toolOptions, toolName, errorText]);
+
+  const isFinish = toolName === 'finish';
+  const hasError = resolvedStatus === 'error';
+
+  const trigger = (
+    <div
+      className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
+        hasPopoverContent ? 'cursor-pointer' : 'cursor-default'
+      } ${
+        hasError
+          ? 'bg-red-50 border-red-200 hover:bg-red-100'
+          : resolvedStatus === 'running'
+            ? 'bg-muted/40 border-border/50 hover:bg-muted/70 animate-[messages-tab-thinking-pulse_1.6s_ease-in-out_infinite]'
+            : 'bg-muted/40 border-border/50 hover:bg-muted/70'
+      } ${align === 'left' ? 'justify-start' : ''}`}>
+      {resolvedStatus === 'running' ? (
+        <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin flex-shrink-0" />
+      ) : resolvedStatus === 'done' ? (
+        <CheckCircle2
+          className={`w-3.5 h-3.5 flex-shrink-0 ${isFinish ? 'text-green-600' : 'text-green-500'}`}
+        />
+      ) : (
+        <XCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+      )}
+      <span
+        className={`text-xs font-mono truncate ${
+          isFinish
+            ? 'font-semibold text-foreground'
+            : hasError
+              ? 'text-red-700 font-semibold'
+              : 'text-foreground'
+        }`}>
+        {displayTitle ?? toolName}
+      </span>
+      {statusText && !displayTitle && (
+        <span
+          className={`text-[10px] italic ${hasError ? 'text-red-500' : 'text-muted-foreground'}`}>
+          {statusText}
+        </span>
+      )}
+    </div>
+  );
+
+  if (!hasPopoverContent) {
+    return trigger;
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent className="w-[420px] p-0 overflow-hidden" align="start">
+        <ToolPopoverPanel
+          toolLabel={toolName}
+          status={resolvedStatus}
+          args={resolvedArgs}
+          resultContent={isConsumerMode ? resultContent : undefined}
+          resultString={!isConsumerMode ? result : undefined}
+          tokens={tokens}
+          usageIn={requestTokenUsageIn}
+          usageOut={requestTokenUsageOut}
+          durationMs={durationMs}
+        />
       </PopoverContent>
     </Popover>
   );
@@ -1163,122 +1226,106 @@ export function SubagentBlock(props: SubagentBlockProps) {
   // If children are provided, use consumer mode
   if (children !== undefined) {
     const headerLabel = purpose ? `Subagent: ${purpose}` : 'Subagent';
+    const displayStatus: 'running' | 'done' | 'error' =
+      status === 'running' ? 'running' : errorText ? 'error' : status;
     const isClickable = status !== 'running' && !!popoverContent;
-    const toolStatus: 'calling' | 'executed' | 'stopped' =
-      status === 'running'
-        ? 'calling'
-        : status === 'error'
-          ? 'stopped'
-          : 'executed';
 
-    const headerRow = (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          cursor: isClickable ? 'pointer' : undefined,
-        }}>
-        {status === 'running' && (
-          <Loader2
-            className="animate-spin"
-            style={{ width: 11, height: 11, color: '#595959' }}
-          />
-        )}
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: '#434343',
-            flex: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
-          {headerLabel}
-        </span>
-        <StatusTag status={toolStatus} hasError={!!errorText} />
-      </div>
+    // Build TokenInfo from raw consumer stats for StatFooter
+    const footerTokens: TokenInfo | undefined = usageIn
+      ? toTokenInfo(usageIn, statistics?.usage?.durationMs)
+      : statistics?.usage?.totalTokens
+        ? {
+            total: statistics.usage.totalTokens,
+            cost: formatUsd(statistics.usage.totalPrice),
+            duration: formatDuration(statistics.usage.durationMs),
+          }
+        : undefined;
+
+    const header = (
+      <BlockHeader left={null} label={headerLabel} status={displayStatus} />
     );
 
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-          width: '100%',
-        }}>
-        {isClickable ? (
-          <Popover>
-            <PopoverTrigger asChild>{headerRow}</PopoverTrigger>
-            <PopoverContent align="start" className="w-auto max-w-[520px]">
-              {popoverContent}
-            </PopoverContent>
-          </Popover>
-        ) : (
-          headerRow
-        )}
+      <div>
+        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-1.5 ml-0.5">
+          <Bot className="w-3 h-3" />
+          <span>Subagent</span>
+        </div>
+        <div className="border border-border rounded-xl overflow-hidden bg-card">
+          {isClickable ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="cursor-pointer">{header}</div>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-auto max-w-[520px]">
+                {popoverContent}
+              </PopoverContent>
+            </Popover>
+          ) : (
+            header
+          )}
 
-        {taskDescription && (
-          <ContentSection
-            variant="task"
-            label="Task"
-            content={taskDescription}
-            collapsible
-          />
-        )}
+          <div className="p-3 space-y-2.5">
+            {taskDescription && (
+              <div>
+                <SectionLabel>Task</SectionLabel>
+                <InlineText
+                  text={taskDescription}
+                  lines={3}
+                  accentClass="bg-purple-50 border border-purple-200/60 text-muted-foreground not-italic"
+                />
+              </div>
+            )}
 
-        {children}
+            {children}
 
-        {errorText && (
-          <ContentSection variant="error" label="Error" content={errorText} />
-        )}
+            {errorText && (
+              <div>
+                <SectionLabel>Error</SectionLabel>
+                <InlineText
+                  text={errorText}
+                  lines={3}
+                  accentClass="bg-red-50 border border-red-200 text-red-700 not-italic"
+                />
+              </div>
+            )}
 
-        {resultText && !errorText && (
-          <ContentSection
-            variant="result"
-            label="Result"
-            content={resultText}
-            collapsible
-          />
-        )}
+            {resultText && !errorText && (
+              <div>
+                <SectionLabel>Result</SectionLabel>
+                <InlineText
+                  text={resultText}
+                  lines={3}
+                  accentClass={RESULT_CLASS}
+                />
+              </div>
+            )}
 
-        {showThinkingIndicator && status === 'running' ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'baseline',
-              gap: 10,
-            }}>
-            <StatisticsBar
-              tokens={statistics?.usage}
-              toolCount={statistics?.toolCallsMade}
-              model={model}
-              usageIn={usageIn}
-              usageOut={usageOut}
-            />
-            <div
-              style={{
-                fontSize: 11,
-                fontStyle: 'italic',
-                color: '#8c8c8c',
-                paddingTop: 2,
-                animation:
-                  'messages-tab-thinking-pulse 1.6s ease-in-out infinite',
-              }}>
-              Agent is thinking...
-            </div>
+            {showThinkingIndicator && status === 'running' ? (
+              <div className="flex items-baseline gap-2.5">
+                <StatFooter
+                  tokens={footerTokens}
+                  toolCount={statistics?.toolCallsMade}
+                  model={model}
+                />
+                <span
+                  className="text-[11px] italic text-muted-foreground"
+                  style={{
+                    animation:
+                      'messages-tab-thinking-pulse 1.6s ease-in-out infinite',
+                  }}>
+                  Agent is thinking...
+                </span>
+              </div>
+            ) : (
+              <StatFooter
+                tokens={footerTokens}
+                toolCount={statistics?.toolCallsMade}
+                model={model}
+              />
+            )}
           </div>
-        ) : (
-          <StatisticsBar
-            tokens={statistics?.usage}
-            toolCount={statistics?.toolCallsMade}
-            model={model}
-            usageIn={usageIn}
-            usageOut={usageOut}
-          />
-        )}
+        </div>
       </div>
     );
   }
@@ -1302,7 +1349,7 @@ export function SubagentBlock(props: SubagentBlockProps) {
               <SectionLabel>Task</SectionLabel>
               <InlineText
                 text={task}
-                lines={5}
+                lines={3}
                 accentClass="bg-purple-50 border border-purple-200/60 text-muted-foreground not-italic"
               />
             </div>
@@ -1433,6 +1480,12 @@ export interface CommunicationBlockProps {
   children?: React.ReactNode;
   targetAgentName?: string;
   targetAvatarSrc?: string;
+  /** Sending (parent) agent name — used to render AgentAvatars in consumer mode. */
+  sourceAgentName?: string;
+  /** Tailwind bg color class for the source agent avatar (e.g. "bg-green-500"). */
+  sourceColor?: string;
+  /** Tailwind bg color class for the target agent avatar (e.g. "bg-red-500"). */
+  targetColor?: string;
   parentContent?: React.ReactNode;
   instructionContent?: string;
   instructionLabel?: string;
@@ -1461,6 +1514,9 @@ export function CommunicationBlock(props: CommunicationBlockProps) {
     children,
     targetAgentName,
     targetAvatarSrc,
+    sourceAgentName,
+    sourceColor,
+    targetColor,
     parentContent,
     instructionContent,
     instructionLabel,
@@ -1487,166 +1543,161 @@ export function CommunicationBlock(props: CommunicationBlockProps) {
 
   // Consumer mode
   if (children !== undefined) {
-    const headerLabel = targetAgentName
-      ? `Communication: ${targetAgentName}`
-      : 'Agent Communication';
-    const toolStatus: 'calling' | 'executed' | 'stopped' =
-      status === 'running'
-        ? 'calling'
-        : status === 'error'
-          ? 'stopped'
-          : 'executed';
+    // Strip parenthetical role from names, e.g. "Samantha Hale (Engineering Manager)" → "Samantha Hale"
+    const stripRole = (name: string) => name.replace(/\s*\(.*?\)\s*$/, '');
+    const cleanSource = sourceAgentName
+      ? stripRole(sourceAgentName)
+      : undefined;
+    const cleanTarget = targetAgentName
+      ? stripRole(targetAgentName)
+      : undefined;
+
+    const displayStatus: 'running' | 'done' | 'error' =
+      status === 'running' ? 'running' : errorText ? 'error' : status;
     const isClickable = status !== 'running' && !!popoverContent;
 
-    const errorLbl = targetAgentName
-      ? `Error from ${targetAgentName}`
-      : 'Error';
+    const errorLbl = cleanTarget ? `Error from ${cleanTarget}` : 'Error';
     const resultLbl =
-      resultLabel ||
-      (targetAgentName ? `Result from ${targetAgentName}` : 'Result');
+      resultLabel || (cleanTarget ? `Result from ${cleanTarget}` : 'Result');
     const instrLabel =
       instructionLabel ||
-      (targetAgentName
-        ? `Providing Instructions for ${targetAgentName}`
+      (cleanTarget
+        ? `Providing Instructions for ${cleanTarget}`
         : 'Providing Instructions');
 
-    const headerRow = (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          cursor: isClickable ? 'pointer' : undefined,
-        }}>
-        {status === 'running' && (
-          <Loader2
-            className="animate-spin"
-            style={{ width: 11, height: 11, color: '#595959' }}
-          />
-        )}
-        {targetAvatarSrc && (
-          <img
-            src={targetAvatarSrc}
-            alt=""
-            style={{
-              width: 18,
-              height: 18,
-              borderRadius: '50%',
-              flexShrink: 0,
-            }}
-          />
-        )}
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: '#434343',
-            flex: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
-          {headerLabel}
-        </span>
-        <StatusTag status={toolStatus} hasError={!!errorText} />
-      </div>
+    // Build TokenInfo from raw consumer stats for StatFooter
+    const footerTokens: TokenInfo | undefined = usageIn
+      ? toTokenInfo(usageIn, statistics?.usage?.durationMs)
+      : statistics?.usage?.totalTokens
+        ? {
+            total: statistics.usage.totalTokens,
+            cost: formatUsd(statistics.usage.totalPrice),
+            duration: formatDuration(statistics.usage.durationMs),
+          }
+        : undefined;
+
+    const hasAgentPair = !!(cleanSource && cleanTarget);
+
+    const headerLeft =
+      hasAgentPair && sourceColor && targetColor ? (
+        <AgentAvatars
+          a={cleanSource}
+          colorA={sourceColor}
+          b={cleanTarget}
+          colorB={targetColor}
+        />
+      ) : targetAvatarSrc ? (
+        <img
+          src={targetAvatarSrc}
+          alt=""
+          className="w-[18px] h-[18px] rounded-full flex-shrink-0"
+        />
+      ) : null;
+
+    const headerLabelText = hasAgentPair
+      ? `${cleanSource} \u2192 ${cleanTarget}`
+      : cleanTarget
+        ? `Communication: ${cleanTarget}`
+        : 'Agent Communication';
+
+    const header = (
+      <BlockHeader
+        left={headerLeft}
+        label={headerLabelText}
+        status={displayStatus}
+      />
     );
 
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-          width: '100%',
-        }}>
-        {isClickable ? (
-          <Popover>
-            <PopoverTrigger asChild>{headerRow}</PopoverTrigger>
-            <PopoverContent align="start" className="w-auto max-w-[520px]">
-              {popoverContent}
-            </PopoverContent>
-          </Popover>
-        ) : (
-          headerRow
-        )}
+      <div>
+        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-1.5 ml-0.5">
+          <ArrowRightLeft className="w-3 h-3" />
+          <span>Agent communication</span>
+        </div>
+        <div className="border border-border rounded-xl overflow-hidden bg-card">
+          {isClickable ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="cursor-pointer">{header}</div>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-auto max-w-[520px]">
+                {popoverContent}
+              </PopoverContent>
+            </Popover>
+          ) : (
+            header
+          )}
 
-        {parentContent && (
-          <div
-            style={{
-              padding: '6px 10px',
-              fontSize: 12,
-              color: '#595959',
-              backgroundColor: '#fafafa',
-              borderRadius: 6,
-              border: '1px solid #f0f0f0',
-              lineHeight: 1.5,
-            }}>
-            {parentContent}
+          <div className="p-3 space-y-2.5">
+            {parentContent && (
+              <div className="px-2.5 py-1.5 text-xs text-muted-foreground bg-muted/40 rounded-md border border-border/60 leading-relaxed">
+                {parentContent}
+              </div>
+            )}
+
+            {instructionContent && (
+              <div>
+                <SectionLabel>{instrLabel}</SectionLabel>
+                <InlineText
+                  text={instructionContent}
+                  lines={3}
+                  accentClass="bg-purple-50 border border-purple-200/60 text-muted-foreground not-italic"
+                />
+              </div>
+            )}
+
+            {children}
+
+            {errorText && (
+              <div>
+                <SectionLabel>{errorLbl}</SectionLabel>
+                <InlineText
+                  text={errorText}
+                  lines={3}
+                  accentClass="bg-red-50 border border-red-200 text-red-700 not-italic"
+                />
+              </div>
+            )}
+
+            {resultText && !errorText && (
+              <div>
+                <SectionLabel>{resultLbl}</SectionLabel>
+                <InlineText
+                  text={resultText}
+                  lines={3}
+                  accentClass={RESULT_CLASS}
+                />
+              </div>
+            )}
+
+            {showThinkingIndicator && status === 'running' ? (
+              <div className="flex items-baseline gap-2.5">
+                <StatFooter
+                  tokens={footerTokens}
+                  toolCount={statistics?.toolCallsMade}
+                  model={model}
+                />
+                <span
+                  className="text-[11px] italic text-muted-foreground"
+                  style={{
+                    animation:
+                      'messages-tab-thinking-pulse 1.6s ease-in-out infinite',
+                  }}>
+                  {thinkingText ||
+                    (targetAgentName
+                      ? `${targetAgentName} is thinking...`
+                      : 'Agent is thinking...')}
+                </span>
+              </div>
+            ) : (
+              <StatFooter
+                tokens={footerTokens}
+                toolCount={statistics?.toolCallsMade}
+                model={model}
+              />
+            )}
           </div>
-        )}
-
-        {instructionContent && (
-          <ContentSection
-            variant="instruction"
-            label={instrLabel}
-            content={instructionContent}
-            collapsible
-          />
-        )}
-
-        {children}
-
-        {errorText && (
-          <ContentSection
-            variant="error"
-            label={errorLbl}
-            content={errorText}
-          />
-        )}
-
-        {resultText && !errorText && (
-          <ContentSection
-            variant="result"
-            label={resultLbl}
-            content={resultText}
-            collapsible
-          />
-        )}
-
-        {showThinkingIndicator && status === 'running' ? (
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-            <StatisticsBar
-              tokens={statistics?.usage}
-              toolCount={statistics?.toolCallsMade}
-              model={model}
-              usageIn={usageIn}
-              usageOut={usageOut}
-            />
-            <div
-              style={{
-                fontSize: 11,
-                fontStyle: 'italic',
-                color: '#8c8c8c',
-                paddingTop: 2,
-                animation:
-                  'messages-tab-thinking-pulse 1.6s ease-in-out infinite',
-              }}>
-              {thinkingText ||
-                (targetAgentName
-                  ? `${targetAgentName} is thinking...`
-                  : 'Agent is thinking...')}
-            </div>
-          </div>
-        ) : (
-          <StatisticsBar
-            tokens={statistics?.usage}
-            toolCount={statistics?.toolCallsMade}
-            model={model}
-            usageIn={usageIn}
-            usageOut={usageOut}
-          />
-        )}
+        </div>
       </div>
     );
   }
@@ -1681,7 +1732,7 @@ export function CommunicationBlock(props: CommunicationBlockProps) {
               <SectionLabel>Instructions for {toAgent}</SectionLabel>
               <InlineText
                 text={instructions}
-                lines={5}
+                lines={3}
                 accentClass="bg-purple-50 border border-purple-200/60 text-muted-foreground not-italic"
               />
             </div>

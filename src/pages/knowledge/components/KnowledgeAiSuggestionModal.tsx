@@ -1,6 +1,6 @@
 import { createTwoFilesPatch } from 'diff';
-import { Loader2, Send, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Loader2, Pencil, Send } from 'lucide-react';
+import { useMemo } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,9 +13,19 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LabelsInput } from '@/components/ui/labels-input';
+import { MdEditor } from '@/components/ui/md-editor';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
-import { MarkdownSplitEditor } from '../../../components/markdown/MarkdownSplitEditor';
+import { DiffHtmlView } from '../../../components/markdown/DiffHtmlView';
+import { MarkdownContent } from '../../../components/markdown/MarkdownContent';
 
 export type KnowledgeSuggestionState = {
   currentTitle: string;
@@ -50,66 +60,6 @@ type KnowledgeAiSuggestionModalProps = {
   onSuggestedTagsChange: (value: string[]) => void;
 };
 
-function TagsInput({
-  tags,
-  onChange,
-}: {
-  tags: string[];
-  onChange: (tags: string[]) => void;
-}) {
-  const [input, setInput] = useState('');
-
-  const addTag = (raw: string) => {
-    const parts = raw
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
-    onChange([...new Set([...tags, ...parts])]);
-    setInput('');
-  };
-
-  const removeTag = (tag: string) => onChange(tags.filter((t) => t !== tag));
-
-  return (
-    <div className="border border-border rounded-md px-3 py-2 flex flex-wrap gap-1.5 min-h-[38px] focus-within:ring-1 focus-within:ring-ring cursor-text">
-      {tags.map((tag) => (
-        <Badge
-          key={tag}
-          variant="secondary"
-          className="gap-1 px-2 py-0.5 text-xs">
-          {tag}
-          <button
-            type="button"
-            onClick={() => removeTag(tag)}
-            className="ml-0.5 hover:text-destructive transition-colors">
-            <X className="w-3 h-3" />
-          </button>
-        </Badge>
-      ))}
-      <input
-        className="flex-1 min-w-[140px] text-sm outline-none bg-transparent placeholder:text-muted-foreground"
-        placeholder={
-          tags.length === 0 ? 'Add tag, press Enter or comma' : 'Add more...'
-        }
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();
-            if (input.trim()) addTag(input);
-          }
-          if (e.key === 'Backspace' && !input && tags.length) {
-            removeTag(tags[tags.length - 1]);
-          }
-        }}
-        onBlur={() => {
-          if (input.trim()) addTag(input);
-        }}
-      />
-    </div>
-  );
-}
-
 export const KnowledgeAiSuggestionModal = ({
   open,
   state,
@@ -129,19 +79,17 @@ export const KnowledgeAiSuggestionModal = ({
 }: KnowledgeAiSuggestionModalProps) => {
   const currentContent = state?.currentContent;
   const suggestedContent = state?.suggestedContent;
-  const suggestionDiffMarkdown = useMemo(() => {
+  const suggestionDiff = useMemo(() => {
     if (!suggestedContent) return null;
-    const diffString = createTwoFilesPatch(
+    return createTwoFilesPatch(
       'Current',
       'Suggested',
       currentContent ?? '',
       suggestedContent ?? '',
       '',
       '',
-      { context: Number.MAX_SAFE_INTEGER },
-    );
-    const trimmed = diffString.trimEnd();
-    return `\`\`\`diff\n${trimmed}\n\`\`\``;
+      { context: 3 },
+    ).trimEnd();
   }, [currentContent, suggestedContent]);
 
   const hasAiSuggestion =
@@ -155,12 +103,12 @@ export const KnowledgeAiSuggestionModal = ({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Improve knowledge with AI</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 min-w-0">
           {/* Current knowledge */}
           <div>
             <p className="text-sm font-semibold mb-2">Current knowledge</p>
@@ -188,7 +136,7 @@ export const KnowledgeAiSuggestionModal = ({
             <p className="text-sm font-semibold mb-2">Content preview</p>
             {state.isEditingSuggestion ? (
               <div className="space-y-2">
-                <MarkdownSplitEditor
+                <MdEditor
                   value={
                     state.editSuggestionDraft ??
                     state.suggestedContent ??
@@ -197,7 +145,6 @@ export const KnowledgeAiSuggestionModal = ({
                   onChange={onEditDraftChange}
                   height={360}
                   placeholder="Edit suggested content..."
-                  initialMode="split"
                 />
                 <div className="flex gap-2">
                   <Button
@@ -212,45 +159,75 @@ export const KnowledgeAiSuggestionModal = ({
                 </div>
               </div>
             ) : state.suggestedContent ? (
-              <MarkdownSplitEditor
-                value={suggestionDiffMarkdown ?? ''}
-                readOnly
-                height={360}
-                initialMode="split"
-                previewValue={state.suggestedContent}
-                onModeChange={(nextMode) => {
-                  if (nextMode === 'edit') {
-                    onStartEditSuggested();
-                  }
-                }}
-                shouldChangeMode={(nextMode) => nextMode !== 'edit'}
-              />
+              <div className="space-y-2">
+                <div className="flex gap-3 items-start">
+                  <div className="flex-1 min-w-0 max-h-[360px] overflow-auto border border-border rounded-md bg-background">
+                    {suggestionDiff ? (
+                      <DiffHtmlView diff={suggestionDiff} wrapLines />
+                    ) : (
+                      <div className="p-3">
+                        <MarkdownContent
+                          content={state.currentContent}
+                          allowHorizontalScroll={false}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 max-h-[360px] overflow-auto border border-border rounded-md p-3 bg-background">
+                    <MarkdownContent
+                      content={state.suggestedContent}
+                      allowHorizontalScroll={false}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={onStartEditSuggested}>
+                    <Pencil className="w-3.5 h-3.5" />
+                    Edit suggestion
+                  </Button>
+                </div>
+              </div>
             ) : (
-              <MarkdownSplitEditor
-                value={state.currentContent}
-                readOnly
-                height={300}
-                initialMode="split"
-              />
+              <div className="border border-border rounded-md p-3 max-h-[300px] overflow-y-auto bg-background">
+                {state.currentContent.trim() ? (
+                  <MarkdownContent
+                    content={state.currentContent}
+                    allowHorizontalScroll={false}
+                  />
+                ) : (
+                  <span className="text-muted-foreground text-sm">
+                    No content yet.
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
           {/* Model */}
           <div>
             <Label className="text-sm font-semibold mb-2 block">Model</Label>
-            <select
-              value={state.model || ''}
-              onChange={(e) => onModelChange(e.target.value || undefined)}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
-              <option value="">
-                {modelsLoading ? 'Loading models...' : 'Select model'}
-              </option>
-              {models.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
+            <Select
+              value={state.model || undefined}
+              onValueChange={(val) => onModelChange(val)}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    modelsLoading ? 'Loading models...' : 'Select model'
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {models.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* User request */}
@@ -288,9 +265,10 @@ export const KnowledgeAiSuggestionModal = ({
                 placeholder="Suggested title"
                 onChange={(e) => onSuggestedTitleChange(e.target.value)}
               />
-              <TagsInput
-                tags={state.suggestedTags ?? []}
-                onChange={(nextTags) => onSuggestedTagsChange(nextTags)}
+              <LabelsInput
+                value={state.suggestedTags ?? []}
+                onChange={onSuggestedTagsChange}
+                placeholder="Add tag and press Enter"
               />
             </div>
           )}

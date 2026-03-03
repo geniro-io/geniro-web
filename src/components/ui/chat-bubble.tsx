@@ -1,3 +1,4 @@
+import { formatDistanceToNow } from 'date-fns';
 import React from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
@@ -6,6 +7,16 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 export type { TokenInfo } from './token-display';
 export { CopyButton } from './token-display';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Formats a date string into relative form ("15 min ago"). */
+function formatTimestamp(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value; // already formatted — pass through
+  return formatDistanceToNow(date, { addSuffix: true });
+}
 
 // ─── ChatBubble ───────────────────────────────────────────────────────────────
 
@@ -17,6 +28,7 @@ export interface ChatBubbleProps {
   content?: string;
   /** Rich content (MarkdownContent, nested blocks). Takes precedence over `content`. */
   children?: React.ReactNode;
+  /** ISO date string or pre-formatted timestamp. Formatted internally via toLocaleString(). */
   timestamp?: string;
   /** Tailwind bg color class (e.g. "bg-blue-500") or raw CSS color. */
   color: string;
@@ -120,7 +132,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
               {timestamp && (
                 <>
                   <span>·</span>
-                  <span>{timestamp}</span>
+                  <span>{formatTimestamp(timestamp)}</span>
                 </>
               )}
               {tokens && (

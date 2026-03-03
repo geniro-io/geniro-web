@@ -56,6 +56,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { GitHubIntegrationCard } from '@/components/ui/github-integration-card';
 import { GraphCard } from '@/components/ui/graph-card';
 import { GraphNodeCard } from '@/components/ui/graph-node-card';
 import { Input } from '@/components/ui/input';
@@ -99,7 +100,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
   CommunicationBlock,
-  ContentSection,
   FinishBlock,
   type InnerMsg,
   ReasoningBlock,
@@ -130,6 +130,10 @@ import { GraphAiSuggestionModal } from '../graphs/components/GraphAiSuggestionMo
 import { NodeAiSuggestionModal } from '../graphs/components/NodeAiSuggestionModal';
 import type { AiSuggestionState } from '../graphs/components/NodeEditSidebar';
 import type { GraphNode } from '../graphs/types';
+import {
+  KnowledgeAiSuggestionModal,
+  type KnowledgeSuggestionState,
+} from '../knowledge/components/KnowledgeAiSuggestionModal';
 
 /* -------------------------------------------------------------------------- */
 /*  Layout helpers                                                            */
@@ -222,9 +226,11 @@ const SECTIONS = [
   { id: 'graph-card', label: 'Graph Card' },
   { id: 'graph-node', label: 'Graph Node' },
   { id: 'knowledge-card', label: 'Knowledge Card' },
+  { id: 'knowledge-ai-suggestion', label: 'Knowledge AI Suggestion' },
   { id: 'diff-view', label: 'Diff View' },
   { id: 'graph-ai-suggestion', label: 'Graph AI Suggestion' },
   { id: 'node-ai-suggestion', label: 'Node AI Suggestion' },
+  { id: 'github-integration', label: 'GitHub Integration' },
 ] as const;
 
 /* -------------------------------------------------------------------------- */
@@ -261,7 +267,7 @@ function useActiveSection() {
 function StorybookSidebar({ active }: { active: string }) {
   return (
     <aside className="w-44 flex-shrink-0 sticky top-6 self-start">
-      <nav className="space-y-0.5 overflow-y-auto max-h-[calc(100vh-3rem)]">
+      <nav className="space-y-0.5 overflow-y-auto max-h-[calc(100vh-8rem)]">
         {SECTIONS.map(({ id, label }) => (
           <a
             key={id}
@@ -1921,6 +1927,59 @@ function ThreadBlocksSection() {
           />
         </div>
       </Row>
+      <Row label="Tool — consumer mode (executed)">
+        <div className="w-full max-w-2xl">
+          <ToolBlock
+            toolName="web_search"
+            status="done"
+            rawStatus="executed"
+            resultContent={{
+              results: [{ title: 'React docs', url: 'https://react.dev' }],
+            }}
+            toolOptions={{ query: 'React 19 features', limit: 5 }}
+            titleText="web_search | React 19 features"
+            requestTokenUsageIn={{
+              inputTokens: 320,
+              outputTokens: 45,
+              totalTokens: 365,
+              totalPrice: 0.0004,
+            }}
+            requestTokenUsageOut={{
+              inputTokens: 100,
+              outputTokens: 200,
+              totalTokens: 300,
+              totalPrice: 0.0003,
+            }}
+            durationMs={1200}
+          />
+        </div>
+      </Row>
+      <Row label="Tool — consumer mode (calling)">
+        <div className="w-full max-w-2xl">
+          <ToolBlock
+            toolName="knowledge_search"
+            status="done"
+            rawStatus="calling"
+            toolOptions={{ query: 'deployment guide' }}
+            align="left"
+          />
+        </div>
+      </Row>
+      <Row label="Tool — consumer mode (error)">
+        <div className="w-full max-w-2xl">
+          <ToolBlock
+            toolName="api_call"
+            status="done"
+            rawStatus="executed"
+            resultContent={{
+              error: 'Connection refused: ECONNREFUSED 127.0.0.1:3000',
+            }}
+            toolOptions={{ url: 'http://localhost:3000/health', method: 'GET' }}
+            errorText="Connection refused: ECONNREFUSED 127.0.0.1:3000"
+            align="left"
+          />
+        </div>
+      </Row>
       <Row label="Shell — executed">
         <div className="w-full max-w-2xl">
           <ShellBlock
@@ -2018,6 +2077,42 @@ function ThreadBlocksSection() {
           />
         </div>
       </Row>
+      <Row label="Communication — consumer" code="children={null}">
+        <div className="w-full max-w-2xl">
+          <CommunicationBlock
+            status="done"
+            targetAgentName="Security Auditor"
+            sourceAgentName="Code Reviewer"
+            sourceColor="bg-blue-500"
+            targetColor="bg-red-500"
+            instructionContent="Please review the JWT validation logic and report any findings with severity ratings."
+            resultText="Review complete. Found 1 critical issue: JWT secret is hardcoded in the source.">
+            {null}
+          </CommunicationBlock>
+        </div>
+      </Row>
+      <Row label="Subagent — consumer" code="children={null}">
+        <div className="w-full max-w-2xl">
+          <SubagentBlock
+            purpose="Run security scan"
+            status="done"
+            taskDescription="Run automated security scan on the auth module and execute the full test suite."
+            resultText="Security scan: 1 high severity (unvalidated redirect). Tests: 47 passed, 3 failed.">
+            {null}
+          </SubagentBlock>
+        </div>
+      </Row>
+      <Row label="Subagent — consumer running" code="showThinkingIndicator">
+        <div className="w-full max-w-2xl">
+          <SubagentBlock
+            purpose="Analyze codebase"
+            status="running"
+            taskDescription="Analyze the repository structure and identify potential refactoring targets."
+            showThinkingIndicator>
+            {null}
+          </SubagentBlock>
+        </div>
+      </Row>
       <Row label="Finish — done">
         <div className="w-full max-w-2xl">
           <FinishBlock
@@ -2050,32 +2145,6 @@ function ThreadBlocksSection() {
           <StatusTag status="executed" />
           <StatusTag status="stopped" />
           <StatusTag status="stopped" hasError />
-        </div>
-      </Row>
-      <Row label="ContentSection" code="ContentSection">
-        <div className="w-full max-w-2xl space-y-3">
-          <ContentSection
-            variant="task"
-            label="Task"
-            content="Run a comprehensive security audit of the authentication module. Check for SQL injection, XSS, CSRF, and insecure cryptographic practices."
-            collapsible
-          />
-          <ContentSection
-            variant="instruction"
-            label="Instructions"
-            content="Focus on the JWT validation logic and the password hashing implementation. Report any findings with severity ratings."
-          />
-          <ContentSection
-            variant="error"
-            label="Error"
-            content="TypeError: Cannot read properties of undefined (reading 'token')\n    at validateSession (src/auth/session.ts:42:15)"
-          />
-          <ContentSection
-            variant="result"
-            label="Result"
-            content="Security audit complete. Found 2 high severity issues: hardcoded JWT secret and predictable reset tokens."
-            collapsible
-          />
         </div>
       </Row>
       <Row label="StatisticsBar" code="StatisticsBar">
@@ -3182,8 +3251,143 @@ function KnowledgeCardSection() {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Knowledge AI Suggestion section                                           */
+/* -------------------------------------------------------------------------- */
+
+const SB_KNOWLEDGE_AI_STATE_INITIAL: KnowledgeSuggestionState = {
+  currentTitle: 'API Authentication Guide',
+  currentContent:
+    '# API Authentication\n\nAll API endpoints require a valid JWT token.\n\n## Getting a Token\n\nSend a POST request to `/auth/login` with your credentials.\n\n## Token Format\n\nTokens expire after 24 hours.',
+  currentTags: ['api', 'authentication'],
+  userRequest: '',
+  loading: false,
+};
+
+const SB_KNOWLEDGE_AI_STATE_WITH_SUGGESTION: KnowledgeSuggestionState = {
+  currentTitle: 'API Authentication Guide',
+  currentContent:
+    '# API Authentication\n\nAll API endpoints require a valid JWT token.\n\n## Getting a Token\n\nSend a POST request to `/auth/login` with your credentials.\n\n## Token Format\n\nTokens expire after 24 hours.',
+  currentTags: ['api', 'authentication'],
+  suggestedTitle: 'API Authentication & Authorization Guide',
+  suggestedContent:
+    '# API Authentication & Authorization\n\nAll API endpoints require a valid JWT token passed in the `Authorization` header.\n\n## Getting a Token\n\nSend a POST request to `/auth/login` with your credentials:\n\n```json\n{ "email": "user@example.com", "password": "***" }\n```\n\n## Token Format\n\nTokens are signed with RS256 and expire after 24 hours. Use the `/auth/refresh` endpoint to obtain a new token.\n\n## Authorization\n\nRole-based access control (RBAC) is enforced on all endpoints. See the Roles section for details.',
+  suggestedTags: ['api', 'authentication', 'authorization', 'jwt'],
+  userRequest: '',
+  loading: false,
+};
+
+const SB_KNOWLEDGE_MODELS = [
+  { label: 'gpt-4o (openai)', value: 'gpt-4o' },
+  { label: 'gpt-4o-mini (openai)', value: 'gpt-4o-mini' },
+  { label: 'claude-3-5-sonnet (anthropic)', value: 'claude-3-5-sonnet' },
+];
+
+function KnowledgeAiSuggestionSection() {
+  const [openInitial, setOpenInitial] = useState(false);
+  const [openWithSuggestion, setOpenWithSuggestion] = useState(false);
+
+  return (
+    <Section
+      id="knowledge-ai-suggestion"
+      title="Knowledge AI Suggestion"
+      description="Modal for improving knowledge documents with AI. Shows current content, diff preview after suggestion, and edit mode.">
+      <Row label="States">
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => setOpenInitial(true)}>
+            Open (initial — no suggestion)
+          </Button>
+          <Button variant="outline" onClick={() => setOpenWithSuggestion(true)}>
+            Open (with AI suggestion)
+          </Button>
+        </div>
+      </Row>
+
+      <KnowledgeAiSuggestionModal
+        open={openInitial}
+        state={SB_KNOWLEDGE_AI_STATE_INITIAL}
+        models={SB_KNOWLEDGE_MODELS}
+        modelsLoading={false}
+        onClose={() => setOpenInitial(false)}
+        onUserRequestChange={() => {}}
+        onModelChange={() => {}}
+        onSubmit={() => {}}
+        onApplySuggestion={() => {}}
+        onStartEditSuggested={() => {}}
+        onCancelEditSuggested={() => {}}
+        onApplyEditSuggested={() => {}}
+        onEditDraftChange={() => {}}
+        onSuggestedTitleChange={() => {}}
+        onSuggestedTagsChange={() => {}}
+      />
+
+      <KnowledgeAiSuggestionModal
+        open={openWithSuggestion}
+        state={SB_KNOWLEDGE_AI_STATE_WITH_SUGGESTION}
+        models={SB_KNOWLEDGE_MODELS}
+        modelsLoading={false}
+        onClose={() => setOpenWithSuggestion(false)}
+        onUserRequestChange={() => {}}
+        onModelChange={() => {}}
+        onSubmit={() => {}}
+        onApplySuggestion={() => {}}
+        onStartEditSuggested={() => {}}
+        onCancelEditSuggested={() => {}}
+        onApplyEditSuggested={() => {}}
+        onEditDraftChange={() => {}}
+        onSuggestedTitleChange={() => {}}
+        onSuggestedTagsChange={() => {}}
+      />
+    </Section>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Page component                                                            */
 /* -------------------------------------------------------------------------- */
+
+function GitHubIntegrationSection() {
+  return (
+    <Section
+      id="github-integration"
+      title="GitHub Integration Card"
+      description="Card component for GitHub App integration status and actions.">
+      <div className="space-y-6 max-w-xl">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">
+            Disconnected
+          </p>
+          <GitHubIntegrationCard
+            state="disconnected"
+            installHref="#"
+            callbackUrl="https://app.geniro.io/github-app/callback"
+          />
+        </div>
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">
+            Connecting
+          </p>
+          <GitHubIntegrationCard state="connecting" />
+        </div>
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">
+            Connected
+          </p>
+          <GitHubIntegrationCard
+            state="connected"
+            accountLogin="my-org"
+            accountType="Organization"
+          />
+        </div>
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">
+            Loading
+          </p>
+          <GitHubIntegrationCard state="loading" />
+        </div>
+      </div>
+    </Section>
+  );
+}
 
 export function StorybookPage() {
   const active = useActiveSection();
@@ -3234,9 +3438,11 @@ export function StorybookPage() {
         <GraphCardSection />
         <GraphNodeSection />
         <KnowledgeCardSection />
+        <KnowledgeAiSuggestionSection />
         <DiffViewSection />
         <GraphAiSuggestionSection />
         <NodeAiSuggestionSection />
+        <GitHubIntegrationSection />
       </div>
     </div>
   );

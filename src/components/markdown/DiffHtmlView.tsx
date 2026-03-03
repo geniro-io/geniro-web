@@ -46,10 +46,21 @@ export const DiffHtmlView: React.FC<DiffHtmlViewProps> = ({
           .ai-diff-view .d2h-code-linenumber {
             display: none !important;
           }
-          
-          /* Add some left padding to the content column once numbers are gone */
+
+          /* Make the diff table fill the full width */
+          .ai-diff-view .d2h-diff-table {
+            width: 100% !important;
+            table-layout: auto !important;
+          }
+
+          /* Code content cell takes full width */
           .ai-diff-view .d2h-code-line {
+            width: 100% !important;
             padding-left: 12px !important;
+          }
+
+          .ai-diff-view .d2h-code-side-line {
+            width: 100% !important;
           }
           
           /* Remove borders */
@@ -80,6 +91,23 @@ export const DiffHtmlView: React.FC<DiffHtmlViewProps> = ({
             word-break: break-all !important;
           }`
               : ''
+          }
+
+          /* Compact text */
+          .ai-diff-view .d2h-code-line,
+          .ai-diff-view .d2h-code-line-ctn,
+          .ai-diff-view .d2h-info {
+            font-size: 12px !important;
+            line-height: 1.4 !important;
+          }
+
+          .ai-diff-view .d2h-code-line-ctn {
+            padding: 0 !important;
+          }
+
+          .ai-diff-view .d2h-code-line {
+            padding-top: 1px !important;
+            padding-bottom: 1px !important;
           }
 
           /* Background for wrapper elements only — do NOT override ins/del row colors */

@@ -6,6 +6,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Tag,
   Trash2,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -14,6 +15,7 @@ import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -29,6 +31,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { knowledgeApi, litellmApi } from '../../api';
@@ -496,7 +503,7 @@ export const KnowledgeListPage = () => {
 
   return (
     <div className="min-h-full">
-      <div className="p-6">
+      <div className="px-6 pt-6 pb-2">
         <div className="flex justify-between gap-6 flex-wrap mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-foreground mb-1">
@@ -512,7 +519,7 @@ export const KnowledgeListPage = () => {
           </Button>
         </div>
 
-        <div className="flex flex-wrap gap-4 items-center mb-6">
+        <div className="flex flex-wrap gap-4 items-center mb-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -523,30 +530,45 @@ export const KnowledgeListPage = () => {
             />
           </div>
           {tagOptions.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {tagOptions.map((tag) => {
-                const isSelected = selectedTags.includes(tag);
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() =>
-                      setSelectedTags((prev) =>
-                        isSelected
-                          ? prev.filter((t) => t !== tag)
-                          : [...prev, tag],
-                      )
-                    }
-                    className={`px-2 py-0.5 rounded-md text-xs border transition-colors ${
-                      isSelected
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-secondary text-secondary-foreground border-border hover:bg-muted'
-                    }`}>
-                    {tag}
-                  </button>
-                );
-              })}
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Tag className="w-4 h-4" />
+                  Filter by tags
+                  {selectedTags.length > 0 && (
+                    <Badge
+                      variant="secondary"
+                      className="ml-1 px-1.5 py-0 text-[10px]">
+                      {selectedTags.length}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-56 p-2">
+                <div className="flex flex-col gap-1 max-h-[280px] overflow-y-auto">
+                  {tagOptions.map((tag) => {
+                    const isSelected = selectedTags.includes(tag);
+                    return (
+                      <label
+                        key={tag}
+                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-muted cursor-pointer text-sm">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() =>
+                            setSelectedTags((prev) =>
+                              isSelected
+                                ? prev.filter((t) => t !== tag)
+                                : [...prev, tag],
+                            )
+                          }
+                        />
+                        {tag}
+                      </label>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
         </div>
       </div>
@@ -693,7 +715,7 @@ export const KnowledgeListPage = () => {
       <Dialog
         open={viewOpen}
         onOpenChange={(isOpen) => !isOpen && handleCloseView()}>
-        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle className="text-lg leading-snug pr-8">
               {viewDoc?.title || 'Untitled'}
@@ -701,7 +723,7 @@ export const KnowledgeListPage = () => {
           </DialogHeader>
 
           {viewDoc && (
-            <div className="space-y-4">
+            <div className="space-y-4 min-w-0 w-full">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground">
                   Updated{' '}
@@ -747,7 +769,10 @@ export const KnowledgeListPage = () => {
                 </div>
               )}
               <div className="border border-border rounded-lg p-4 max-h-[420px] overflow-y-auto">
-                <MarkdownContent content={viewDoc.content || ''} />
+                <MarkdownContent
+                  content={viewDoc.content || ''}
+                  allowHorizontalScroll={false}
+                />
               </div>
             </div>
           )}

@@ -130,7 +130,7 @@ const renderMarkdownCode = ({
         style={{
           margin: '8px 0',
           borderRadius: 6,
-          overflow: 'hidden',
+          overflow: 'auto',
         }}>
         <SyntaxHighlighter
           style={vscDarkPlus}
@@ -304,6 +304,7 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = React.memo(
     const normalizedContent = content.replace(/\n{3,}/g, '\n\n');
 
     const combinedStyle: React.CSSProperties = {
+      width: '100%',
       maxWidth: '100%',
       overflowX: allowHorizontalScroll ? 'auto' : 'hidden',
       wordBreak: 'break-word',

@@ -36,7 +36,7 @@ export function fmtK(n: number) {
     : String(n);
 }
 
-function formatUsd(amount?: number | null): string {
+export function formatUsd(amount?: number | null): string {
   if (typeof amount !== 'number' || !Number.isFinite(amount)) return '$—';
   const truncated = Math.floor(amount * 1000) / 1000;
   return new Intl.NumberFormat('en-US', {
@@ -47,7 +47,7 @@ function formatUsd(amount?: number | null): string {
   }).format(truncated);
 }
 
-function formatDuration(ms?: number): string | undefined {
+export function formatDuration(ms?: number): string | undefined {
   if (typeof ms !== 'number' || !Number.isFinite(ms) || ms <= 0)
     return undefined;
   if (ms < 1000) return `${Math.round(ms)}ms`;
@@ -177,7 +177,7 @@ function isSameUsage(a?: RawTokenUsage | null, b?: RawTokenUsage | null) {
   );
 }
 
-function UsageSection({
+export function UsageSection({
   usage,
   label,
 }: {

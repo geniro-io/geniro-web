@@ -1,6 +1,4 @@
 // ThreadMessagesView.tsx
-import JsonView from '@uiw/react-json-view';
-import { lightTheme } from '@uiw/react-json-view/light';
 import isPlainObject from 'lodash/isPlainObject';
 import { ChevronDown, ChevronRight, Loader2, Wrench } from 'lucide-react';
 import React, {
@@ -19,22 +17,21 @@ import type {
 import { MarkdownContent } from '../../../components/markdown/MarkdownContent';
 import { ChatBubble } from '../../../components/ui/chat-bubble';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '../../../components/ui/popover';
-import {
   CommunicationBlock,
+  FinishBlock,
   ReasoningBlock,
   ShellBlock,
   SubagentBlock,
+  ToolBlock,
+  ToolPopoverPanel,
 } from '../../../components/ui/thread-blocks';
 import {
   type RawTokenUsage,
-  TokenUsageDetail,
+  toTokenInfo,
 } from '../../../components/ui/token-display';
 import { getAgentAvatarDataUri } from '../../../utils/agentAvatars';
 import { STREAMING_REASONING_FLAG } from '../../../utils/threadMessages';
+import { getAgentColor } from '../../chats/utils/chatsPageUtils';
 import type { PendingMessage } from '../types/messages';
 import {
   formatMessageContent,
@@ -57,7 +54,6 @@ import {
   getMessageTitle,
   isToolLikeRole,
   messageBlockStyle,
-  parseJsonSafe,
   scrollContainerStyle,
 } from './threadMessages/threadMessagesViewUtils';
 
@@ -91,45 +87,6 @@ export interface ThreadMessagesViewProps {
   currentThreadLastRunId?: string | null;
   pendingMessages?: PendingMessage[];
   newMessageMode?: 'inject_after_tool_call' | 'wait_for_completion';
-}
-
-// ─── Inline footer helper ────────────────────────────────────────────────────
-
-function FooterWithUsage({
-  text,
-  usageIn,
-  usageOut,
-  durationMs,
-}: {
-  text: string;
-  usageIn?: RawTokenUsage | null;
-  usageOut?: RawTokenUsage | null;
-  durationMs?: number;
-}) {
-  const showDuration = typeof durationMs === 'number' && durationMs > 0;
-  const formatDuration = (ms: number): string => {
-    if (ms < 1000) return `${Math.round(ms)}ms`;
-    const totalSeconds = ms / 1000;
-    const rounded = Math.round(totalSeconds * 10) / 10;
-    if (rounded < 60) return `${rounded}s`;
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = Math.round(totalSeconds % 60);
-    return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
-  };
-
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-      <span>{text}</span>
-      {showDuration && (
-        <span style={{ color: '#8c8c8c' }}>{formatDuration(durationMs)}</span>
-      )}
-      <TokenUsageDetail
-        usageIn={usageIn}
-        usageOut={usageOut}
-        durationMs={durationMs}
-      />
-    </span>
-  );
 }
 
 // ─── Shell tool display adapter ──────────────────────────────────────────────
@@ -204,12 +161,14 @@ function ShellToolDisplayAdapter({
     if (resultContent === undefined && !toolOptions) return undefined;
 
     return (
-      <ToolPopoverContent
-        value={resultContent}
-        toolOptions={toolOptions}
+      <ToolPopoverPanel
         toolLabel={name}
-        requestTokenUsageIn={requestTokenUsageIn}
-        requestTokenUsageOut={requestTokenUsageOut}
+        args={
+          toolOptions ? (toolOptions as Record<string, unknown>) : undefined
+        }
+        resultContent={resultContent}
+        usageIn={requestTokenUsageIn as RawTokenUsage | undefined}
+        usageOut={requestTokenUsageOut as RawTokenUsage | undefined}
         durationMs={durationMs}
       />
     );
@@ -237,118 +196,6 @@ function ShellToolDisplayAdapter({
       durationMs={durationMs}
       popoverContent={popoverContent}
     />
-  );
-}
-
-// ─── Tool popover content (shared between tool lines and shell) ──────────────
-
-function ToolPopoverContent({
-  value,
-  toolOptions,
-  toolLabel,
-  requestTokenUsageIn,
-  requestTokenUsageOut,
-  durationMs,
-}: {
-  value: unknown;
-  toolOptions?: Record<string, JsonValue>;
-  toolLabel?: string;
-  requestTokenUsageIn?: ThreadMessageDtoRequestTokenUsage | null;
-  requestTokenUsageOut?: ThreadMessageDtoRequestTokenUsage | null;
-  durationMs?: number;
-}) {
-  let parsed: JsonValue | null = null;
-  if (typeof value === 'string') {
-    parsed = parseJsonSafe(value) as JsonValue | null;
-  } else if (
-    value !== null &&
-    (typeof value === 'object' ||
-      typeof value === 'number' ||
-      typeof value === 'boolean')
-  ) {
-    parsed = value as JsonValue;
-  }
-
-  const hasRequestTokenUsage = requestTokenUsageIn || requestTokenUsageOut;
-
-  const containerStyle: React.CSSProperties = { maxWidth: 520 };
-  const innerStyle: React.CSSProperties = {
-    maxHeight: 300,
-    overflow: 'auto',
-    background: '#f5f5f5',
-    border: '1px solid #eee',
-    borderRadius: 6,
-    padding: 12,
-    fontFamily:
-      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace',
-    fontSize: 12,
-    whiteSpace: 'pre-wrap',
-  };
-
-  const sectionStyle: React.CSSProperties = { marginBottom: 16 };
-  const sectionTitleStyle: React.CSSProperties = {
-    fontWeight: 'bold',
-    fontSize: 13,
-    marginBottom: 8,
-    color: '#333',
-    borderBottom: '1px solid #ddd',
-    paddingBottom: 4,
-  };
-
-  return (
-    <div style={containerStyle}>
-      {(toolLabel && toolLabel.trim().length > 0) || hasRequestTokenUsage ? (
-        <div
-          style={{
-            marginBottom: 12,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8,
-          }}>
-          {toolLabel && toolLabel.trim().length > 0 ? (
-            <span style={{ fontSize: 13 }}>Tool: {toolLabel}</span>
-          ) : (
-            <span />
-          )}
-          {hasRequestTokenUsage && (
-            <TokenUsageDetail
-              usageIn={requestTokenUsageIn as RawTokenUsage | undefined}
-              usageOut={requestTokenUsageOut as RawTokenUsage | undefined}
-              durationMs={durationMs}
-            />
-          )}
-        </div>
-      ) : null}
-      {toolOptions && Object.keys(toolOptions).length > 0 && (
-        <div style={sectionStyle}>
-          <div style={sectionTitleStyle}>Tool Options:</div>
-          <div style={innerStyle}>
-            <JsonView value={toolOptions} style={lightTheme} />
-          </div>
-        </div>
-      )}
-
-      {(parsed || (value !== undefined && value !== null)) && (
-        <div style={sectionStyle}>
-          <div style={sectionTitleStyle}>Output:</div>
-          <div style={innerStyle}>
-            {parsed ? (
-              <JsonView value={parsed as object} style={lightTheme} />
-            ) : (
-              <pre
-                style={{
-                  margin: 0,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                }}>
-                {String(value ?? '')}
-              </pre>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -535,16 +382,16 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
         tokenUsageOut?: ThreadMessageDtoRequestTokenUsage | null,
         durationMs?: number,
       ): React.ReactNode => (
-        <ToolPopoverContent
-          value={rawResult}
-          toolOptions={
+        <ToolPopoverPanel
+          toolLabel={toolLabel}
+          args={
             rawArgs && typeof rawArgs === 'object'
-              ? (rawArgs as Record<string, JsonValue>)
+              ? (rawArgs as Record<string, unknown>)
               : undefined
           }
-          toolLabel={toolLabel}
-          requestTokenUsageIn={tokenUsageIn}
-          requestTokenUsageOut={tokenUsageOut}
+          resultContent={rawResult}
+          usageIn={tokenUsageIn as RawTokenUsage | undefined}
+          usageOut={tokenUsageOut as RawTokenUsage | undefined}
           durationMs={durationMs}
         />
       ),
@@ -589,13 +436,8 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
       const content = formatMessageContent(message.message?.content);
 
       return (
-        <div style={{ width: '90%', margin: '0 auto' }}>
-          <div
-            style={{
-              fontSize: '12px',
-              color: '#afafaf',
-              textAlign: 'center',
-            }}>
+        <div className="w-[90%] mx-auto">
+          <div className="text-xs text-muted-foreground text-center">
             <MarkdownContent content={content} allowHorizontalScroll={true} />
           </div>
         </div>
@@ -629,68 +471,30 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
         }
       }
 
-      const messageColor = needsMoreInfo ? '#faad14' : '#52c41a';
-      const statusTag = needsMoreInfo ? '⚠ Need more info' : '✓ Finished';
-
-      const avatarSrc = metadata?.nodeId
-        ? getAgentAvatarDataUri(metadata.nodeId)
-        : undefined;
-
       const finishAgentName =
         (metadata?.nodeId && nodeDisplayNames?.[metadata.nodeId]) ||
         (metadata?.nodeId ? `Node ${metadata.nodeId.slice(-6)}` : 'Agent');
 
-      const finishBubbleStyle: React.CSSProperties = {
-        backgroundColor: '#f3f3f3',
-        borderLeft: `3px solid ${messageColor}`,
-      };
+      const timestamp =
+        formatMetadataLine(
+          metadata?.createdAt,
+          metadata?.roleLabel,
+          metadata?.nodeId,
+        ) ?? '';
+
+      const finishTokens = requestTokenUsage
+        ? toTokenInfo(requestTokenUsage as RawTokenUsage, durationMs)
+        : undefined;
 
       return (
-        <ChatBubble
-          sender="AI"
-          role="ai"
-          color={messageColor}
-          avatarSrc={avatarSrc}
-          avatarTooltip={finishAgentName}
-          containerStyle={{ marginBottom: '8px' }}
-          bubbleStyle={finishBubbleStyle}
-          footer={
-            <span
-              style={{
-                fontSize: '11px',
-                marginTop: '4px',
-                color: '#8c8c8c',
-                display: 'block',
-              }}>
-              <FooterWithUsage
-                text={
-                  formatMetadataLine(
-                    metadata?.createdAt,
-                    metadata?.roleLabel,
-                    metadata?.nodeId,
-                  ) ?? ''
-                }
-                usageIn={requestTokenUsage as RawTokenUsage | undefined}
-                durationMs={durationMs}
-              />
-            </span>
-          }>
-          <span
-            style={{
-              fontSize: '11px',
-              marginBottom: '5px',
-              display: 'block',
-              color: messageColor,
-              fontWeight: 'bold',
-            }}>
-            {statusTag}
-          </span>
-
-          <MarkdownContent
-            content={finishMessage}
-            style={MARKDOWN_DEFAULT_STYLE}
-          />
-        </ChatBubble>
+        <FinishBlock
+          sender={finishAgentName}
+          color={needsMoreInfo ? 'bg-amber-500' : 'bg-green-500'}
+          timestamp={timestamp}
+          variant={needsMoreInfo ? 'need_more' : 'done'}
+          message={finishMessage}
+          tokens={finishTokens}
+        />
       );
     };
 
@@ -705,126 +509,34 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
       requestTokenUsageOut?: ThreadMessageDtoRequestTokenUsage | null;
       durationMs?: number;
     }) => {
-      const {
-        name,
-        status,
-        resultContent,
-        toolOptions,
-        titleText,
-        align = 'center',
-        requestTokenUsageIn,
-        requestTokenUsageOut,
-        durationMs,
-      } = opts;
-      const hasToolOptions =
-        toolOptions !== undefined &&
-        toolOptions !== null &&
-        Object.keys(toolOptions).length > 0;
-      const isClickable =
-        (status === 'executed' && resultContent !== undefined) ||
-        hasToolOptions;
-      const isCalling = status === 'calling';
-      const errorText =
-        status === 'executed' ? extractToolErrorText(resultContent) : undefined;
-      const hasError = Boolean(errorText);
-      const statusText =
-        status === 'calling'
-          ? 'calling...'
-          : status === 'stopped'
-            ? 'stopped'
-            : 'executed';
-      const displayTitleBase =
-        (titleText && titleText.trim().length > 0 ? titleText : undefined) ??
-        (toolOptions?.purpose
-          ? `${name} | ${String(toolOptions.purpose)}`
-          : `tool ${name} is ${statusText}`);
-      const needsEllipsis =
-        resultContent === undefined && status !== 'executed';
-      const displayTitleRaw = hasError
-        ? `${displayTitleBase} - ${errorText}`
-        : needsEllipsis
-          ? `${displayTitleBase}...`
-          : displayTitleBase;
-      const firstNewline = displayTitleRaw.indexOf('\n');
-      const displayTitle =
-        firstNewline >= 0
-          ? `${displayTitleRaw.slice(0, firstNewline)}…`
-          : displayTitleRaw;
-      const accessibleName = displayTitle || name;
-      const line = (
-        <div
-          className="hoverable-chat-message"
-          style={{
-            cursor: isClickable ? 'pointer' : 'default',
-            animation: isCalling
-              ? 'messages-tab-thinking-pulse 1.6s ease-in-out infinite'
-              : undefined,
-            textAlign: align,
-            ...(hasError ? { color: '#ff4d4f' } : null),
-          }}
-          aria-label={
-            status === 'executed'
-              ? `View tool result for ${accessibleName}`
-              : status === 'stopped'
-                ? `Tool ${accessibleName} is stopped`
-                : `Tool ${accessibleName} is calling`
+      const toolErrorText =
+        opts.status === 'executed'
+          ? extractToolErrorText(opts.resultContent)
+          : undefined;
+
+      return (
+        <ToolBlock
+          toolName={opts.name}
+          status="done"
+          rawStatus={opts.status}
+          resultContent={opts.resultContent}
+          toolOptions={
+            opts.toolOptions
+              ? (opts.toolOptions as Record<string, unknown>)
+              : undefined
           }
-          tabIndex={isClickable ? 0 : -1}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: align === 'left' ? 'flex-start' : 'center',
-              gap: 4,
-            }}>
-            <Wrench
-              style={{
-                width: 10,
-                height: 10,
-                color: hasError ? 'inherit' : '#8c8c8c',
-                flexShrink: 0,
-              }}
-            />
-            <span
-              className="tool-status-line__text"
-              style={{
-                fontSize: '12px',
-                color: 'inherit',
-                fontWeight: hasError ? 600 : undefined,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                maxWidth: '100%',
-              }}>
-              {displayTitle}
-            </span>
-          </div>
-        </div>
+          titleText={opts.titleText}
+          align={opts.align ?? 'center'}
+          requestTokenUsageIn={
+            opts.requestTokenUsageIn as RawTokenUsage | undefined
+          }
+          requestTokenUsageOut={
+            opts.requestTokenUsageOut as RawTokenUsage | undefined
+          }
+          durationMs={opts.durationMs}
+          errorText={toolErrorText}
+        />
       );
-
-      let baseLine: React.ReactNode = line;
-      if (isClickable) {
-        const contentNode = (
-          <ToolPopoverContent
-            value={resultContent}
-            toolOptions={toolOptions}
-            toolLabel={name}
-            requestTokenUsageIn={requestTokenUsageIn}
-            requestTokenUsageOut={requestTokenUsageOut}
-            durationMs={durationMs}
-          />
-        );
-        baseLine = (
-          <Popover>
-            <PopoverTrigger asChild>{line}</PopoverTrigger>
-            <PopoverContent side="top" align="start" className="w-auto">
-              {contentNode}
-            </PopoverContent>
-          </Popover>
-        );
-      }
-
-      return baseLine;
     };
 
     const renderShellStatusLine = (opts: {
@@ -906,10 +618,6 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
     const renderMessage = (message: ThreadMessageDto) => {
       const role = (message.message?.role as string) || '';
       const content = formatMessageContent(message.message?.content);
-      const metadataText =
-        formatMetadataLine(message.createdAt, role, message.nodeId) ||
-        (role ? `from ${role}` : undefined);
-
       if (isToolLikeRole(role)) {
         const name = getMessageString(message.message, 'name') || 'tool';
         const title = getMessageTitle(message.message);
@@ -942,12 +650,12 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
           ? getAgentAvatarDataUri(avatarSeedNodeId)
           : undefined;
       const avatarColor = isHuman
-        ? '#1890ff'
+        ? 'bg-gray-500'
         : role === 'ai'
-          ? '#52c41a'
+          ? 'bg-green-500'
           : role === 'system'
-            ? '#722ed1'
-            : '#d9d9d9';
+            ? 'bg-purple-500'
+            : 'bg-gray-400';
 
       const agentName =
         (message.nodeId && nodeDisplayNames?.[message.nodeId]) ||
@@ -956,123 +664,40 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
       const avatarTooltip = isHuman ? 'You' : agentName;
 
       if (isAgentInstruction) {
-        const dateOnlyText = message.createdAt
-          ? new Date(message.createdAt).toLocaleString()
-          : undefined;
-
         return (
-          <ChatBubble
-            sender={isHuman ? 'ME' : 'AI'}
-            role={isHuman ? 'human' : 'ai'}
-            color="#722ed1"
-            avatarSrc={avatarSrc}
-            avatarTooltip={avatarTooltip}
-            bubbleStyle={{
-              backgroundColor: '#f9f0ff',
-              border: '2px solid #d3adf7',
-              borderRadius: '8px',
-              padding: '12px 16px',
-            }}
-            copyContent={content}
-            footer={
-              dateOnlyText ? (
-                <span
-                  style={{
-                    fontSize: '11px',
-                    marginTop: '4px',
-                    color: '#8c8c8c',
-                  }}>
-                  <FooterWithUsage
-                    text={dateOnlyText}
-                    usageIn={
-                      message.requestTokenUsage as RawTokenUsage | undefined
-                    }
-                    durationMs={extractDurationMs(message.message)}
-                  />
-                </span>
-              ) : undefined
-            }>
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '8px',
-                  paddingBottom: '8px',
-                  borderBottom: '1px solid #d3adf7',
-                }}>
-                <span
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#722ed1',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                  Providing Instructions for {agentName}
-                </span>
-              </div>
-              <MarkdownContent
-                content={content}
-                style={MARKDOWN_DEFAULT_STYLE}
-              />
-            </div>
-          </ChatBubble>
+          <CommunicationBlock
+            status="done"
+            instructionContent={content}
+            instructionLabel={`Providing Instructions for ${agentName}`}
+            targetAgentName={agentName}
+            targetAvatarSrc={avatarSrc}>
+            {null}
+          </CommunicationBlock>
         );
       }
 
       if (isReportingMessage) {
         return (
           <ChatBubble
-            sender={isHuman ? 'ME' : 'AI'}
+            sender={isHuman ? 'You' : agentName}
             role={isHuman ? 'human' : 'ai'}
-            color="#1890ff"
+            color={avatarColor}
             avatarSrc={avatarSrc}
             avatarTooltip={avatarTooltip}
-            bubbleStyle={{
-              backgroundColor: '#e6f7ff',
-              border: '1px solid #91d5ff',
-              borderRadius: '8px',
-              padding: '12px 16px',
-            }}
+            bubbleClassName="bg-blue-50 text-blue-900 border border-blue-200"
             copyContent={content}
-            footer={
-              metadataText ? (
-                <span
-                  style={{
-                    fontSize: '11px',
-                    marginTop: '4px',
-                    color: '#8c8c8c',
-                  }}>
-                  <FooterWithUsage
-                    text={metadataText}
-                    usageIn={
-                      message.requestTokenUsage as RawTokenUsage | undefined
-                    }
-                    durationMs={extractDurationMs(message.message)}
-                  />
-                </span>
-              ) : undefined
+            timestamp={message.createdAt}
+            tokens={
+              message.requestTokenUsage
+                ? toTokenInfo(
+                    message.requestTokenUsage as RawTokenUsage,
+                    extractDurationMs(message.message),
+                  )
+                : undefined
             }>
             <div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '8px',
-                  paddingBottom: '8px',
-                  borderBottom: '1px solid #91d5ff',
-                }}>
-                <span
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#1890ff',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
+              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-blue-200">
+                <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
                   Status report
                 </span>
               </div>
@@ -1085,32 +710,38 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
         );
       }
 
+      if (isHuman) {
+        return (
+          <ChatBubble
+            sender="You"
+            role="human"
+            color={avatarColor}
+            avatarSrc={avatarSrc}
+            avatarTooltip={avatarTooltip}
+            timestamp={message.createdAt}
+            copyContent={content}>
+            <MarkdownContent content={content} style={MARKDOWN_DEFAULT_STYLE} />
+          </ChatBubble>
+        );
+      }
+
       return (
         <ChatBubble
-          sender={isHuman ? 'ME' : 'AI'}
-          role={isHuman ? 'human' : 'ai'}
+          sender={agentName}
+          role="ai"
           color={avatarColor}
           avatarSrc={avatarSrc}
           avatarTooltip={avatarTooltip}
-          copyContent={content}
-          footer={
-            metadataText ? (
-              <span
-                style={{
-                  fontSize: '11px',
-                  marginTop: '4px',
-                  color: '#8c8c8c',
-                }}>
-                <FooterWithUsage
-                  text={metadataText}
-                  usageIn={
-                    message.requestTokenUsage as RawTokenUsage | undefined
-                  }
-                  durationMs={extractDurationMs(message.message)}
-                />
-              </span>
-            ) : undefined
-          }>
+          timestamp={message.createdAt}
+          tokens={
+            message.requestTokenUsage
+              ? toTokenInfo(
+                  message.requestTokenUsage as RawTokenUsage,
+                  extractDurationMs(message.message),
+                )
+              : undefined
+          }
+          copyContent={content}>
           <MarkdownContent content={content} style={MARKDOWN_DEFAULT_STYLE} />
         </ChatBubble>
       );
@@ -1136,22 +767,16 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
 
       return (
         <ChatBubble
-          sender={isHuman ? 'ME' : 'AI'}
+          sender={isHuman ? 'You' : pendingAgentName}
           role={isHuman ? 'human' : 'ai'}
-          color={isHuman ? '#1890ff' : '#52c41a'}
+          color={isHuman ? 'bg-gray-500' : 'bg-green-500'}
           avatarSrc={avatarSrc}
           avatarTooltip={pendingAvatarTooltip}
           containerStyle={{ opacity: 0.6 }}
-          bubbleStyle={{ border: '2px dashed #d9d9d9' }}
+          bubbleClassName="border-2 border-dashed border-gray-300"
           copyContent={content}
           footer={
-            <span
-              style={{
-                fontSize: '11px',
-                marginTop: '4px',
-                color: '#8c8c8c',
-                fontStyle: 'italic',
-              }}>
+            <span className="text-[11px] mt-1 text-muted-foreground italic">
               {sendTimeText}
             </span>
           }>
@@ -1351,14 +976,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
         const isCalling = it.status === 'calling';
 
         return (
-          <div
-            key={`work-subagent-${it.id}-${idx}`}
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e5e7eb',
-              borderRadius: 8,
-              padding: '10px 12px',
-            }}>
+          <div key={`work-subagent-${it.id}-${idx}`}>
             <SubagentBlock
               purpose={it.purpose}
               status={
@@ -1397,6 +1015,18 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
           it.targetAgentName ||
           (it.targetNodeId && nodeDisplayNames?.[it.targetNodeId]) ||
           (it.targetNodeId ? `Node ${it.targetNodeId.slice(-6)}` : undefined);
+        const sourceNodeId = it.sourceAgentNodeId || it.nodeId;
+        const commSourceName = sourceNodeId
+          ? nodeDisplayNames?.[sourceNodeId] || `Node ${sourceNodeId.slice(-6)}`
+          : undefined;
+        const commSourceColor = sourceNodeId
+          ? getAgentColor(sourceNodeId)
+          : undefined;
+        const commTargetColorNodeId =
+          it.targetNodeId || it.innerMessages.find((im) => im.nodeId)?.nodeId;
+        const commTargetColor = commTargetColorNodeId
+          ? getAgentColor(commTargetColorNodeId)
+          : undefined;
         const innerNodeId =
           it.innerMessages.find((im) => im.nodeId)?.nodeId ?? undefined;
         const targetAvatar = innerNodeId
@@ -1427,14 +1057,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
         const isCalling = it.status === 'calling';
 
         return (
-          <div
-            key={`work-comm-${it.id}-${idx}`}
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e5e7eb',
-              borderRadius: 8,
-              padding: '10px 12px',
-            }}>
+          <div key={`work-comm-${it.id}-${idx}`}>
             <CommunicationBlock
               status={
                 it.status === 'calling'
@@ -1447,16 +1070,12 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
               }
               targetAgentName={commTargetName}
               targetAvatarSrc={targetAvatar}
+              sourceAgentName={commSourceName}
+              sourceColor={commSourceColor}
+              targetColor={commTargetColor}
               parentContent={
                 parentContent ? (
-                  <MarkdownContent
-                    content={parentContent}
-                    style={{
-                      fontSize: '12px',
-                      lineHeight: '1.4',
-                      color: '#333',
-                    }}
-                  />
+                  <MarkdownContent content={parentContent} />
                 ) : undefined
               }
               instructionContent={instructionContent}
@@ -1554,24 +1173,12 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
             avatarTooltip={workingAgentName}
             containerStyle={{ marginBottom: '8px', width: '100%' }}
             bubbleStyle={bubbleStyle}>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 5,
-                width: '100%',
-              }}>
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: '#8c8c8c',
-                  textAlign: 'left',
-                }}>
+            <div className="flex flex-col gap-1.5 w-full">
+              <span className="text-xs font-semibold text-muted-foreground text-left">
                 Working...
               </span>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <div className="flex flex-col gap-1.5">
                 {items.map((it, idx) => renderWorkingItem(it, idx))}
               </div>
             </div>
@@ -1629,25 +1236,6 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
         }
 
         if (item.type === 'subagent') {
-          const avatarSeedNodeId = item.nodeId ?? nodeId ?? undefined;
-          const subAvatarLabel = getAvatarInitials(
-            formatNodeLabel(avatarSeedNodeId) ?? undefined,
-          );
-          const subAvatarSrc = avatarSeedNodeId
-            ? getAgentAvatarDataUri(avatarSeedNodeId)
-            : undefined;
-          const subAgentName =
-            (avatarSeedNodeId && nodeDisplayNames?.[avatarSeedNodeId]) ||
-            (avatarSeedNodeId ? `Node ${avatarSeedNodeId.slice(-6)}` : 'Agent');
-
-          const subBubbleStyle: React.CSSProperties = {
-            backgroundColor: '#ffffff',
-            border: '1px solid #e5e7eb',
-            borderRadius: 8,
-            padding: '10px 12px',
-            width: '100%',
-          };
-
           const topSubPopover =
             item.status !== 'calling'
               ? buildToolPopover(
@@ -1667,84 +1255,66 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
 
           pushRow(
             item.id,
-            <ChatBubble
-              sender={subAvatarLabel}
-              role="ai"
-              color="#722ed1"
-              avatarSrc={subAvatarSrc}
-              avatarTooltip={subAgentName}
-              containerStyle={{ width: '100%' }}
-              bubbleStyle={subBubbleStyle}>
-              <SubagentBlock
-                purpose={item.purpose}
-                status={
-                  item.status === 'calling'
-                    ? 'running'
-                    : item.status === 'stopped'
+            <SubagentBlock
+              purpose={item.purpose}
+              status={
+                item.status === 'calling'
+                  ? 'running'
+                  : item.status === 'stopped'
+                    ? 'error'
+                    : item.errorText
                       ? 'error'
-                      : item.errorText
-                        ? 'error'
-                        : 'done'
-                }
-                taskDescription={item.taskDescription}
-                model={item.model}
-                errorText={item.errorText}
-                resultText={item.resultText}
-                statistics={item.statistics}
-                popoverContent={topSubPopover}
-                usageIn={item.requestTokenUsageIn as RawTokenUsage | undefined}
-                usageOut={
-                  item.requestTokenUsageOut as RawTokenUsage | undefined
-                }
-                showThinkingIndicator={isCalling && filteredInner.length > 0}>
-                {(filteredInner.length > 0 || isCalling) && (
-                  <CollapsibleInnerArea
-                    items={filteredInner}
-                    renderItem={renderWorkingItem}
-                    isCalling={isCalling}
-                    emptyText="Subagent is working..."
-                  />
-                )}
-              </SubagentBlock>
-            </ChatBubble>,
+                      : 'done'
+              }
+              taskDescription={item.taskDescription}
+              model={item.model}
+              errorText={item.errorText}
+              resultText={item.resultText}
+              statistics={item.statistics}
+              popoverContent={topSubPopover}
+              usageIn={item.requestTokenUsageIn as RawTokenUsage | undefined}
+              usageOut={item.requestTokenUsageOut as RawTokenUsage | undefined}
+              showThinkingIndicator={isCalling && filteredInner.length > 0}>
+              {(filteredInner.length > 0 || isCalling) && (
+                <CollapsibleInnerArea
+                  items={filteredInner}
+                  renderItem={renderWorkingItem}
+                  isCalling={isCalling}
+                  emptyText="Subagent is working..."
+                />
+              )}
+            </SubagentBlock>,
           );
           i++;
           continue;
         }
 
         if (item.type === 'communication') {
-          const commAvatarSeedNodeId = item.nodeId ?? nodeId ?? undefined;
-          const commAvatarLabel = getAvatarInitials(
-            formatNodeLabel(commAvatarSeedNodeId) ?? undefined,
-          );
-          const commAvatarSrc = commAvatarSeedNodeId
-            ? getAgentAvatarDataUri(commAvatarSeedNodeId)
-            : undefined;
-          const commAgentName =
-            (commAvatarSeedNodeId &&
-              nodeDisplayNames?.[commAvatarSeedNodeId]) ||
-            (commAvatarSeedNodeId
-              ? `Node ${commAvatarSeedNodeId.slice(-6)}`
-              : 'Agent');
           const commTargetName =
             item.targetAgentName ||
             (item.targetNodeId && nodeDisplayNames?.[item.targetNodeId]) ||
             (item.targetNodeId
               ? `Node ${item.targetNodeId.slice(-6)}`
               : undefined);
+          const topSourceNodeId = item.sourceAgentNodeId || item.nodeId;
+          const topCommSourceName = topSourceNodeId
+            ? nodeDisplayNames?.[topSourceNodeId] ||
+              `Node ${topSourceNodeId.slice(-6)}`
+            : undefined;
+          const topCommSourceColor = topSourceNodeId
+            ? getAgentColor(topSourceNodeId)
+            : undefined;
+          const topCommTargetColorNodeId =
+            item.targetNodeId ||
+            item.innerMessages.find((im) => im.nodeId)?.nodeId;
+          const topCommTargetColor = topCommTargetColorNodeId
+            ? getAgentColor(topCommTargetColorNodeId)
+            : undefined;
           const targetInnerNodeId =
             item.innerMessages.find((im) => im.nodeId)?.nodeId ?? undefined;
           const commTargetAvatarSrc = targetInnerNodeId
             ? getAgentAvatarDataUri(targetInnerNodeId)
             : undefined;
-
-          const commBubbleStyle: React.CSSProperties = {
-            backgroundColor: '#ffffff',
-            border: '1px solid #e5e7eb',
-            borderRadius: 8,
-            padding: '10px 12px',
-            width: '100%',
-          };
 
           const topCommPopover =
             item.status !== 'calling'
@@ -1772,64 +1342,49 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
 
           pushRow(
             item.id,
-            <ChatBubble
-              sender={commAvatarLabel}
-              role="ai"
-              color="#722ed1"
-              avatarSrc={commAvatarSrc}
-              avatarTooltip={commAgentName}
-              containerStyle={{ width: '100%' }}
-              bubbleStyle={commBubbleStyle}>
-              <CommunicationBlock
-                status={
-                  item.status === 'calling'
-                    ? 'running'
-                    : item.status === 'stopped'
+            <CommunicationBlock
+              status={
+                item.status === 'calling'
+                  ? 'running'
+                  : item.status === 'stopped'
+                    ? 'error'
+                    : item.errorText
                       ? 'error'
-                      : item.errorText
-                        ? 'error'
-                        : 'done'
-                }
-                targetAgentName={commTargetName}
-                targetAvatarSrc={commTargetAvatarSrc}
-                parentContent={
-                  parentContent ? (
-                    <MarkdownContent
-                      content={parentContent}
-                      style={{
-                        fontSize: '12px',
-                        lineHeight: '1.4',
-                        color: '#333',
-                      }}
-                    />
-                  ) : undefined
-                }
-                instructionContent={instructionContent}
-                errorText={item.errorText}
-                resultText={item.resultText}
-                model={item.model}
-                statistics={item.statistics}
-                popoverContent={topCommPopover}
-                usageIn={item.requestTokenUsageIn as RawTokenUsage | undefined}
-                usageOut={
-                  item.requestTokenUsageOut as RawTokenUsage | undefined
-                }
-                showThinkingIndicator={isCalling && filteredInner.length > 0}
-                thinkingText={
-                  commTargetName
-                    ? `${commTargetName} is thinking...`
-                    : 'Agent is thinking...'
-                }>
-                {(filteredInner.length > 0 || isCalling) && (
-                  <CollapsibleInnerArea
-                    items={filteredInner}
-                    renderItem={renderWorkingItem}
-                    isCalling={isCalling}
-                    emptyText="Agent is working..."
-                  />
-                )}
-              </CommunicationBlock>
-            </ChatBubble>,
+                      : 'done'
+              }
+              targetAgentName={commTargetName}
+              targetAvatarSrc={commTargetAvatarSrc}
+              sourceAgentName={topCommSourceName}
+              sourceColor={topCommSourceColor}
+              targetColor={topCommTargetColor}
+              parentContent={
+                parentContent ? (
+                  <MarkdownContent content={parentContent} />
+                ) : undefined
+              }
+              instructionContent={instructionContent}
+              errorText={item.errorText}
+              resultText={item.resultText}
+              model={item.model}
+              statistics={item.statistics}
+              popoverContent={topCommPopover}
+              usageIn={item.requestTokenUsageIn as RawTokenUsage | undefined}
+              usageOut={item.requestTokenUsageOut as RawTokenUsage | undefined}
+              showThinkingIndicator={isCalling && filteredInner.length > 0}
+              thinkingText={
+                commTargetName
+                  ? `${commTargetName} is thinking...`
+                  : 'Agent is thinking...'
+              }>
+              {(filteredInner.length > 0 || isCalling) && (
+                <CollapsibleInnerArea
+                  items={filteredInner}
+                  renderItem={renderWorkingItem}
+                  isCalling={isCalling}
+                  emptyText="Agent is working..."
+                />
+              )}
+            </CommunicationBlock>,
           );
           i++;
           continue;
@@ -2150,49 +1705,27 @@ function CollapsibleInnerArea({
   const hiddenCount = nonReasoningCount - COLLAPSED_MESSAGE_COUNT;
 
   return (
-    <div
-      style={{
-        overflowX: 'hidden',
-        padding: '8px 10px',
-        backgroundColor: '#fafafa',
-        borderRadius: 6,
-        border: '1px solid #f0f0f0',
-      }}>
+    <div className="space-y-2 overflow-x-hidden">
       {items.length === 0 && isCalling && (
-        <span style={{ fontSize: 12, fontStyle: 'italic', color: '#8c8c8c' }}>
+        <span className="text-xs italic text-muted-foreground">
           {emptyText}
         </span>
       )}
       {visibleMessages.map((item, idx) => (
-        <div
-          key={item.id || idx}
-          style={
-            idx < visibleMessages.length - 1 ? { marginBottom: 6 } : undefined
-          }>
-          {renderItem(item, idx)}
-        </div>
+        <div key={item.id || idx}>{renderItem(item, idx)}</div>
       ))}
       {isCollapsible && (
         <div
           onClick={() => setExpanded((prev) => !prev)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            marginTop: 4,
-            cursor: 'pointer',
-            fontSize: 11,
-            color: '#8c8c8c',
-            userSelect: 'none',
-          }}>
+          className="flex items-center gap-1 mt-1 cursor-pointer text-[11px] text-muted-foreground hover:text-foreground select-none transition-colors">
           {expanded ? (
             <>
-              <ChevronDown style={{ width: 9, height: 9 }} />
+              <ChevronDown className="w-[9px] h-[9px]" />
               Collapse
             </>
           ) : (
             <>
-              <ChevronRight style={{ width: 9, height: 9 }} />
+              <ChevronRight className="w-[9px] h-[9px]" />
               {hiddenCount} more message{hiddenCount !== 1 ? 's' : ''}
             </>
           )}
