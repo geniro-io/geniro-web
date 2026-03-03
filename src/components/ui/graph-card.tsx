@@ -8,41 +8,10 @@ import {
   Trash2,
 } from 'lucide-react';
 
+import { getStatusBadgeClass } from '../../utils/statusColors';
 import { Badge } from './badge';
 import { Button } from './button';
 import { Card } from './card';
-
-export const GRAPH_STATUS_META: Record<
-  string,
-  { label: string; className: string }
-> = {
-  running: {
-    label: 'running',
-    className: 'bg-blue-100 text-blue-700 border-transparent hover:bg-blue-100',
-  },
-  compiling: {
-    label: 'compiling',
-    className: 'bg-blue-50 text-blue-600 border-transparent hover:bg-blue-50',
-  },
-  created: {
-    label: 'created',
-    className: 'bg-blue-50 text-blue-600 border-transparent hover:bg-blue-50',
-  },
-  stopped: {
-    label: 'stopped',
-    className:
-      'bg-muted text-muted-foreground border-transparent hover:bg-muted',
-  },
-  error: {
-    label: 'error',
-    className: 'bg-red-100 text-red-700 border-transparent hover:bg-red-100',
-  },
-  draft: {
-    label: 'draft',
-    className:
-      'bg-amber-100 text-amber-700 border-transparent hover:bg-amber-100',
-  },
-};
 
 export interface GraphCardProps {
   name: string;
@@ -76,11 +45,6 @@ export function GraphCard({
   onToggleRun,
 }: GraphCardProps) {
   const key = status.toLowerCase();
-  const meta = GRAPH_STATUS_META[key] ?? {
-    label: status,
-    className:
-      'bg-muted text-muted-foreground border-transparent hover:bg-muted',
-  };
   const isRunning = key === 'running';
 
   return (
@@ -96,8 +60,8 @@ export function GraphCard({
             </h3>
             <Badge
               variant={isRunning ? 'default' : 'secondary'}
-              className={`text-[10px] px-1.5 py-0.5 font-medium ${meta.className}`}>
-              {meta.label}
+              className={`text-[10px] px-1.5 py-0.5 font-medium ${getStatusBadgeClass(key)}`}>
+              {key}
             </Badge>
             {version && (
               <span className="text-sm text-muted-foreground">{version}</span>

@@ -63,6 +63,7 @@ docs/TemplatesApi.md
 docs/ThreadAnalysisRequestDto.md
 docs/ThreadAnalysisResponseDto.md
 docs/ThreadDto.md
+docs/ThreadDtoAgentsInner.md
 docs/ThreadMessageDto.md
 docs/ThreadMessageDtoMessage.md
 docs/ThreadMessageDtoMessageOneOf.md

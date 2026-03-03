@@ -23,12 +23,14 @@ export const GRAPH_STATUS_META: Record<
   string,
   { label: string; color: string }
 > = {
-  [GraphDtoStatusEnum.Running]: { label: 'Running', color: '#52c41a' },
+  [GraphDtoStatusEnum.Running]: { label: 'Running', color: '#1677ff' },
   [GraphDtoStatusEnum.Compiling]: { label: 'Compiled', color: '#1677ff' },
   [GraphDtoStatusEnum.Created]: { label: 'Created', color: '#1677ff' },
   [GraphDtoStatusEnum.Stopped]: { label: 'Stopped', color: '#bfbfbf' },
   [GraphDtoStatusEnum.Error]: { label: 'Error', color: '#ff4d4f' },
 };
+
+export { getStatusBadgeClass as getGraphStatusBadgeClass } from '../../../utils/statusColors';
 
 export const mergeTokenUsageByNode = (
   baseline: Record<string, ThreadTokenUsageSnapshot>,
@@ -213,3 +215,42 @@ export const DEFAULT_MESSAGE_META = {
   offset: 0,
   initialLoadFailed: false,
 } as const;
+
+const AGENT_AVATAR_COLORS = [
+  'bg-blue-500',
+  'bg-purple-500',
+  'bg-green-500',
+  'bg-orange-500',
+  'bg-pink-500',
+  'bg-indigo-500',
+  'bg-teal-500',
+  'bg-red-500',
+];
+
+export const getAgentColor = (nodeId: string): string => {
+  let hash = 0;
+  for (let i = 0; i < nodeId.length; i++) {
+    hash = (hash * 31 + nodeId.charCodeAt(i)) | 0;
+  }
+  return AGENT_AVATAR_COLORS[Math.abs(hash) % AGENT_AVATAR_COLORS.length]!;
+};
+
+export const getAgentInitials = (label: string): string => {
+  const { name } = parseAgentLabel(label);
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
+export const parseAgentLabel = (
+  label: string,
+): { name: string; role?: string } => {
+  const match = label.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+  if (match) {
+    return { name: match[1]!.trim(), role: match[2]!.trim() };
+  }
+  return { name: label };
+};

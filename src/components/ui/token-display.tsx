@@ -1,4 +1,4 @@
-import { BarChart2, Check, Copy } from 'lucide-react';
+import { BarChart2, BarChart3, Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
@@ -13,7 +13,20 @@ export type TokenInfo = {
   total: number;
   cost: string;
   duration?: string;
+  currentContext?: number;
 };
+
+// ─── Raw usage shape (matches ThreadMessageDtoRequestTokenUsage) ─────────────
+
+export interface RawTokenUsage {
+  inputTokens?: number;
+  outputTokens?: number;
+  cachedInputTokens?: number;
+  reasoningTokens?: number;
+  totalTokens?: number;
+  totalPrice?: number;
+  currentContext?: number;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -21,6 +34,51 @@ export function fmtK(n: number) {
   return n >= 1000
     ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}K`
     : String(n);
+}
+
+function formatUsd(amount?: number | null): string {
+  if (typeof amount !== 'number' || !Number.isFinite(amount)) return '$—';
+  const truncated = Math.floor(amount * 1000) / 1000;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3,
+  }).format(truncated);
+}
+
+function formatDuration(ms?: number): string | undefined {
+  if (typeof ms !== 'number' || !Number.isFinite(ms) || ms <= 0)
+    return undefined;
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  const totalSeconds = ms / 1000;
+  const rounded = Math.round(totalSeconds * 10) / 10;
+  if (rounded < 60) return `${rounded}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.round(totalSeconds % 60);
+  return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+}
+
+// ─── Adapter ──────────────────────────────────────────────────────────────────
+
+/**
+ * Converts a raw usage object (from ThreadMessageDtoRequestTokenUsage)
+ * into a `TokenInfo` suitable for TokenBadge / TokenUsageDetail.
+ */
+export function toTokenInfo(
+  usage: RawTokenUsage,
+  durationMs?: number,
+): TokenInfo {
+  return {
+    input: usage.inputTokens,
+    cachedInput: usage.cachedInputTokens,
+    output: usage.outputTokens,
+    reasoning: usage.reasoningTokens,
+    total: usage.totalTokens ?? 0,
+    cost: formatUsd(usage.totalPrice),
+    duration: formatDuration(durationMs),
+    currentContext: usage.currentContext,
+  };
 }
 
 // ─── StatRow ──────────────────────────────────────────────────────────────────
@@ -89,6 +147,12 @@ export function TokenBadge({
             value={tokens.reasoning.toLocaleString()}
           />
         )}
+        {tokens.currentContext !== undefined && (
+          <StatRow
+            label="Current context"
+            value={tokens.currentContext.toLocaleString()}
+          />
+        )}
         <div className="border-t border-border my-1" />
         <StatRow label="Total" value={tokens.total.toLocaleString()} bold />
         <StatRow label="Cost" value={tokens.cost} bold />
@@ -97,6 +161,182 @@ export function TokenBadge({
         )}
       </PopoverContent>
     </Popover>
+  );
+}
+
+// ─── TokenUsageDetail ─────────────────────────────────────────────────────────
+
+/** Returns true when two token-usage objects carry identical numeric values. */
+function isSameUsage(a?: RawTokenUsage | null, b?: RawTokenUsage | null) {
+  if (!a || !b) return false;
+  return (
+    a.totalTokens === b.totalTokens &&
+    a.inputTokens === b.inputTokens &&
+    a.outputTokens === b.outputTokens &&
+    a.totalPrice === b.totalPrice
+  );
+}
+
+function UsageSection({
+  usage,
+  label,
+}: {
+  usage: RawTokenUsage;
+  label: string;
+}) {
+  const fmt = (n?: number) =>
+    typeof n === 'number' ? n.toLocaleString() : '—';
+  return (
+    <>
+      <span className="text-xs font-semibold text-muted-foreground">
+        {label}
+      </span>
+      <span className="text-xs text-muted-foreground">
+        Total: {fmtK(usage.totalTokens ?? 0)} ({formatUsd(usage.totalPrice)})
+      </span>
+      <span className="text-xs text-muted-foreground">
+        Input tokens: {fmt(usage.inputTokens)}
+      </span>
+      {typeof usage.cachedInputTokens === 'number' && (
+        <span className="text-xs text-muted-foreground">
+          Cached input tokens: {fmt(usage.cachedInputTokens)}
+        </span>
+      )}
+      <span className="text-xs text-muted-foreground">
+        Output tokens: {fmt(usage.outputTokens)}
+      </span>
+      {typeof usage.reasoningTokens === 'number' && (
+        <span className="text-xs text-muted-foreground">
+          Reasoning tokens: {fmt(usage.reasoningTokens)}
+        </span>
+      )}
+      {typeof usage.currentContext === 'number' && (
+        <span className="text-xs text-muted-foreground">
+          Current context: {fmt(usage.currentContext)}
+        </span>
+      )}
+    </>
+  );
+}
+
+/**
+ * Dual In/Out token usage popover — replaces the custom TokenUsagePopoverIcon.
+ * Renders a BarChart3 icon that opens a popover with one or two stat sections.
+ */
+export function TokenUsageDetail({
+  usageIn,
+  usageOut,
+  durationMs,
+}: {
+  usageIn?: RawTokenUsage | null;
+  usageOut?: RawTokenUsage | null;
+  durationMs?: number;
+}) {
+  const effectiveIn = usageIn;
+  const effectiveOut =
+    usageOut && !isSameUsage(usageIn, usageOut) ? usageOut : null;
+
+  if (!effectiveIn && !effectiveOut) return null;
+
+  const showBoth = !!effectiveIn && !!effectiveOut;
+  const inLabel = showBoth
+    ? 'Request Token Usage (Input):'
+    : 'Request Token Usage:';
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <span
+          className="inline-flex items-center cursor-help"
+          aria-label="View token usage details"
+          title="View token usage details">
+          <BarChart3 className="w-3 h-3" />
+        </span>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-auto max-w-[340px]">
+        <div className="flex flex-col gap-1">
+          {effectiveIn && <UsageSection usage={effectiveIn} label={inLabel} />}
+          {effectiveOut && (
+            <UsageSection
+              usage={effectiveOut}
+              label="Request Token Usage (Output):"
+            />
+          )}
+          {typeof durationMs === 'number' && durationMs > 0 && (
+            <span className="text-xs text-muted-foreground">
+              Duration: {formatDuration(durationMs)}
+            </span>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ─── StatisticsBar ────────────────────────────────────────────────────────────
+
+/**
+ * Horizontal row of stats for subagent/communication footers.
+ * Replaces the custom StatisticsFooter component.
+ */
+export function StatisticsBar({
+  tokens,
+  toolCount,
+  model,
+  usageIn,
+  usageOut,
+  durationMs,
+}: {
+  tokens?: {
+    totalTokens?: number;
+    totalPrice?: number;
+    durationMs?: number;
+  };
+  toolCount?: number;
+  model?: string;
+  usageIn?: RawTokenUsage | null;
+  usageOut?: RawTokenUsage | null;
+  durationMs?: number;
+}) {
+  const items: { label: string; value: string }[] = [];
+
+  if (tokens?.totalTokens) {
+    items.push({ label: 'Tokens', value: fmtK(tokens.totalTokens) });
+  }
+  if (typeof tokens?.totalPrice === 'number' && tokens.totalPrice > 0) {
+    items.push({ label: 'Cost', value: formatUsd(tokens.totalPrice) });
+  }
+  if (typeof tokens?.durationMs === 'number' && tokens.durationMs > 0) {
+    const dur = formatDuration(tokens.durationMs);
+    if (dur) items.push({ label: 'Duration', value: dur });
+  }
+  if (typeof toolCount === 'number') {
+    items.push({
+      label: 'Tools',
+      value: String(toolCount),
+    });
+  }
+  if (model) {
+    items.push({ label: 'Model', value: model });
+  }
+
+  if (items.length === 0 && !usageIn && !usageOut) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2.5 pt-1 text-[11px] text-muted-foreground">
+      {items.map((item) => (
+        <span key={item.label}>
+          <span className="font-semibold">{item.label}:</span> {item.value}
+        </span>
+      ))}
+      {(usageIn || usageOut) && (
+        <TokenUsageDetail
+          usageIn={usageIn}
+          usageOut={usageOut}
+          durationMs={durationMs}
+        />
+      )}
+    </div>
   );
 }
 

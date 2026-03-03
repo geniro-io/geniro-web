@@ -1896,6 +1896,12 @@ export interface ThreadDto {
    * @memberof ThreadDto
    */
   'status': ThreadDtoStatusEnum;
+  /**
+   *
+   * @type {Array<ThreadDtoAgentsInner>}
+   * @memberof ThreadDto
+   */
+  'agents'?: Array<ThreadDtoAgentsInner> | null;
 }
 
 export const ThreadDtoStatusEnum = {
@@ -1908,6 +1914,31 @@ export const ThreadDtoStatusEnum = {
 export type ThreadDtoStatusEnum =
   (typeof ThreadDtoStatusEnum)[keyof typeof ThreadDtoStatusEnum];
 
+/**
+ *
+ * @export
+ * @interface ThreadDtoAgentsInner
+ */
+export interface ThreadDtoAgentsInner {
+  /**
+   * Graph node ID of the agent
+   * @type {string}
+   * @memberof ThreadDtoAgentsInner
+   */
+  'nodeId': string;
+  /**
+   * Agent display name
+   * @type {string}
+   * @memberof ThreadDtoAgentsInner
+   */
+  'name': string;
+  /**
+   * Agent description
+   * @type {string}
+   * @memberof ThreadDtoAgentsInner
+   */
+  'description'?: string;
+}
 /**
  *
  * @export

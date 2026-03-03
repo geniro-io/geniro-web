@@ -12,11 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../../../components/ui/alert-dialog';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '../../../components/ui/avatar';
+import { Avatar, AvatarFallback } from '../../../components/ui/avatar';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import {
@@ -32,6 +28,7 @@ import {
   getThreadStatusDisplay,
 } from '../../../utils/threadStatus';
 import type { DraftThread, GraphCacheEntry } from '../types';
+import { getAgentColor, getAgentInitials } from '../utils/chatsPageUtils';
 
 interface ThreadListItemProps {
   thread: ThreadDto | DraftThread;
@@ -43,7 +40,6 @@ interface ThreadListItemProps {
     nodeId: string;
     label: string;
     description?: string;
-    avatarSrc?: string;
   }[];
 }
 
@@ -121,9 +117,9 @@ export const ThreadListItem: React.FC<ThreadListItemProps> = React.memo(
             <div className="flex items-center gap-1">
               {agents.slice(0, 3).map((agent) => (
                 <Avatar key={agent.nodeId} className="w-5 h-5">
-                  <AvatarImage src={agent.avatarSrc} />
-                  <AvatarFallback className="text-[9px]">
-                    {agent.label.charAt(0).toUpperCase()}
+                  <AvatarFallback
+                    className={`${getAgentColor(agent.nodeId)} text-white text-[9px]`}>
+                    {getAgentInitials(agent.label)}
                   </AvatarFallback>
                 </Avatar>
               ))}

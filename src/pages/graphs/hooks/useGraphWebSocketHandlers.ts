@@ -226,8 +226,9 @@ export const useGraphWebSocketHandlers = ({
 
           if (hasLocalChanges) {
             // User has local changes - warn them that the server was updated
-            message.warning({
+            message.open({
               key: `graph-revision-${revision.id}`,
+              type: 'warning',
               content: `Revision ${revision.toVersion} applied.`,
               duration: 8,
             });
@@ -259,8 +260,9 @@ export const useGraphWebSocketHandlers = ({
 
             setGraph(updatedGraph);
 
-            message.success({
+            message.open({
               key: `graph-revision-${revision.id}`,
+              type: 'success',
               content: `Revision ${revision.toVersion} applied`,
               duration: 3,
             });

@@ -1,3 +1,4 @@
+import { BarChart3 } from 'lucide-react';
 import type { FC } from 'react';
 
 import type {
@@ -43,9 +44,12 @@ export const UsageStatsModal: FC<UsageStatsModalProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[800px]">
+      <DialogContent className="sm:max-w-5xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Thread Usage Statistics</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <BarChart3 className="size-4" />
+            Thread Usage Statistics
+          </DialogTitle>
         </DialogHeader>
         {threadId &&
           (() => {

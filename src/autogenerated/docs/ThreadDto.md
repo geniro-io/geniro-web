@@ -2,18 +2,19 @@
 
 ## Properties
 
-| Name                 | Type                        | Description                       | Notes                             |
-| -------------------- | --------------------------- | --------------------------------- | --------------------------------- |
-| **id**               | **string**                  | Thread ID                         | [default to undefined]            |
-| **graphId**          | **string**                  | Graph ID                          | [default to undefined]            |
-| **externalThreadId** | **string**                  | External thread ID from LangChain | [default to undefined]            |
-| **lastRunId**        | **string**                  |                                   | [optional] [default to undefined] |
-| **createdAt**        | **string**                  |                                   | [default to undefined]            |
-| **updatedAt**        | **string**                  |                                   | [default to undefined]            |
-| **metadata**         | **{ [key: string]: any; }** |                                   | [optional] [default to undefined] |
-| **source**           | **string**                  |                                   | [optional] [default to undefined] |
-| **name**             | **string**                  |                                   | [optional] [default to undefined] |
-| **status**           | **string**                  | Thread execution status           | [default to undefined]            |
+| Name                 | Type                                                             | Description                       | Notes                             |
+| -------------------- | ---------------------------------------------------------------- | --------------------------------- | --------------------------------- |
+| **id**               | **string**                                                       | Thread ID                         | [default to undefined]            |
+| **graphId**          | **string**                                                       | Graph ID                          | [default to undefined]            |
+| **externalThreadId** | **string**                                                       | External thread ID from LangChain | [default to undefined]            |
+| **lastRunId**        | **string**                                                       |                                   | [optional] [default to undefined] |
+| **createdAt**        | **string**                                                       |                                   | [default to undefined]            |
+| **updatedAt**        | **string**                                                       |                                   | [default to undefined]            |
+| **metadata**         | **{ [key: string]: any; }**                                      |                                   | [optional] [default to undefined] |
+| **source**           | **string**                                                       |                                   | [optional] [default to undefined] |
+| **name**             | **string**                                                       |                                   | [optional] [default to undefined] |
+| **status**           | **string**                                                       | Thread execution status           | [default to undefined]            |
+| **agents**           | [**Array&lt;ThreadDtoAgentsInner&gt;**](ThreadDtoAgentsInner.md) |                                   | [optional] [default to undefined] |
 
 ## Example
 
@@ -31,6 +32,7 @@ const instance: ThreadDto = {
   source,
   name,
   status,
+  agents,
 };
 ```
 

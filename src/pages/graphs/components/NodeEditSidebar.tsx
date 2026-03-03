@@ -48,6 +48,7 @@ import {
 } from '../../../components/ui/tooltip';
 import { getAgentAvatarDataUri } from '../../../utils/agentAvatars';
 import { extractApiErrorMessage } from '../../../utils/errors';
+import { getStatusBadgeClass } from '../../../utils/statusColors';
 import { toastMessage } from '../../../utils/toastAdapter';
 import type { GraphNode, SchemaProperty } from '../types';
 import {
@@ -115,19 +116,6 @@ export type AiSuggestionState = {
   threadId?: string;
   model?: string;
   loading: boolean;
-};
-
-const STATUS_BADGE_STYLES: Record<
-  string,
-  {
-    variant: 'default' | 'outline' | 'secondary' | 'destructive';
-    color?: string;
-  }
-> = {
-  running: { variant: 'default', color: '#52c41a' },
-  idle: { variant: 'secondary' },
-  starting: { variant: 'default', color: '#2f54eb' },
-  stopped: { variant: 'destructive' },
 };
 
 export const NodeEditSidebar = React.memo(
@@ -444,12 +432,11 @@ export const NodeEditSidebar = React.memo(
           ? `${rawStatus.charAt(0).toUpperCase()}${rawStatus.slice(1)}`
           : 'Unknown';
 
-    const statusBadgeStyle = !isGraphRunning
-      ? STATUS_BADGE_STYLES['default']
+    const statusBadgeKey = !isGraphRunning
+      ? 'stopped'
       : compiledNodesLoading
-        ? STATUS_BADGE_STYLES['starting']
-        : (STATUS_BADGE_STYLES[rawStatus ?? ''] ??
-          STATUS_BADGE_STYLES['default']);
+        ? 'starting'
+        : (rawStatus ?? 'idle');
 
     const normalizeJsonViewValue = (value: unknown): object | undefined => {
       if (value === undefined) {
@@ -1264,17 +1251,8 @@ export const NodeEditSidebar = React.memo(
                 }}>
                 <div className="flex items-center gap-0.5">
                   <Badge
-                    variant={statusBadgeStyle?.variant ?? 'outline'}
-                    style={{
-                      fontSize: 12,
-                      ...(statusBadgeStyle?.color
-                        ? {
-                            backgroundColor: statusBadgeStyle.color,
-                            color: '#fff',
-                            border: 'none',
-                          }
-                        : {}),
-                    }}>
+                    variant="outline"
+                    className={`text-xs ${getStatusBadgeClass(statusBadgeKey)}`}>
                     {statusLabel}
                   </Badge>
                   {compiledNode?.error && (

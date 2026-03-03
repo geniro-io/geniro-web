@@ -32,14 +32,4 @@ export const getThreadStatusDisplay = (status?: ThreadDto['status']) => {
   );
 };
 
-export function getStatusBadgeClass(label: string): string {
-  if (label === 'Done' || label === 'done')
-    return 'bg-green-100 text-green-700 hover:bg-green-100';
-  if (label === 'Running' || label === 'running')
-    return 'bg-blue-100 text-blue-700 hover:bg-blue-100';
-  if (label === 'Need More Info')
-    return 'bg-amber-100 text-amber-700 hover:bg-amber-100';
-  if (label === 'Stopped' || label === 'stopped')
-    return 'bg-muted text-muted-foreground hover:bg-muted';
-  return 'bg-muted text-muted-foreground hover:bg-muted';
-}
+export { getStatusBadgeClass } from './statusColors';
