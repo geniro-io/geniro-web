@@ -56,6 +56,9 @@ export function createKeycloakModule({
           redirectTo: '/login',
         };
       } catch (_error) {
+        const message =
+          _error instanceof Error ? _error.message : String(_error);
+        console.warn('Keycloak logout failed:', message);
         return {
           success: false,
           error: new Error('Logout failed'),

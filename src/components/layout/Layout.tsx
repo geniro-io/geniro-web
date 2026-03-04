@@ -126,9 +126,16 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       ? location.pathname === '/projects'
       : location.pathname.startsWith(path);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     const authProvider = createAuthProvider();
-    authProvider.logout({});
+    try {
+      const result = await authProvider.logout({});
+      if (!result.success) {
+        navigate('/login');
+      }
+    } catch {
+      navigate('/login');
+    }
   };
 
   const handleProjectSwitch = (targetProjectId: string) => {
