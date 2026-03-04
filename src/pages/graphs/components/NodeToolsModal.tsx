@@ -1,5 +1,3 @@
-import JsonView from '@uiw/react-json-view';
-import { lightTheme } from '@uiw/react-json-view/light';
 import type { FC } from 'react';
 
 import {
@@ -8,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../../components/ui/dialog';
+import { JsonViewer } from '../../../components/ui/json-view';
 
 interface ConnectedTool {
   name: string;
@@ -67,11 +66,7 @@ export const NodeToolsModal: FC<NodeToolsModalProps> = ({
                     maxHeight: 320,
                     overflow: 'auto',
                   }}>
-                  <JsonView
-                    value={tool.schema as object}
-                    style={lightTheme}
-                    collapsed={1}
-                  />
+                  <JsonViewer value={tool.schema as object} collapsed={1} />
                 </div>
               </div>
             ))}

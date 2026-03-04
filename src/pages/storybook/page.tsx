@@ -1,5 +1,3 @@
-import JsonView from '@uiw/react-json-view';
-import { lightTheme } from '@uiw/react-json-view/light';
 import { formatDistanceToNow } from 'date-fns';
 import { createTwoFilesPatch } from 'diff';
 import {
@@ -60,6 +58,7 @@ import { GitHubIntegrationCard } from '@/components/ui/github-integration-card';
 import { GraphCard } from '@/components/ui/graph-card';
 import { GraphNodeCard } from '@/components/ui/graph-node-card';
 import { Input } from '@/components/ui/input';
+import { JsonViewer } from '@/components/ui/json-view';
 import {
   KeyValueInput,
   type KeyValuePair,
@@ -1653,7 +1652,7 @@ function ChatMessageSection() {
     <Section
       id="chat-message"
       title="Chat Message"
-      description="ChatBubble component used in thread views — human and AI message variants.">
+      description="ChatBubble data-only component — renders markdown content, handles semantic states (pending, report, working) via props.">
       <Row label="Human message" code='role="human"'>
         <div className="w-full max-w-2xl">
           <ChatBubble
@@ -1730,29 +1729,16 @@ function ChatMessageSection() {
           />
         </div>
       </Row>
-      <Row label="Rich children" code="children prop">
+      <Row label="Pending message" code="isPending + pendingNote">
         <div className="w-full max-w-2xl">
           <ChatBubble
-            sender="Jarvis Kline"
-            role="ai"
-            agentRole="Engineer"
-            color="bg-blue-500">
-            <div className="space-y-2">
-              <p>Here's a summary of my findings:</p>
-              <ul className="list-disc list-inside text-sm space-y-1">
-                <li>
-                  Missing index on <code>user_id</code> column
-                </li>
-                <li>Non-reversible migration detected</li>
-                <li>
-                  Unused import in <code>auth.controller.ts</code>
-                </li>
-              </ul>
-              <p className="text-xs text-muted-foreground italic">
-                Parsed from 3 files, 247 lines scanned.
-              </p>
-            </div>
-          </ChatBubble>
+            sender="You"
+            role="human"
+            content="Please also check the integration tests."
+            color="bg-gray-500"
+            isPending
+            pendingNote="Will be sent after agent completes current task"
+          />
         </div>
       </Row>
       <Row label="Avatar tooltip" code="avatarTooltip">
@@ -1767,36 +1753,41 @@ function ChatMessageSection() {
           />
         </div>
       </Row>
-      <Row label="Custom footer" code="footer prop">
+      <Row label="Report message" code="isReport">
         <div className="w-full max-w-2xl">
           <ChatBubble
             sender="Marcus Wells"
             role="ai"
             agentRole="DevOps"
-            content="Deployment pipeline completed with 2 warnings."
+            content="Deployment pipeline completed with 2 warnings. All services are healthy."
             color="bg-amber-500"
-            footer={
-              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                <Badge variant="outline" className="text-[9px] px-1.5 py-0">
-                  v2.4.1
-                </Badge>
-                <span>Deployed to staging</span>
-                <span>·</span>
-                <span>2 warnings</span>
-              </div>
-            }
+            isReport
           />
         </div>
       </Row>
-      <Row label="Custom bubble style" code="bubbleStyle">
+      <Row label="Working block" code="isWorking + customBody">
         <div className="w-full max-w-2xl">
           <ChatBubble
-            sender="System"
+            sender="JK"
             role="ai"
-            content="Graph execution completed successfully. All 12 nodes executed without errors."
-            color="bg-emerald-500"
-            bubbleClassName="border-l-4 border-l-emerald-500"
-            bubbleStyle={{ background: '#f0fdf4' }}
+            color="bg-blue-500"
+            isWorking
+            content=""
+            customBody={
+              <div className="flex flex-col gap-1.5 w-full">
+                <span className="text-xs font-semibold text-muted-foreground text-left">
+                  Working...
+                </span>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs text-muted-foreground">
+                    Reviewing migration files...
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Checking index definitions...
+                  </span>
+                </div>
+              </div>
+            }
           />
         </div>
       </Row>
@@ -2388,21 +2379,15 @@ function JsonViewerSection() {
     <Section
       id="json-viewer"
       title="JSON Viewer"
-      description="Colorized JSON display using @uiw/react-json-view with lightTheme.">
+      description="Colorized JSON display via the JsonViewer wrapper.">
       <Row label="Simple object">
         <div className="w-full max-w-sm rounded-lg border border-gray-200 bg-white overflow-auto max-h-44 text-[10px] p-1.5">
-          <JsonView
-            value={SB_JSON_SIMPLE}
-            style={{ ...lightTheme, fontSize: '12px', fontFamily: 'monospace' }}
-          />
+          <JsonViewer value={SB_JSON_SIMPLE} />
         </div>
       </Row>
       <Row label="Nested / array">
         <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white overflow-auto max-h-60 text-[10px] p-1.5">
-          <JsonView
-            value={SB_JSON_NESTED}
-            style={{ ...lightTheme, fontSize: '12px', fontFamily: 'monospace' }}
-          />
+          <JsonViewer value={SB_JSON_NESTED} />
         </div>
       </Row>
     </Section>
@@ -2734,40 +2719,41 @@ function GraphNodeSection() {
       description="Canvas node card with type badges, model info, and expandable input/output handles.">
       <Row label="Interactive node">
         <div className="flex flex-col items-start gap-3">
-          <GraphNodeCard
-            label={SB_NODE.name}
-            templateKind={SB_NODE.type}
-            template={SB_NODE.badge}
-            metadataProperties={[
-              { key: 'model', value: SB_NODE.model, title: 'Model' },
-              {
-                key: 'reasoning',
-                value: SB_NODE.reasoning,
-                title: 'Reasoning',
-              },
-            ]}
-            description={SB_NODE.description}
-            selected={selected}
-            onClick={() => setSelected((v) => !v)}
-            avatar={
-              <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
-                <User className="w-3.5 h-3.5 text-primary" />
-              </div>
-            }
-            actionsSlot={
-              <button
-                className="text-muted-foreground/40 hover:text-destructive transition-colors flex-shrink-0"
-                onClick={(e) => e.stopPropagation()}>
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            }
-            inputsExpanded={inputsExpanded}
-            inputsCollapsed={inputsCollapsed}
-            outputsExpanded={outputsExpanded}
-            outputsCollapsed={outputsCollapsed}
-            defaultExpanded
-            className="w-[380px]"
-          />
+          <div className="w-[380px]">
+            <GraphNodeCard
+              label={SB_NODE.name}
+              templateKind={SB_NODE.type}
+              template={SB_NODE.badge}
+              metadataProperties={[
+                { key: 'model', value: SB_NODE.model, title: 'Model' },
+                {
+                  key: 'reasoning',
+                  value: SB_NODE.reasoning,
+                  title: 'Reasoning',
+                },
+              ]}
+              description={SB_NODE.description}
+              selected={selected}
+              onClick={() => setSelected((v) => !v)}
+              avatar={
+                <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+                  <User className="w-3.5 h-3.5 text-primary" />
+                </div>
+              }
+              actionsSlot={
+                <button
+                  className="text-muted-foreground/40 hover:text-destructive transition-colors flex-shrink-0"
+                  onClick={(e) => e.stopPropagation()}>
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              }
+              inputsExpanded={inputsExpanded}
+              inputsCollapsed={inputsCollapsed}
+              outputsExpanded={outputsExpanded}
+              outputsCollapsed={outputsCollapsed}
+              defaultExpanded
+            />
+          </div>
           <p className="text-xs text-muted-foreground">
             Click to select · use toggle button to expand inputs/outputs
           </p>
@@ -3351,40 +3337,34 @@ function GitHubIntegrationSection() {
       id="github-integration"
       title="GitHub Integration Card"
       description="Card component for GitHub App integration status and actions.">
-      <div className="space-y-6 max-w-xl">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground mb-2">
-            Disconnected
-          </p>
+      <Row label="Disconnected">
+        <div className="w-full max-w-xl">
           <GitHubIntegrationCard
             state="disconnected"
             installHref="#"
             callbackUrl="https://app.geniro.io/github-app/callback"
           />
         </div>
-        <div>
-          <p className="text-xs font-medium text-muted-foreground mb-2">
-            Connecting
-          </p>
+      </Row>
+      <Row label="Connecting">
+        <div className="w-full max-w-xl">
           <GitHubIntegrationCard state="connecting" />
         </div>
-        <div>
-          <p className="text-xs font-medium text-muted-foreground mb-2">
-            Connected
-          </p>
+      </Row>
+      <Row label="Connected">
+        <div className="w-full max-w-xl">
           <GitHubIntegrationCard
             state="connected"
             accountLogin="my-org"
             accountType="Organization"
           />
         </div>
-        <div>
-          <p className="text-xs font-medium text-muted-foreground mb-2">
-            Loading
-          </p>
+      </Row>
+      <Row label="Loading">
+        <div className="w-full max-w-xl">
           <GitHubIntegrationCard state="loading" />
         </div>
-      </div>
+      </Row>
     </Section>
   );
 }

@@ -1,9 +1,9 @@
 import React from 'react';
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
+
+import { SyntaxHighlighter } from '../ui/syntax-highlighter';
 
 /** Remark plugin that converts "loose" lists (items separated by blank lines
  *  in the source) into "tight" lists.  Loose lists cause react-markdown to
@@ -133,9 +133,8 @@ const renderMarkdownCode = ({
           overflow: 'auto',
         }}>
         <SyntaxHighlighter
-          style={vscDarkPlus}
           language={match[1]}
-          PreTag="div"
+          preTag="div"
           codeTagProps={{ style: { fontSize: 12 } }}>
           {codeContent}
         </SyntaxHighlighter>

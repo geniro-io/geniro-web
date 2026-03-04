@@ -575,26 +575,22 @@ export const ChatsPage = () => {
             </Tabs>
           </div>
           {graphFilterId && (
-            <div className="px-4 py-2.5 border-b border-border bg-muted/30 shrink-0">
-              <div className="flex items-center justify-between gap-3 min-w-0">
-                <div className="min-w-0 flex-1">
-                  <span className="text-[11px] text-muted-foreground block mb-0.5">
-                    Current graph
-                  </span>
-                  <span
-                    className="font-medium block truncate text-sm"
-                    title={filteredGraphLabel}>
-                    {filteredGraphLabel}
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 shrink-0"
-                  onClick={handleClearGraphFilter}
-                  aria-label="Clear graph filter">
-                  <X className="h-3.5 w-3.5" />
-                </Button>
+            <div className="px-3 py-2 border-b border-border shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <Badge
+                  variant="secondary"
+                  className="gap-1.5 pl-1.5 pr-1 py-0.5 min-w-0 max-w-full"
+                  title={filteredGraphLabel}>
+                  <Network className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{filteredGraphLabel}</span>
+                  <button
+                    type="button"
+                    className="ml-0.5 rounded-sm hover:bg-muted-foreground/20 p-0.5 shrink-0 transition-colors"
+                    onClick={handleClearGraphFilter}
+                    aria-label="Clear graph filter">
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
               </div>
             </div>
           )}

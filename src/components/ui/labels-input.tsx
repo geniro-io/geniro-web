@@ -8,7 +8,6 @@ export interface LabelsInputProps {
   onChange: (value: string[]) => void;
   placeholder?: string;
   disabled?: boolean;
-  className?: string;
 }
 
 export function LabelsInput({
@@ -16,7 +15,6 @@ export function LabelsInput({
   onChange,
   placeholder = 'Add label and press Enter',
   disabled = false,
-  className,
 }: LabelsInputProps) {
   const [inputValue, setInputValue] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -50,7 +48,6 @@ export function LabelsInput({
         'transition-[color,box-shadow]',
         'focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]',
         disabled && 'pointer-events-none cursor-not-allowed opacity-50',
-        className,
       )}
       onClick={() => inputRef.current?.focus()}>
       {value.map((label) => (

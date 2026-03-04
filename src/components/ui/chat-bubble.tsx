@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import React from 'react';
 
+import { MarkdownContent } from '../markdown/MarkdownContent';
 import { Avatar, AvatarFallback, AvatarImage } from './avatar';
 import { CopyButton, TokenBadge, type TokenInfo } from './token-display';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
@@ -18,35 +19,39 @@ function formatTimestamp(value?: string | null): string | undefined {
   return formatDistanceToNow(date, { addSuffix: true });
 }
 
+const MARKDOWN_BUBBLE_STYLE: React.CSSProperties = {
+  fontSize: '14px',
+  lineHeight: '1.4',
+  color: '#000000',
+};
+
 // ─── ChatBubble ───────────────────────────────────────────────────────────────
 
 export interface ChatBubbleProps {
+  // Identity
   sender: string;
   role: 'human' | 'ai';
   agentRole?: string;
-  /** Simple text content — rendered when `children` is not provided. */
-  content?: string;
-  /** Rich content (MarkdownContent, nested blocks). Takes precedence over `content`. */
-  children?: React.ReactNode;
-  /** ISO date string or pre-formatted timestamp. Formatted internally via toLocaleString(). */
-  timestamp?: string;
-  /** Tailwind bg color class (e.g. "bg-blue-500") or raw CSS color. */
-  color: string;
-  tokens?: TokenInfo;
-  /** Image URL for the avatar (dicebear data URI, gravatar, etc.). */
+  color?: string;
   avatarSrc?: string;
-  /** Tooltip text shown on avatar hover. */
   avatarTooltip?: string;
-  /** Custom footer replacing the default metadata row. */
-  footer?: React.ReactNode;
-  /** Additional Tailwind classes appended to the bubble div. */
-  bubbleClassName?: string;
-  /** Inline style overrides for the bubble div. */
-  bubbleStyle?: React.CSSProperties;
-  /** Inline style overrides for the outer container div. */
-  containerStyle?: React.CSSProperties;
-  /** Text for the clipboard copy button. Defaults to `content`. */
+
+  // Content — data only
+  content: string;
   copyContent?: string;
+
+  // Timestamps & metrics
+  timestamp?: string;
+  tokens?: TokenInfo;
+
+  // Semantic state flags — drive styling
+  isPending?: boolean;
+  pendingNote?: string;
+  isReport?: boolean;
+  isWorking?: boolean;
+
+  // Escape hatch for non-markdown structured content (working blocks)
+  customBody?: React.ReactNode;
 }
 
 export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
@@ -54,18 +59,18 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
     sender,
     role,
     agentRole,
-    content,
-    children,
-    timestamp,
-    color,
-    tokens,
+    color = 'bg-gray-500',
     avatarSrc,
     avatarTooltip,
-    footer,
-    bubbleClassName,
-    bubbleStyle,
-    containerStyle,
+    content,
     copyContent,
+    timestamp,
+    tokens,
+    isPending,
+    pendingNote,
+    isReport,
+    isWorking,
+    customBody,
   }) => {
     const isHuman = role === 'human';
     const initials = sender
@@ -95,11 +100,40 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
 
     const copyText = copyContent ?? content ?? '';
 
-    const defaultBubbleClass = isHuman
-      ? 'bg-blue-50 text-blue-900 border border-blue-100'
-      : 'bg-muted text-foreground';
+    // Compute bubble classes from state flags
+    const bubbleClass = isPending
+      ? 'border-2 border-dashed border-gray-300'
+      : isReport
+        ? 'bg-blue-50 text-blue-900 border border-blue-200'
+        : isHuman
+          ? 'bg-primary/10 border border-primary/20'
+          : 'bg-muted/40 border border-border';
 
-    const hasCustomFooter = footer !== undefined;
+    const bubbleStyle: React.CSSProperties | undefined = isWorking
+      ? { background: '#fff', border: '1px solid #e5e5e5' }
+      : undefined;
+
+    const containerStyle: React.CSSProperties | undefined = isPending
+      ? { opacity: 0.6 }
+      : isWorking
+        ? { marginBottom: 8, width: '100%' }
+        : undefined;
+
+    // Render body content
+    const body = customBody ? (
+      customBody
+    ) : isReport ? (
+      <div>
+        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-blue-200">
+          <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+            Status report
+          </span>
+        </div>
+        <MarkdownContent content={content} style={MARKDOWN_BUBBLE_STYLE} />
+      </div>
+    ) : (
+      <MarkdownContent content={content} style={MARKDOWN_BUBBLE_STYLE} />
+    );
 
     return (
       <div
@@ -110,39 +144,38 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
         <div
           className={`max-w-[76%] flex flex-col ${isHuman ? 'items-end' : 'items-start'}`}>
           <div
-            className={`rounded-xl px-4 py-3 text-sm leading-relaxed ${defaultBubbleClass} ${bubbleClassName ?? ''}`}
+            className={`rounded-xl px-4 py-3 text-sm leading-relaxed ${bubbleClass}`}
             style={bubbleStyle}>
-            {children ?? content}
+            {body}
           </div>
 
-          {hasCustomFooter ? (
-            footer && (
-              <div className="flex items-center gap-2 mt-1">{footer}</div>
-            )
-          ) : (
-            <div
-              className={`flex items-center gap-1.5 mt-1 text-[10px] text-muted-foreground flex-wrap ${isHuman ? 'flex-row-reverse' : ''}`}>
-              <span className="font-medium text-foreground/60">{sender}</span>
-              {agentRole && (
-                <>
-                  <span>·</span>
-                  <span>{agentRole}</span>
-                </>
-              )}
-              {timestamp && (
-                <>
-                  <span>·</span>
-                  <span>{formatTimestamp(timestamp)}</span>
-                </>
-              )}
-              {tokens && (
-                <>
-                  <span>·</span>
-                  <TokenBadge tokens={tokens} />
-                </>
-              )}
-              <CopyButton text={copyText} />
-            </div>
+          <div
+            className={`flex items-center gap-1.5 mt-1 text-[10px] text-muted-foreground flex-wrap ${isHuman ? 'flex-row-reverse' : ''}`}>
+            <span className="font-medium text-foreground/60">{sender}</span>
+            {agentRole && (
+              <>
+                <span>·</span>
+                <span>{agentRole}</span>
+              </>
+            )}
+            {timestamp && (
+              <>
+                <span>·</span>
+                <span>{formatTimestamp(timestamp)}</span>
+              </>
+            )}
+            {tokens && (
+              <>
+                <span>·</span>
+                <TokenBadge tokens={tokens} />
+              </>
+            )}
+            <CopyButton text={copyText} />
+          </div>
+          {pendingNote && (
+            <span className="text-[11px] mt-1 text-muted-foreground italic">
+              {pendingNote}
+            </span>
           )}
         </div>
       </div>

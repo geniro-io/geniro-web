@@ -8,6 +8,7 @@ import type { AuthModule } from './auth/types';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Layout } from './components/layout/Layout';
 import { Card } from './components/ui/card';
+import { STORYBOOK_ENABLED } from './config';
 import { ProjectProvider, useProjectContext } from './contexts/ProjectContext';
 import { ChatsPage } from './pages/chats/page';
 import { GitHubAppCallbackPage } from './pages/github-app/components/GitHubAppCallbackPage';
@@ -183,7 +184,9 @@ function App({ authModule }: { authModule: AuthModule }) {
               path="/github-app/callback"
               element={<GitHubAppCallbackPage />}
             />
-            <Route path="/storybook" element={<StorybookPage />} />
+            {STORYBOOK_ENABLED && (
+              <Route path="/storybook" element={<StorybookPage />} />
+            )}
             <Route
               path="*"
               element={

@@ -44,6 +44,7 @@ import type {
 } from '../types';
 
 interface UseGraphActionsOptions {
+  projectId: string | undefined;
   graphId: string | undefined;
   graph: GraphDto | null;
   setGraph: Dispatch<SetStateAction<GraphDto | null>>;
@@ -73,6 +74,7 @@ interface UseGraphActionsOptions {
 }
 
 export const useGraphActions = ({
+  projectId,
   graphId: id,
   graph,
   setGraph,
@@ -512,8 +514,8 @@ export const useGraphActions = ({
         handleDownloadGraphBackup();
       }
       if (key === 'chats') {
-        if (!graph) return;
-        navigate(`/chats?graphId=${graph.id}`);
+        if (!graph || !projectId) return;
+        navigate(`/projects/${projectId}/chats?graphId=${graph.id}`);
       }
       if (key === 'improve') {
         handleOpenGraphAiModal();
@@ -524,6 +526,7 @@ export const useGraphActions = ({
     },
     [
       graph,
+      projectId,
       handleNameEdit,
       handleDownloadGraphBackup,
       handleOpenGraphAiModal,

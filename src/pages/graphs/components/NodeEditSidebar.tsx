@@ -1,6 +1,4 @@
 import $RefParser from '@apidevtools/json-schema-ref-parser';
-import JsonView from '@uiw/react-json-view';
-import { lightTheme } from '@uiw/react-json-view/light';
 import { createTwoFilesPatch } from 'diff';
 import { isEqual } from 'lodash';
 import {
@@ -36,6 +34,7 @@ import {
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
+import { JsonViewer } from '../../../components/ui/json-view';
 import {
   Popover,
   PopoverContent,
@@ -480,10 +479,7 @@ export const NodeEditSidebar = React.memo(
                 padding: 8,
                 background: '#fafafa',
               }}>
-              <JsonView
-                value={metadataJsonValue as object}
-                style={lightTheme}
-              />
+              <JsonViewer value={metadataJsonValue as object} />
             </div>
           </div>
         )}
@@ -503,7 +499,7 @@ export const NodeEditSidebar = React.memo(
                 padding: 8,
                 background: '#fafafa',
               }}>
-              <JsonView value={configJsonValue as object} style={lightTheme} />
+              <JsonViewer value={configJsonValue as object} />
             </div>
           </div>
         )}

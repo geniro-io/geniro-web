@@ -1,5 +1,3 @@
-import JsonView from '@uiw/react-json-view';
-import { lightTheme } from '@uiw/react-json-view/light';
 import { AnsiUp } from 'ansi_up';
 import {
   AlertCircle,
@@ -15,14 +13,14 @@ import {
   XCircle,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { toast } from 'sonner';
 
 import { getStatusBadgeClass } from '../../utils/statusColors';
 import { Avatar, AvatarFallback } from './avatar';
 import { Badge } from './badge';
+import { JsonViewer } from './json-view';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { SyntaxHighlighter } from './syntax-highlighter';
 import {
   CopyButton,
   fmtK,
@@ -231,10 +229,7 @@ export function JsonDisplay({
   return (
     <div
       className={`rounded-lg border border-gray-200 bg-white overflow-auto ${maxH} text-[10px] p-1.5`}>
-      <JsonView
-        value={data as object}
-        style={{ ...lightTheme, fontSize: '10px', fontFamily: 'monospace' }}
-      />
+      <JsonViewer value={data as object} fontSize="10px" />
     </div>
   );
 }
@@ -814,14 +809,13 @@ export function ShellBlock({
     return (
       <SyntaxHighlighter
         language="bash"
-        style={vscDarkPlus}
         customStyle={{
           margin: 0,
           padding: 0,
           background: 'transparent',
           fontSize: '12px',
         }}
-        PreTag="div"
+        preTag="div"
         codeTagProps={{
           style: { fontFamily: 'inherit', color },
         }}>
@@ -901,7 +895,6 @@ export function ShellBlock({
                 }}>
                 <SyntaxHighlighter
                   language="bash"
-                  style={vscDarkPlus}
                   customStyle={{
                     margin: 0,
                     padding: 0,
@@ -911,7 +904,7 @@ export function ShellBlock({
                     wordBreak: 'break-word',
                     lineHeight: '1.5',
                   }}
-                  PreTag="div"
+                  preTag="div"
                   codeTagProps={{
                     style: {
                       fontFamily: 'inherit',

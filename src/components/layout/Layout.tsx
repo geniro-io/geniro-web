@@ -14,6 +14,7 @@ import { useMemo } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 
 import { useAuth, useAuthModule } from '../../auth/AuthModuleContext';
+import { STORYBOOK_ENABLED } from '../../config';
 import { useCurrentProject } from '../../hooks/useCurrentProject';
 import {
   DropdownMenu,
@@ -113,7 +114,9 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       );
     }
 
-    base.push({ path: '/storybook', icon: Layers, label: 'Storybook' });
+    if (STORYBOOK_ENABLED) {
+      base.push({ path: '/storybook', icon: Layers, label: 'Storybook' });
+    }
 
     return base;
   }, [projectId]);

@@ -67,7 +67,7 @@ import {
 
 export const GraphPage = () => {
   const message = toastMessage;
-  const { id } = useParams<{ id: string }>();
+  const { projectId, id } = useParams<{ projectId: string; id: string }>();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -584,6 +584,7 @@ export const GraphPage = () => {
     handleDeleteGraphConfirm,
     handleDeleteGraphCancel,
   } = useGraphActions({
+    projectId,
     graphId: id,
     graph,
     setGraph,

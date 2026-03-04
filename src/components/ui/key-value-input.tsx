@@ -13,7 +13,6 @@ export interface KeyValueInputProps {
   onChange: (pairs: KeyValuePair[]) => void;
   placeholder?: string;
   disabled?: boolean;
-  className?: string;
 }
 
 export function KeyValueInput({
@@ -21,7 +20,6 @@ export function KeyValueInput({
   onChange,
   placeholder = 'Key',
   disabled = false,
-  className,
 }: KeyValueInputProps) {
   const addPair = () => {
     onChange([...value, { key: '', value: '' }]);
@@ -50,7 +48,6 @@ export function KeyValueInput({
         'transition-[color,box-shadow]',
         'focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]',
         disabled && 'pointer-events-none cursor-not-allowed opacity-50',
-        className,
       )}>
       {value.map((pair, index) => (
         <div

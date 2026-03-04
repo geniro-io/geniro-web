@@ -57,13 +57,6 @@ import {
   scrollContainerStyle,
 } from './threadMessages/threadMessagesViewUtils';
 
-/** Stable style references for MarkdownContent to enable React.memo effectiveness. */
-const MARKDOWN_DEFAULT_STYLE: React.CSSProperties = {
-  fontSize: '14px',
-  lineHeight: '1.4',
-  color: '#000000',
-};
-
 const MARKDOWN_COMPACT_STYLE: React.CSSProperties = {
   fontSize: '13px',
   lineHeight: '1.4',
@@ -684,7 +677,8 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
             color={avatarColor}
             avatarSrc={avatarSrc}
             avatarTooltip={avatarTooltip}
-            bubbleClassName="bg-blue-50 text-blue-900 border border-blue-200"
+            isReport
+            content={content}
             copyContent={content}
             timestamp={message.createdAt}
             tokens={
@@ -694,19 +688,8 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
                     extractDurationMs(message.message),
                   )
                 : undefined
-            }>
-            <div>
-              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-blue-200">
-                <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
-                  Status report
-                </span>
-              </div>
-              <MarkdownContent
-                content={content}
-                style={MARKDOWN_DEFAULT_STYLE}
-              />
-            </div>
-          </ChatBubble>
+            }
+          />
         );
       }
 
@@ -719,9 +702,9 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
             avatarSrc={avatarSrc}
             avatarTooltip={avatarTooltip}
             timestamp={message.createdAt}
-            copyContent={content}>
-            <MarkdownContent content={content} style={MARKDOWN_DEFAULT_STYLE} />
-          </ChatBubble>
+            content={content}
+            copyContent={content}
+          />
         );
       }
 
@@ -741,9 +724,9 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
                 )
               : undefined
           }
-          copyContent={content}>
-          <MarkdownContent content={content} style={MARKDOWN_DEFAULT_STYLE} />
-        </ChatBubble>
+          content={content}
+          copyContent={content}
+        />
       );
     };
 
@@ -772,16 +755,11 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
           color={isHuman ? 'bg-gray-500' : 'bg-green-500'}
           avatarSrc={avatarSrc}
           avatarTooltip={pendingAvatarTooltip}
-          containerStyle={{ opacity: 0.6 }}
-          bubbleClassName="border-2 border-dashed border-gray-300"
+          isPending
+          pendingNote={sendTimeText}
+          content={content}
           copyContent={content}
-          footer={
-            <span className="text-[11px] mt-1 text-muted-foreground italic">
-              {sendTimeText}
-            </span>
-          }>
-          <MarkdownContent content={content} style={MARKDOWN_DEFAULT_STYLE} />
-        </ChatBubble>
+        />
       );
     };
 
@@ -1157,13 +1135,6 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
           (avatarSeedNodeId && nodeDisplayNames?.[avatarSeedNodeId]) ||
           (avatarSeedNodeId ? `Node ${avatarSeedNodeId.slice(-6)}` : 'Agent');
 
-        const bubbleStyle: React.CSSProperties = {
-          backgroundColor: '#ffffff',
-          border: '1px solid #e5e7eb',
-          borderRadius: 8,
-          padding: '10px 12px',
-        };
-
         return (
           <ChatBubble
             sender={avatarLabel}
@@ -1171,18 +1142,19 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
             color="#8c8c8c"
             avatarSrc={avatarSrc}
             avatarTooltip={workingAgentName}
-            containerStyle={{ marginBottom: '8px', width: '100%' }}
-            bubbleStyle={bubbleStyle}>
-            <div className="flex flex-col gap-1.5 w-full">
-              <span className="text-xs font-semibold text-muted-foreground text-left">
-                Working...
-              </span>
-
-              <div className="flex flex-col gap-1.5">
-                {items.map((it, idx) => renderWorkingItem(it, idx))}
+            isWorking
+            content=""
+            customBody={
+              <div className="flex flex-col gap-1.5 w-full">
+                <span className="text-xs font-semibold text-muted-foreground text-left">
+                  Working...
+                </span>
+                <div className="flex flex-col gap-1.5">
+                  {items.map((it, idx) => renderWorkingItem(it, idx))}
+                </div>
               </div>
-            </div>
-          </ChatBubble>
+            }
+          />
         );
       };
 

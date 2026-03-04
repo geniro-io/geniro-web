@@ -67,8 +67,6 @@ export interface GraphNodeCardProps {
 
   defaultExpanded?: boolean;
 
-  style?: React.CSSProperties;
-  className?: string;
   onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
@@ -89,8 +87,6 @@ export const GraphNodeCard: React.FC<GraphNodeCardProps> = ({
   outputsExpanded,
   outputsCollapsed,
   defaultExpanded = false,
-  style,
-  className,
   onClick,
 }) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -106,11 +102,9 @@ export const GraphNodeCard: React.FC<GraphNodeCardProps> = ({
       className={[
         'bg-card rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer',
         borderClass,
-        className,
       ]
         .filter(Boolean)
         .join(' ')}
-      style={style}
       onClick={onClick}>
       {/* ── Header ─────────────────────────────────────────────── */}
       <div className="p-4 border-b border-border/50">
@@ -919,38 +913,39 @@ export const CustomNode = React.memo(
     );
 
     return (
-      <GraphNodeCard
-        label={nodeData.label}
-        templateKind={templateKind}
-        template={nodeData.template}
-        metadataProperties={metadataProperties.map((p) => ({
-          ...p,
-          value: String(p.value),
-        }))}
-        description={nodeTemplate?.description}
-        selected={selected}
-        hasValidationErrors={hasValidationErrors}
-        statusDot={statusDot}
-        avatar={avatar}
-        actionsSlot={actionsSlot}
-        inputsExpanded={inputsExpanded}
-        inputsCollapsed={inputsCollapsed}
-        outputsExpanded={outputsExpanded}
-        outputsCollapsed={outputsCollapsed}
-        footer={
-          isTriggerNode ? (
-            <Button
-              size="sm"
-              disabled={!canTrigger}
-              onClick={() => onTriggerClick?.(nodeId)}
-              className="text-[11px] px-5">
-              <Play className="size-3.5" />
-              Trigger
-            </Button>
-          ) : undefined
-        }
-        style={{ minWidth: 300, position: 'relative', zIndex: 1 }}
-      />
+      <div style={{ minWidth: 300, position: 'relative', zIndex: 1 }}>
+        <GraphNodeCard
+          label={nodeData.label}
+          templateKind={templateKind}
+          template={nodeData.template}
+          metadataProperties={metadataProperties.map((p) => ({
+            ...p,
+            value: String(p.value),
+          }))}
+          description={nodeTemplate?.description}
+          selected={selected}
+          hasValidationErrors={hasValidationErrors}
+          statusDot={statusDot}
+          avatar={avatar}
+          actionsSlot={actionsSlot}
+          inputsExpanded={inputsExpanded}
+          inputsCollapsed={inputsCollapsed}
+          outputsExpanded={outputsExpanded}
+          outputsCollapsed={outputsCollapsed}
+          footer={
+            isTriggerNode ? (
+              <Button
+                size="sm"
+                disabled={!canTrigger}
+                onClick={() => onTriggerClick?.(nodeId)}
+                className="text-[11px] px-5">
+                <Play className="size-3.5" />
+                Trigger
+              </Button>
+            ) : undefined
+          }
+        />
+      </div>
     );
   },
   (prevProps, nextProps) => {

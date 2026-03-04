@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
@@ -599,9 +600,9 @@ export const KnowledgeListPage = () => {
               doc.content?.split('\n').find((line) => line.trim()) ||
               'No summary provided.';
             return (
-              <div
+              <Card
                 key={doc.id}
-                className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-all cursor-pointer flex flex-col gap-3 group w-[clamp(300px,30vw,420px)]"
+                className="p-5 hover:shadow-md transition-all cursor-pointer gap-3 group w-[clamp(300px,30vw,420px)]"
                 onClick={() => handleOpenView(doc)}>
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2 flex-1">
@@ -669,7 +670,7 @@ export const KnowledgeListPage = () => {
                 <p className="text-[10px] text-muted-foreground mt-auto">
                   Updated {formatDistanceToNow(updatedAt, { addSuffix: true })}
                 </p>
-              </div>
+              </Card>
             );
           })}
         </div>

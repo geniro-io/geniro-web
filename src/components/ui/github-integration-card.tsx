@@ -10,6 +10,7 @@ import {
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   Tooltip,
   TooltipContent,
@@ -86,7 +87,7 @@ export function GitHubIntegrationCard({
   disconnecting,
 }: GitHubIntegrationCardProps) {
   return (
-    <div className="border border-border rounded-lg bg-card">
+    <Card className="gap-0">
       {/* Card header */}
       <div className="flex items-start justify-between gap-4 p-5 border-b border-border">
         <div className="flex items-center gap-3">
@@ -218,6 +219,6 @@ export function GitHubIntegrationCard({
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
