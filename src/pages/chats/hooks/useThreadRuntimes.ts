@@ -30,26 +30,30 @@ export const useThreadRuntimes = (
     graphIdRef.current = graphId;
   }, [graphId]);
 
-  const fetchRuntimes = useCallback(async (tid: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await runtimesApi.getRuntimes(tid);
-      if (threadIdRef.current === tid) {
-        setRuntimes(response.data);
+  const fetchRuntimes = useCallback(
+    async (tid: string, options?: { silent?: boolean }) => {
+      const silent = options?.silent ?? false;
+      if (!silent) setLoading(true);
+      if (!silent) setError(null);
+      try {
+        const response = await runtimesApi.getRuntimes(tid);
+        if (threadIdRef.current === tid) {
+          setRuntimes(response.data);
+        }
+      } catch (err) {
+        if (threadIdRef.current === tid && !silent) {
+          const message =
+            err instanceof Error ? err.message : 'Failed to load runtimes';
+          setError(message);
+        }
+      } finally {
+        if (threadIdRef.current === tid && !silent) {
+          setLoading(false);
+        }
       }
-    } catch (err) {
-      if (threadIdRef.current === tid) {
-        const message =
-          err instanceof Error ? err.message : 'Failed to load runtimes';
-        setError(message);
-      }
-    } finally {
-      if (threadIdRef.current === tid) {
-        setLoading(false);
-      }
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!threadId) {
@@ -59,6 +63,20 @@ export const useThreadRuntimes = (
       return;
     }
     void fetchRuntimes(threadId);
+  }, [threadId, fetchRuntimes]);
+
+  useEffect(() => {
+    if (!threadId) return;
+    const POLL_INTERVAL_MS = 60_000;
+    const intervalId = setInterval(() => {
+      const tid = threadIdRef.current;
+      if (tid) {
+        void fetchRuntimes(tid, { silent: true });
+      }
+    }, POLL_INTERVAL_MS);
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [threadId, fetchRuntimes]);
 
   const refresh = useCallback(() => {
