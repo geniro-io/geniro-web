@@ -4,7 +4,7 @@
 
 **Build, run, and manage AI agent automations through a visual graph editor.**
 
-[![License: MIT + Commons Clause](https://img.shields.io/badge/License-MIT%20%2B%20Commons%20Clause-blue.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7-646cff.svg)](https://vitejs.dev/)
@@ -231,6 +231,6 @@ See [`docs/readme.md`](docs/readme.md) for detailed development guidelines, debu
 
 ## License
 
-This project is licensed under the [MIT License + Commons Clause](LICENSE).
+Licensed under the [Apache License 2.0](LICENSE) with additional conditions. A commercial license is required for operating a multi-tenant SaaS. See [LICENSE](LICENSE) for details.
 
 Copyright (c) 2026 Sergei Razumovskii

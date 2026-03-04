@@ -38,6 +38,10 @@ import { Card } from '@/components/ui/card';
 import { ChatBubble } from '@/components/ui/chat-bubble';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
+  DateRangeFilter,
+  type DateRangeFilterValue,
+} from '@/components/ui/date-range-filter';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -230,6 +234,7 @@ const SECTIONS = [
   { id: 'graph-ai-suggestion', label: 'Graph AI Suggestion' },
   { id: 'node-ai-suggestion', label: 'Node AI Suggestion' },
   { id: 'github-integration', label: 'GitHub Integration' },
+  { id: 'date-range-filter', label: 'Date Range Filter' },
 ] as const;
 
 /* -------------------------------------------------------------------------- */
@@ -3369,6 +3374,32 @@ function GitHubIntegrationSection() {
   );
 }
 
+function DateRangeFilterSection() {
+  const [dateRangeValue, setDateRangeValue] = useState<DateRangeFilterValue>({
+    dateFrom: undefined,
+    dateTo: undefined,
+  });
+
+  return (
+    <Section
+      id="date-range-filter"
+      title="Date Range Filter"
+      description="Preset-based date range selector with optional custom calendar picker.">
+      <Row label="Default">
+        <div className="flex flex-col gap-4">
+          <DateRangeFilter
+            value={dateRangeValue}
+            onChange={setDateRangeValue}
+          />
+          <pre className="text-xs text-muted-foreground">
+            {JSON.stringify(dateRangeValue, null, 2)}
+          </pre>
+        </div>
+      </Row>
+    </Section>
+  );
+}
+
 export function StorybookPage() {
   const active = useActiveSection();
 
@@ -3423,6 +3454,7 @@ export function StorybookPage() {
         <GraphAiSuggestionSection />
         <NodeAiSuggestionSection />
         <GitHubIntegrationSection />
+        <DateRangeFilterSection />
       </div>
     </div>
   );
