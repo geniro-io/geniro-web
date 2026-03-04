@@ -513,7 +513,7 @@ export const ChatsPage = () => {
   // --- Render ---
 
   return (
-    <div className="h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden">
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Left sidebar: thread list */}
         <aside className="w-72 bg-card border-r border-border flex flex-col overflow-hidden">
@@ -674,7 +674,7 @@ export const ChatsPage = () => {
                           </h2>
                           {threadStatusMeta && (
                             <Badge
-                              className={`text-[10px] px-1.5 py-0 h-4 font-medium flex-shrink-0 ${getStatusBadgeClass(threadStatusMeta.label)}`}>
+                              className={`text-[10px] px-1.5 py-0 h-4 font-medium flex-shrink-0 ${getStatusBadgeClass((selectedThread as ThreadDto).status)}`}>
                               {threadStatusMeta.label}
                             </Badge>
                           )}
@@ -886,7 +886,7 @@ export const ChatsPage = () => {
                     )}
                   </div>
 
-                  <div className="flex-1 min-h-0 flex flex-col">
+                  <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
                     <ThreadChatPanel
                       graphId={selectedThread.graphId}
                       thread={selectedThread as ThreadDto}

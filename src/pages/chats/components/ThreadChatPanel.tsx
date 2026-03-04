@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   ChevronDown,
   GitBranch,
   Github,
@@ -655,22 +656,23 @@ export const ThreadChatPanel: React.FC<ThreadChatPanelProps> = ({
   const ChatInputSection = useMemo(
     () => (
       <div className="px-4 py-3 border-t border-border bg-card">
-        {triggerNodes.length > 0 ? (
+        {triggerNodes.length > 0 && !graphIsRunning ? (
+          <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+            <span className="text-sm text-muted-foreground">
+              Graph is not running. Start the graph to send messages.
+            </span>
+          </div>
+        ) : triggerNodes.length > 0 ? (
           <div className="flex flex-col gap-1.5">
             {/* Main row: textarea + action buttons */}
             <div className="flex items-end gap-2">
               <Textarea
-                placeholder={
-                  !graphIsRunning
-                    ? 'Graph is not running'
-                    : 'Type your message...'
-                }
+                placeholder="Type your message..."
                 value={messageInput}
                 onChange={handleInputChange}
                 onKeyDown={handleInputEnter}
-                disabled={
-                  sendingMessage || !selectedTriggerId || !graphIsRunning
-                }
+                disabled={sendingMessage || !selectedTriggerId}
                 className="flex-1 resize-none min-h-[36px]"
                 rows={1}
               />
@@ -700,8 +702,7 @@ export const ThreadChatPanel: React.FC<ThreadChatPanelProps> = ({
                   !messageInput.trim() ||
                   !selectedTriggerId ||
                   templatesLoading ||
-                  sendingMessage ||
-                  !graphIsRunning
+                  sendingMessage
                 }
                 className="shrink-0">
                 {sendingMessage ? (
@@ -805,7 +806,7 @@ export const ThreadChatPanel: React.FC<ThreadChatPanelProps> = ({
   );
 
   return (
-    <div style={style} className="flex flex-col flex-1 min-h-0">
+    <div style={style} className="flex flex-col flex-1 min-h-0 overflow-hidden">
       <div className="flex-1 min-h-0 rounded-lg flex flex-col overflow-hidden">
         <ThreadMessagesView
           messages={messages}
