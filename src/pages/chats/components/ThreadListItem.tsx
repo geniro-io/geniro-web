@@ -66,16 +66,19 @@ export const ThreadListItem: React.FC<ThreadListItemProps> = React.memo(
           <div className="flex items-center gap-1.5 mb-1">
             <span
               className={cn(
-                'text-sm font-medium truncate flex-1 min-w-0',
+                'text-sm font-medium truncate min-w-0',
                 isActive ? 'text-primary' : 'text-foreground',
               )}>
               {thread.name || 'New Thread'}
             </span>
+            <div className="flex-1" />
             {statusMeta && (
               <Badge
                 className={cn(
                   'text-[10px] px-1.5 py-0 h-4 flex-shrink-0 font-medium',
-                  getStatusBadgeClass(statusMeta.label),
+                  isDraft
+                    ? getStatusBadgeClass('draft')
+                    : getStatusBadgeClass((thread as ThreadDto).status),
                 )}>
                 {statusMeta.label}
               </Badge>

@@ -16,6 +16,7 @@ import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { getStatusBadgeClass } from '../../utils/statusColors';
+import { MarkdownContent } from '../markdown/MarkdownContent';
 import { Avatar, AvatarFallback } from './avatar';
 import { Badge } from './badge';
 import { JsonViewer } from './json-view';
@@ -236,16 +237,6 @@ export function JsonDisplay({
 
 // ─── InlineText ───────────────────────────────────────────────────────────────
 
-// Static map so Tailwind JIT can detect the full class names.
-const LINE_CLAMP: Record<number, string> = {
-  1: 'line-clamp-1',
-  2: 'line-clamp-2',
-  3: 'line-clamp-3',
-  4: 'line-clamp-4',
-  5: 'line-clamp-5',
-  6: 'line-clamp-6',
-};
-
 export function InlineText({
   text,
   lines = 3,
@@ -258,13 +249,28 @@ export function InlineText({
   const [expanded, setExpanded] = useState(false);
   const lineCount = text.split('\n').length;
   const isLong = lineCount > lines || text.length > lines * 80;
-  const clampClass = LINE_CLAMP[lines] ?? 'line-clamp-3';
+  // Account for markdown paragraph margins (~2.4em per visible "line")
+  const collapsedMaxH = `${lines * 2.4}em`;
   return (
     <div
       className={`text-[11px] rounded-lg px-3 py-2.5 leading-relaxed ${accentClass ?? 'bg-muted/40 border border-border/50 text-foreground font-mono'}`}>
-      <p className={!expanded && isLong ? clampClass : 'whitespace-pre-wrap'}>
-        {text}
-      </p>
+      <div
+        className={!expanded && isLong ? 'overflow-hidden' : undefined}
+        style={
+          !expanded && isLong
+            ? {
+                maxHeight: collapsedMaxH,
+                maskImage: 'linear-gradient(to bottom, black 40%, transparent)',
+                WebkitMaskImage:
+                  'linear-gradient(to bottom, black 40%, transparent)',
+              }
+            : undefined
+        }>
+        <MarkdownContent
+          content={text}
+          style={{ fontSize: '11px', lineHeight: '1.5' }}
+        />
+      </div>
       {isLong && (
         <button
           className="flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground mt-1.5 transition-colors"
@@ -1798,13 +1804,16 @@ export function FinishBlock({
           </span>
         </div>
         <div
-          className="rounded-b-xl px-4 py-4 text-sm whitespace-pre-wrap leading-relaxed text-foreground border border-t-0"
+          className="rounded-b-xl px-4 py-4 text-sm leading-relaxed text-foreground border border-t-0"
           style={{
             background: isDone ? '#f6ffed' : '#fffbe6',
             borderLeft: `3px solid ${accentColor}`,
             borderColor: isDone ? '#b7eb8f' : '#ffe58f',
           }}>
-          {message}
+          <MarkdownContent
+            content={message}
+            style={{ fontSize: '14px', lineHeight: '1.4', color: '#000000' }}
+          />
         </div>
         <div className="flex items-center gap-1.5 mt-1 text-[10px] text-muted-foreground">
           <span className="font-medium text-foreground/60">{sender}</span>
