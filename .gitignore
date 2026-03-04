@@ -33,3 +33,6 @@ _.sln
 \*.sw?
 
 .playwright-mcp/
+
+# Generated runtime config (created by docker-entrypoint.sh)
+public/config.js

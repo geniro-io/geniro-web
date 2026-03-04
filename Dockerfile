@@ -21,7 +21,7 @@ RUN pnpm run build
 FROM base AS runner
 WORKDIR /app
 
-RUN apk add --no-cache --update curl
+RUN apk add --no-cache --update curl gettext
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -35,6 +35,10 @@ COPY --from=deps /app/vite.config.ts ./vite.config.ts
 
 RUN corepack enable && pnpm --version
 
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 EXPOSE 4173
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["pnpm", "start"]
