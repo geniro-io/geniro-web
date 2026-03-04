@@ -149,7 +149,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="flex h-screen flex-col bg-background min-w-[1248px]">
       {/* Full-width header row */}
       <div className="flex border-b border-border bg-card flex-shrink-0">
         {/* Logo cell */}

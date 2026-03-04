@@ -153,14 +153,14 @@ export const CreateProjectPage = () => {
 
   if (projectsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/50 p-6">
+      <div className="min-h-screen min-w-[1248px] flex items-center justify-center bg-muted/50 p-6">
         <Skeleton className="h-[500px] w-[520px] rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/50 p-6">
+    <div className="min-h-screen min-w-[1248px] flex items-center justify-center bg-muted/50 p-6">
       <Card className="w-full max-w-[520px] rounded-2xl shadow-lg p-8">
         {/* Step Indicator */}
         <div className="flex items-center justify-center gap-3 mb-8">

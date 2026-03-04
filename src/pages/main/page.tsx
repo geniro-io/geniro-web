@@ -13,6 +13,7 @@ import {
 import { useEffect, useState } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import {
   DateRangeFilter,
@@ -42,6 +43,15 @@ const TOKEN_COLORS = {
 const formatNumber = (num?: number | null): string => {
   if (typeof num !== 'number' || !Number.isFinite(num)) return '\u2014';
   return new Intl.NumberFormat('en-US').format(num);
+};
+
+const formatCompact = (num?: number | null): string => {
+  if (typeof num !== 'number' || !Number.isFinite(num)) return '\u2014';
+  if (num < 10_000) return new Intl.NumberFormat('en-US').format(num);
+  return new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(num);
 };
 
 const formatUsd = (amount?: number | null): string => {
@@ -82,7 +92,7 @@ const StatCard = ({
   );
 };
 
-const GraphCard = ({
+const AnalyticsGraphCard = ({
   graph,
 }: {
   graph: AnalyticsByGraphResponseDtoGraphsInner;
@@ -95,39 +105,39 @@ const GraphCard = ({
           {graph.graphName}
         </span>
       </div>
-      <div className="px-2 py-0.5 bg-[#b87d52]/10 text-[#b87d52] rounded text-xs font-medium">
+      <Badge className="px-2 py-0.5 bg-[#b87d52]/10 text-[#b87d52] border-transparent rounded text-xs font-medium hover:bg-[#b87d52]/10">
         {formatUsd(graph.totalPrice)}
-      </div>
+      </Badge>
     </div>
     <div className="grid grid-cols-4 gap-2">
-      <div>
+      <div className="min-w-0">
         <div className="text-[11px] text-muted-foreground">Threads</div>
-        <div className="flex items-center gap-1">
-          <MessageCircle className="w-3 h-3 text-[#d4915e]" />
-          <span className="text-sm font-semibold text-[#d4915e]">
-            {graph.totalThreads}
+        <div className="flex items-center gap-1 min-w-0">
+          <MessageCircle className="w-3 h-3 flex-shrink-0 text-[#d4915e]" />
+          <span className="text-sm font-semibold text-[#d4915e] truncate">
+            {formatCompact(graph.totalThreads)}
           </span>
         </div>
       </div>
-      <div>
+      <div className="min-w-0">
         <div className="text-[11px] text-muted-foreground">Total Tokens</div>
-        <div className="flex items-center gap-1">
-          <Zap className="w-3 h-3 text-[#e8a676]" />
-          <span className="text-sm font-semibold text-[#e8a676]">
-            {formatNumber(graph.totalTokens)}
+        <div className="flex items-center gap-1 min-w-0">
+          <Zap className="w-3 h-3 flex-shrink-0 text-[#e8a676]" />
+          <span className="text-sm font-semibold text-[#e8a676] truncate">
+            {formatCompact(graph.totalTokens)}
           </span>
         </div>
       </div>
-      <div>
+      <div className="min-w-0">
         <div className="text-[11px] text-muted-foreground">Input</div>
-        <div className="text-sm font-semibold text-[#8a6947]">
-          {formatNumber(graph.inputTokens)}
+        <div className="text-sm font-semibold text-[#8a6947] truncate">
+          {formatCompact(graph.inputTokens)}
         </div>
       </div>
-      <div>
+      <div className="min-w-0">
         <div className="text-[11px] text-muted-foreground">Output</div>
-        <div className="text-sm font-semibold text-[#c99167]">
-          {formatNumber(graph.outputTokens)}
+        <div className="text-sm font-semibold text-[#c99167] truncate">
+          {formatCompact(graph.outputTokens)}
         </div>
       </div>
     </div>
@@ -197,7 +207,7 @@ export const MainPage = () => {
           <Skeleton className="h-20 rounded-xl" />
         </div>
         <Skeleton className="h-6 w-40 mb-4" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-24 rounded-xl" />
           ))}
@@ -314,9 +324,9 @@ export const MainPage = () => {
               Usage by Graph
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {byGraph.graphs.map((graph) => (
-              <GraphCard graph={graph} key={graph.graphId} />
+              <AnalyticsGraphCard graph={graph} key={graph.graphId} />
             ))}
           </div>
         </>

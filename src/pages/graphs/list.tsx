@@ -413,7 +413,7 @@ export const GraphsListPage = () => {
           <Skeleton className="h-8 w-40 mb-2" />
           <Skeleton className="h-5 w-72" />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-40 rounded-xl" />
           ))}
@@ -507,7 +507,7 @@ export const GraphsListPage = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {filteredGraphs.map((graph) => (
               <GraphCard
                 key={graph.id}

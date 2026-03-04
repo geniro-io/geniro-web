@@ -218,6 +218,13 @@ export const ChatsPage = () => {
     threadSocketEventsModalThreadId,
   } = analysis;
 
+  // --- Agent cards expand/collapse ---
+  const [agentsExpanded, setAgentsExpanded] = useState(false);
+
+  useEffect(() => {
+    setAgentsExpanded(false);
+  }, [selectedThreadId]);
+
   // --- Runtime sidebar ---
   const [runtimeSidebarOpen, setRuntimeSidebarOpen] = useState(false);
 
@@ -657,21 +664,22 @@ export const ChatsPage = () => {
                 <>
                   {/* Chat Header */}
                   <div className="px-5 py-4 border-b border-border bg-card flex-shrink-0">
+                    {/* Row 1: title/graph link + action buttons */}
                     <div className="flex items-start gap-4">
-                      {/* Left: title + graph link + agent cards */}
+                      {/* Left: title + graph link */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h2 className="text-base font-semibold m-0">
+                        <div className="flex items-center gap-2 mb-1 min-w-0">
+                          <h2 className="text-base font-semibold m-0 truncate">
                             {selectedThread.name || 'New Thread'}
                           </h2>
                           {threadStatusMeta && (
                             <Badge
-                              className={`text-[10px] px-1.5 py-0 h-4 font-medium ${getStatusBadgeClass(threadStatusMeta.label)}`}>
+                              className={`text-[10px] px-1.5 py-0 h-4 font-medium flex-shrink-0 ${getStatusBadgeClass(threadStatusMeta.label)}`}>
                               {threadStatusMeta.label}
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mb-3">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Network className="w-3 h-3" />
                           <Link
                             to={
@@ -685,9 +693,81 @@ export const ChatsPage = () => {
                             <ExternalLink className="h-3 w-3" />
                           </Link>
                         </p>
-                        {/* Agent cards with ContextUsageGauge */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {agentsForSelectedThread.map((agent) => {
+                      </div>
+
+                      {/* Right: action buttons + token usage */}
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2.5 text-xs"
+                            onClick={handleOpenAnalyzeModal}
+                            disabled={analysisButtonDisabled}
+                            title={
+                              selectedThreadIsDraft
+                                ? 'Create the thread before analyzing it'
+                                : undefined
+                            }>
+                            Analyze thread
+                          </Button>
+                          {!selectedThreadIsDraft && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant={
+                                    runtimeSidebarOpen ? 'default' : 'outline'
+                                  }
+                                  size="icon"
+                                  className="h-7 w-7 p-0"
+                                  onClick={() =>
+                                    setRuntimeSidebarOpen((v) => !v)
+                                  }>
+                                  <Server className="h-3.5 w-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {runtimeSidebarOpen
+                                  ? 'Hide runtimes'
+                                  : 'Show runtimes'}
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          {selectedThreadHeaderUsage && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={handleOpenUsageStatsModal}>
+                                  <BarChart3 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                View detailed usage statistics
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                        <ThreadTokenUsageLine
+                          usage={selectedThreadHeaderUsage}
+                          withPopover
+                          contextPercent={selectedThreadHeaderContextPercent}
+                          contextMaxTokens={
+                            selectedThreadHeaderContextMaxTokens
+                          }
+                        />
+                      </div>
+                    </div>
+                    {/* Row 2: Agent cards - grid with expand/collapse */}
+                    {agentsForSelectedThread.length > 0 && (
+                      <div className="mt-3">
+                        <div className="grid grid-cols-3 lg:grid-cols-4 gap-2">
+                          {(agentsExpanded
+                            ? agentsForSelectedThread
+                            : agentsForSelectedThread.slice(0, 4)
+                          ).map((agent) => {
                             const usage =
                               selectedThreadUsageByNode?.[agent.nodeId];
                             const pct =
@@ -705,7 +785,7 @@ export const ChatsPage = () => {
                             return (
                               <Popover key={agent.nodeId}>
                                 <PopoverTrigger asChild>
-                                  <div className="flex items-center gap-2 px-2.5 py-1.5 bg-muted/60 hover:bg-muted rounded-lg cursor-pointer transition-colors">
+                                  <div className="flex items-center gap-2 px-2.5 py-1.5 bg-muted/60 hover:bg-muted rounded-lg cursor-pointer transition-colors min-w-0">
                                     <Avatar className="w-6 h-6 flex-shrink-0">
                                       <AvatarFallback
                                         className={`${getAgentColor(agent.nodeId)} text-white text-[10px]`}>
@@ -717,12 +797,12 @@ export const ChatsPage = () => {
                                         {parsed.name}
                                       </div>
                                       {displayRole && (
-                                        <div className="text-muted-foreground leading-tight">
+                                        <div className="text-muted-foreground leading-tight truncate">
                                           {displayRole}
                                         </div>
                                       )}
                                     </div>
-                                    <div className="flex items-center gap-1 ml-1 flex-shrink-0">
+                                    <div className="flex items-center gap-1 ml-auto flex-shrink-0">
                                       <ContextUsageGauge
                                         percent={pct}
                                         size={18}
@@ -791,76 +871,22 @@ export const ChatsPage = () => {
                             );
                           })}
                         </div>
-                      </div>
-
-                      {/* Right: action buttons + token usage */}
-                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                        <div className="flex items-center gap-1.5">
+                        {agentsForSelectedThread.length > 4 && (
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            className="h-7 px-2.5 text-xs"
-                            onClick={handleOpenAnalyzeModal}
-                            disabled={analysisButtonDisabled}
-                            title={
-                              selectedThreadIsDraft
-                                ? 'Create the thread before analyzing it'
-                                : undefined
-                            }>
-                            Analyze thread
+                            className="mt-1 h-auto py-0.5 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+                            onClick={() => setAgentsExpanded((prev) => !prev)}>
+                            {agentsExpanded
+                              ? 'Show less'
+                              : `+${agentsForSelectedThread.length - 4} more`}
                           </Button>
-                          {!selectedThreadIsDraft && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant={
-                                    runtimeSidebarOpen ? 'default' : 'outline'
-                                  }
-                                  size="icon"
-                                  className="h-7 w-7 p-0"
-                                  onClick={() =>
-                                    setRuntimeSidebarOpen((v) => !v)
-                                  }>
-                                  <Server className="h-3.5 w-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {runtimeSidebarOpen
-                                  ? 'Hide runtimes'
-                                  : 'Show runtimes'}
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                          {selectedThreadHeaderUsage && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={handleOpenUsageStatsModal}>
-                                  <BarChart3 className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                View detailed usage statistics
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                        </div>
-                        <ThreadTokenUsageLine
-                          usage={selectedThreadHeaderUsage}
-                          withPopover
-                          contextPercent={selectedThreadHeaderContextPercent}
-                          contextMaxTokens={
-                            selectedThreadHeaderContextMaxTokens
-                          }
-                        />
+                        )}
                       </div>
-                    </div>
+                    )}
                   </div>
 
-                  <div className="flex-1 min-h-0 flex flex-col p-6 pt-4">
+                  <div className="flex-1 min-h-0 flex flex-col">
                     <ThreadChatPanel
                       graphId={selectedThread.graphId}
                       thread={selectedThread as ThreadDto}
