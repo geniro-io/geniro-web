@@ -30,6 +30,7 @@ export interface SetupInfoResponseDto {
   installUrl: string;
   configured: boolean;
   callbackPath: string;
+  newInstallationUrl: string;
 }
 
 // --- API Service ---

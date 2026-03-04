@@ -1501,6 +1501,12 @@ export interface SetupInfoResponseDto {
    */
   'installUrl': string;
   /**
+   * URL to install the GitHub App on a new organization
+   * @type {string}
+   * @memberof SetupInfoResponseDto
+   */
+  'newInstallationUrl': string;
+  /**
    * Whether the GitHub App is fully configured
    * @type {boolean}
    * @memberof SetupInfoResponseDto

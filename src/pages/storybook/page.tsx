@@ -3365,6 +3365,50 @@ function GitHubIntegrationSection() {
           />
         </div>
       </Row>
+      <Row label="Connected — multiple orgs">
+        <div className="w-full max-w-xl">
+          <GitHubIntegrationCard
+            state="connected"
+            installations={[
+              {
+                id: 'story-1',
+                installationId: 11111,
+                accountLogin: 'my-org',
+                accountType: 'Organization',
+                isActive: true,
+                createdAt: new Date().toISOString(),
+              },
+              {
+                id: 'story-2',
+                installationId: 22222,
+                accountLogin: 'personal-user',
+                accountType: 'User',
+                isActive: true,
+                createdAt: new Date().toISOString(),
+              },
+            ]}
+            addOrgHref="#"
+          />
+        </div>
+      </Row>
+      <Row label="Connected — single org (new style)">
+        <div className="w-full max-w-xl">
+          <GitHubIntegrationCard
+            state="connected"
+            installations={[
+              {
+                id: 'story-3',
+                installationId: 33333,
+                accountLogin: 'solo-org',
+                accountType: 'Organization',
+                isActive: true,
+                createdAt: new Date().toISOString(),
+              },
+            ]}
+            addOrgHref="#"
+          />
+        </div>
+      </Row>
       <Row label="Loading">
         <div className="w-full max-w-xl">
           <GitHubIntegrationCard state="loading" />

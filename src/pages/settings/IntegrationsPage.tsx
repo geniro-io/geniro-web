@@ -18,7 +18,9 @@ import { githubAppInstallationsApi } from '../github-app/types';
 export const IntegrationsPage = () => {
   const { settings, loading: settingsLoading } = useSystemSettings();
   const [loading, setLoading] = useState(true);
-  const [disconnecting, setDisconnecting] = useState(false);
+  const [removingInstallationId, setRemovingInstallationId] = useState<
+    number | null
+  >(null);
   const [installations, setInstallations] = useState<
     GitHubAppInstallationDto[]
   >([]);
@@ -61,24 +63,26 @@ export const IntegrationsPage = () => {
     fetchData();
   }, [fetchData]);
 
-  const activeInstallation = installations.find((i) => i.isActive);
   const hasInstallations = installations.length > 0;
 
-  const handleDisconnect = useCallback(async () => {
-    if (!activeInstallation) return;
-    setDisconnecting(true);
-    try {
-      await githubAppInstallationsApi.disconnect(
-        activeInstallation.installationId,
-      );
-      await fetchData();
-    } catch (e: unknown) {
-      const errorMessage = extractApiErrorMessage(e, 'Failed to disconnect');
-      setError(errorMessage);
-    } finally {
-      setDisconnecting(false);
-    }
-  }, [activeInstallation, fetchData]);
+  const handleRemoveInstallation = useCallback(
+    async (installationId: number) => {
+      setRemovingInstallationId(installationId);
+      try {
+        await githubAppInstallationsApi.disconnect(installationId);
+        await fetchData();
+      } catch (e: unknown) {
+        const errorMessage = extractApiErrorMessage(
+          e,
+          'Failed to remove installation',
+        );
+        setError(errorMessage);
+      } finally {
+        setRemovingInstallationId(null);
+      }
+    },
+    [fetchData],
+  );
 
   const callbackUrl = setupInfo?.callbackPath
     ? `${window.location.origin}${setupInfo.callbackPath}`
@@ -91,6 +95,8 @@ export const IntegrationsPage = () => {
     url.searchParams.set('redirect_uri', callbackUrl);
     return url.toString();
   })();
+
+  const addOrgHref = setupInfo?.newInstallationUrl || undefined;
 
   let connectionState: GitHubConnectionState = 'disconnected';
   if (loading) {
@@ -125,12 +131,13 @@ export const IntegrationsPage = () => {
         <div className="space-y-3">
           <GitHubIntegrationCard
             state={connectionState}
-            accountLogin={activeInstallation?.accountLogin}
-            accountType={activeInstallation?.accountType}
             installHref={setupInfo?.configured ? installHref : undefined}
             callbackUrl={callbackUrl}
-            onDisconnect={handleDisconnect}
-            disconnecting={disconnecting}
+            installations={installations}
+            onRemoveInstallation={handleRemoveInstallation}
+            removingInstallationId={removingInstallationId}
+            addOrgHref={setupInfo?.configured ? addOrgHref : undefined}
+            syncHref={setupInfo?.configured ? installHref : undefined}
           />
         </div>
       )}

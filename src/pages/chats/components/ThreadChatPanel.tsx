@@ -567,10 +567,12 @@ export const ThreadChatPanel: React.FC<ThreadChatPanelProps> = ({
       setMessageInput(e.target.value);
       const textarea = e.target;
       textarea.style.height = 'auto';
-      const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) || 20;
+      const lineHeight =
+        parseInt(getComputedStyle(textarea).lineHeight, 10) || 20;
       const maxHeight = lineHeight * 7;
       textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
-      textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+      textarea.style.overflowY =
+        textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
     },
     [],
   );

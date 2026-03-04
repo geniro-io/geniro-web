@@ -1,6 +1,7 @@
-import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { Loader2, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 
@@ -9,7 +10,6 @@ import { githubAppInstallationsApi } from '../types';
 
 type CallbackState =
   | { status: 'linking' }
-  | { status: 'success'; accountLogin: string }
   | { status: 'error'; message: string }
   | { status: 'request-pending' };
 
@@ -27,7 +27,8 @@ const resolveInitialState = (
     if (!Number.isInteger(numericId) || numericId <= 0) {
       return {
         status: 'error',
-        message: `Invalid installation ID: ${installationId}`,
+        message:
+          'Invalid installation ID. Please try the installation flow again.',
       };
     }
     return { status: 'linking' };
@@ -65,38 +66,41 @@ export const GitHubAppCallbackPage = () => {
 
     const linkInstallation = async () => {
       try {
-        let response;
-
         if (installationId) {
-          response = await githubAppInstallationsApi.link(
-            Number(installationId),
-          );
+          await githubAppInstallationsApi.link(Number(installationId));
         } else if (code) {
-          response = await githubAppInstallationsApi.linkViaOAuthCode(code);
+          await githubAppInstallationsApi.linkViaOAuthCode(code);
         } else {
           setState({ status: 'error', message: 'Missing parameters' });
           return;
         }
 
-        setState({
-          status: 'success',
-          accountLogin: response.data.accountLogin,
-        });
+        toast.success('GitHub organization linked successfully.');
+        navigate('/settings/integrations', { replace: true });
       } catch (e: unknown) {
         const errorMessage = extractApiErrorMessage(
           e,
           'Failed to link installation',
         );
-        setState({ status: 'error', message: errorMessage });
+        if (errorMessage.includes('NO_INSTALLATIONS_FOUND')) {
+          toast.error('No GitHub organizations were linked. Please try again.');
+          navigate('/settings/integrations', { replace: true });
+        } else {
+          setState({ status: 'error', message: errorMessage });
+        }
       }
     };
 
     linkInstallation();
-  }, [installationId, code, state.status]);
+  }, [installationId, code, state.status, navigate]);
 
-  const goToInstallations = () => {
-    navigate('/settings/integrations', { replace: true });
-  };
+  useEffect(() => {
+    if (state.status !== 'request-pending') return;
+    const timer = setTimeout(() => {
+      navigate('/settings/integrations', { replace: true });
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [state.status, navigate]);
 
   if (state.status === 'linking') {
     return (
@@ -105,21 +109,6 @@ export const GitHubAppCallbackPage = () => {
         <p className="text-muted-foreground">
           Linking GitHub App installation...
         </p>
-      </div>
-    );
-  }
-
-  if (state.status === 'success') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center">
-        <CheckCircle2 className="w-16 h-16 text-emerald-500" />
-        <h2 className="text-2xl font-semibold text-foreground">
-          GitHub App Installed Successfully
-        </h2>
-        <p className="text-muted-foreground">
-          Installation linked to {state.accountLogin}.
-        </p>
-        <Button onClick={goToInstallations}>Go to Settings</Button>
       </div>
     );
   }
@@ -138,7 +127,10 @@ export const GitHubAppCallbackPage = () => {
           organization admin. Once approved, the installation will appear here
           automatically.
         </p>
-        <Button onClick={goToInstallations}>Go to Settings</Button>
+        <Button
+          onClick={() => navigate('/settings/integrations', { replace: true })}>
+          Go to Settings
+        </Button>
       </div>
     );
   }
