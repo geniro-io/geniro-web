@@ -113,6 +113,7 @@ export const ThreadChatPanel: React.FC<ThreadChatPanelProps> = ({
     string | undefined
   >(() => triggerNodes[0]?.id);
   const [messageInput, setMessageInput] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [stoppingThread, setStoppingThread] = useState(false);
   const [threadStatusOverride, setThreadStatusOverride] = useState<
@@ -564,9 +565,23 @@ export const ThreadChatPanel: React.FC<ThreadChatPanelProps> = ({
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setMessageInput(e.target.value);
+      const textarea = e.target;
+      textarea.style.height = 'auto';
+      const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) || 20;
+      const maxHeight = lineHeight * 7;
+      textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+      textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
     },
     [],
   );
+
+  // Reset textarea height when input is cleared programmatically
+  useEffect(() => {
+    if (!messageInput && textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.overflowY = 'hidden';
+    }
+  }, [messageInput]);
 
   // Memoize input enter handler
   const handleInputEnter = useCallback(
@@ -668,12 +683,13 @@ export const ThreadChatPanel: React.FC<ThreadChatPanelProps> = ({
             {/* Main row: textarea + action buttons */}
             <div className="flex items-end gap-2">
               <Textarea
+                ref={textareaRef}
                 placeholder="Type your message..."
                 value={messageInput}
                 onChange={handleInputChange}
                 onKeyDown={handleInputEnter}
                 disabled={sendingMessage || !selectedTriggerId}
-                className="flex-1 resize-none min-h-[36px]"
+                className="flex-1 resize-none min-h-[36px] overflow-hidden"
                 rows={1}
               />
               {!isDraft && isThreadRunning && (
