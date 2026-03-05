@@ -1,6 +1,8 @@
 import {
   BookOpen,
   ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
   FolderGit2,
   Folders,
   Gauge,
@@ -16,6 +18,8 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth, useAuthModule } from '../../auth/AuthModuleContext';
 import { STORYBOOK_ENABLED } from '../../config';
 import { useCurrentProject } from '../../hooks/useCurrentProject';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
+import { Button } from '../ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { PickerTrigger } from '../ui/picker-trigger';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 const getInitials = (value: string) => {
   if (!value) return 'U';
@@ -74,6 +79,10 @@ export function Layout({ children }: { children?: React.ReactNode }) {
   const { projectId, currentProject, projects } = useCurrentProject();
   const { userInfo } = useAuth();
   const { createAuthProvider } = useAuthModule();
+  const [navCollapsed, setNavCollapsed] = useLocalStorage<boolean>(
+    'geniro:nav-sidebar-collapsed',
+    false,
+  );
 
   const { label: currentPage, backLink } = resolvePageTitle(
     location.pathname,
@@ -153,8 +162,15 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       {/* Full-width header row */}
       <div className="flex border-b border-border bg-card flex-shrink-0">
         {/* Logo cell */}
-        <div className="w-52 flex-shrink-0 border-r border-border flex items-center justify-center px-4 py-4">
-          <img src="/logo.png" alt="Geniro" className="h-10" />
+        <div
+          className={`flex-shrink-0 border-r border-border flex items-center justify-center py-4 ${
+            navCollapsed ? 'w-14' : 'w-52 px-4'
+          }`}>
+          {navCollapsed ? (
+            <img src="/icon.png" alt="Geniro" className="w-8 h-8 object-contain" />
+          ) : (
+            <img src="/logo.png" alt="Geniro" className="h-10" />
+          )}
         </div>
 
         {/* Header content */}
@@ -250,38 +266,96 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       {/* Body row */}
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
-        <aside className="w-52 bg-card border-r border-border flex flex-col flex-shrink-0">
-          <nav className="flex-1 p-3 space-y-0.5">
+        <aside
+          className={`bg-card border-r border-border flex flex-col flex-shrink-0 ${
+            navCollapsed ? 'w-14' : 'w-52'
+          }`}>
+          <nav className="flex-1 p-2 space-y-0.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
-              return (
+              const linkClassName = `flex items-center rounded-lg transition-colors ${
+                navCollapsed
+                  ? 'justify-center px-2 py-2.5'
+                  : 'gap-3 px-3 py-2.5'
+              } ${
+                active
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`;
+              return navCollapsed ? (
+                <Tooltip key={item.path}>
+                  <TooltipTrigger asChild>
+                    <NavLink to={item.path} className={linkClassName}>
+                      <Icon className="w-4.5 h-4.5 shrink-0" />
+                    </NavLink>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{item.label}</TooltipContent>
+                </Tooltip>
+              ) : (
                 <NavLink
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                    active
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}>
-                  <Icon className="w-4.5 h-4.5" />
+                  className={linkClassName}>
+                  <Icon className="w-4.5 h-4.5 shrink-0" />
                   <span className="text-sm">{item.label}</span>
                 </NavLink>
               );
             })}
           </nav>
 
-          <div className="p-3 border-t border-border">
-            <NavLink
-              to="/settings/integrations"
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors w-full ${
-                isActive('/settings')
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}>
-              <Settings className="w-4.5 h-4.5" />
-              <span className="text-sm">Settings</span>
-            </NavLink>
+          <div className="p-2 border-t border-border space-y-0.5">
+            {navCollapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <NavLink
+                    to="/settings/integrations"
+                    className={`flex items-center justify-center rounded-lg transition-colors w-full px-2 py-2.5 ${
+                      isActive('/settings')
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}>
+                    <Settings className="w-4.5 h-4.5 shrink-0" />
+                  </NavLink>
+                </TooltipTrigger>
+                <TooltipContent side="right">Settings</TooltipContent>
+              </Tooltip>
+            ) : (
+              <NavLink
+                to="/settings/integrations"
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors w-full ${
+                  isActive('/settings')
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}>
+                <Settings className="w-4.5 h-4.5 shrink-0" />
+                <span className="text-sm">Settings</span>
+              </NavLink>
+            )}
+
+            {navCollapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-full h-9 text-muted-foreground hover:text-foreground"
+                    onClick={() => setNavCollapsed((prev) => !prev)}>
+                    <ChevronsRight className="w-4.5 h-4.5 shrink-0" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Expand sidebar</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-full h-9 text-muted-foreground hover:text-foreground justify-start gap-3 px-3"
+                onClick={() => setNavCollapsed((prev) => !prev)}>
+                <ChevronsLeft className="w-4.5 h-4.5 shrink-0" />
+                <span className="text-sm">Collapse</span>
+              </Button>
+            )}
           </div>
         </aside>
 

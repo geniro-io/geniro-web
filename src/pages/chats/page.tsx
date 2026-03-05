@@ -6,6 +6,8 @@ import {
   Loader2,
   MessageSquare,
   Network,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   Server,
   Upload,
@@ -32,6 +34,7 @@ import {
   TooltipTrigger,
 } from '../../components/ui/tooltip';
 import { API_URL } from '../../config';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
 import {
   getStatusBadgeClass,
   getThreadStatusDisplay,
@@ -228,6 +231,10 @@ export const ChatsPage = () => {
     handleCopyThreadSocketEventsJson,
     threadSocketEventsModalThreadId,
   } = analysis;
+
+  // --- Thread list collapse ---
+  const [threadListCollapsed, setThreadListCollapsed] =
+    useLocalStorage<boolean>('geniro:chats-thread-list-collapsed', false);
 
   // --- Thread export/import ---
   const [snapshotModalOpen, setSnapshotModalOpen] = useState(false);
@@ -576,173 +583,214 @@ export const ChatsPage = () => {
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Left sidebar: thread list */}
-        <aside className="w-72 bg-card border-r border-border flex flex-col overflow-hidden">
-          {/* Header */}
-          {graphFilterId ? (
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
-              <span className="text-sm font-semibold text-foreground">
-                Chats
-              </span>
-              <div className="flex items-center gap-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => importFileInputRef.current?.click()}>
-                      <Upload className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Import thread snapshot</TooltipContent>
-                </Tooltip>
+        {threadListCollapsed ? (
+          <div className="w-9 bg-card border-r border-border flex flex-col items-center py-2 flex-shrink-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
                   className="h-7 w-7"
-                  onClick={handleCreateDraftThread}>
-                  <Plus className="w-3.5 h-3.5" />
+                  onClick={() => setThreadListCollapsed(false)}>
+                  <PanelLeftOpen className="h-4 w-4" />
                 </Button>
-              </div>
-            </div>
-          ) : (
-            <Popover open={graphPickerOpen} onOpenChange={setGraphPickerOpen}>
-              <PopoverAnchor asChild>
-                <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
-                  <span className="text-sm font-semibold text-foreground">
-                    Chats
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => importFileInputRef.current?.click()}>
-                          <Upload className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Import thread snapshot</TooltipContent>
-                    </Tooltip>
-                    <PopoverTrigger asChild>
+              </TooltipTrigger>
+              <TooltipContent side="right">Expand thread list</TooltipContent>
+            </Tooltip>
+          </div>
+        ) : (
+          <aside className="w-72 bg-card border-r border-border flex flex-col overflow-hidden flex-shrink-0">
+            {/* Header */}
+            {graphFilterId ? (
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
+                <span className="text-sm font-semibold text-foreground">
+                  Chats
+                </span>
+                <div className="flex items-center gap-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
                         className="h-7 w-7"
-                        onClick={handleCreateDraftThread}>
-                        <Plus className="w-3.5 h-3.5" />
+                        onClick={() => importFileInputRef.current?.click()}>
+                        <Upload className="h-3.5 w-3.5" />
                       </Button>
-                    </PopoverTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>Import thread snapshot</TooltipContent>
+                  </Tooltip>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={handleCreateDraftThread}>
+                    <Plus className="w-3.5 h-3.5" />
+                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => setThreadListCollapsed(true)}>
+                        <PanelLeftClose className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Collapse thread list</TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+            ) : (
+              <Popover open={graphPickerOpen} onOpenChange={setGraphPickerOpen}>
+                <PopoverAnchor asChild>
+                  <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
+                    <span className="text-sm font-semibold text-foreground">
+                      Chats
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => importFileInputRef.current?.click()}>
+                            <Upload className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Import thread snapshot</TooltipContent>
+                      </Tooltip>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={handleCreateDraftThread}>
+                          <Plus className="w-3.5 h-3.5" />
+                        </Button>
+                      </PopoverTrigger>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => setThreadListCollapsed(true)}>
+                            <PanelLeftClose className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Collapse thread list</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                </PopoverAnchor>
+                <PopoverContent
+                  align="center"
+                  className="w-[calc(18rem-1rem)] p-1">
+                  <GraphPickerContent
+                    graphs={graphPickerGraphs}
+                    loading={graphPickerLoading}
+                    error={graphPickerError}
+                    onSelect={handleGraphPickerSelect}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+
+            {/* Filter tabs */}
+            <div className="px-3 py-2 border-b border-border shrink-0">
+              <Tabs
+                value={threadStatusTab}
+                onValueChange={handleThreadStatusTabChange}
+                className="w-full">
+                <TabsList className="w-full h-7 grid grid-cols-3 p-0.5">
+                  <TabsTrigger value="all" className="text-xs h-6">
+                    All
+                  </TabsTrigger>
+                  <TabsTrigger value="open" className="text-xs h-6">
+                    Open
+                  </TabsTrigger>
+                  <TabsTrigger value="resolved" className="text-xs h-6">
+                    Resolved
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            {graphFilterId && (
+              <div className="px-3 py-2 border-b border-border shrink-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Badge
+                    variant="secondary"
+                    className="gap-1.5 pl-1.5 pr-1 py-0.5 min-w-0 max-w-full"
+                    title={filteredGraphLabel}>
+                    <Network className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{filteredGraphLabel}</span>
+                    <button
+                      type="button"
+                      className="ml-0.5 rounded-sm hover:bg-muted-foreground/20 p-0.5 shrink-0 transition-colors"
+                      onClick={handleClearGraphFilter}
+                      aria-label="Clear graph filter">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                </div>
+              </div>
+            )}
+            <div
+              ref={threadsContainerRef}
+              onScroll={handleThreadsScroll}
+              className="flex-1 min-h-0 overflow-y-auto py-1">
+              {shouldShowDraftThread && draftThread ? (
+                <ThreadListItem
+                  thread={draftThread}
+                  isActive={draftThread.id === selectedThreadId}
+                  graphCache={graphCache}
+                  onSelect={setSelectedThreadId}
+                  onDeleteThread={handleDeleteThread}
+                  agents={[]}
+                />
+              ) : null}
+              {filteredThreads.map((thread) => (
+                <ThreadListItem
+                  key={thread.id}
+                  thread={thread}
+                  isActive={thread.id === selectedThreadId}
+                  graphCache={graphCache}
+                  onSelect={setSelectedThreadId}
+                  onDeleteThread={handleDeleteThread}
+                  agents={
+                    thread.id === selectedThreadId
+                      ? agentsForSelectedThread
+                      : (agentsByGraphId[thread.graphId] ?? [])
+                  }
+                />
+              ))}
+              {threadsLoading && (
+                <div className="py-6 text-center">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                </div>
+              )}
+              {threadsEmpty && (
+                <div className="py-10 px-4">
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <MessageSquare className="w-10 h-10 text-muted-foreground/30 mb-3" />
+                    <p className="text-sm font-medium text-muted-foreground mb-1">
+                      {threadsEmptyDescription}
+                    </p>
+                    <p className="text-xs text-muted-foreground/70">
+                      Start a new chat to begin a conversation
+                    </p>
                   </div>
                 </div>
-              </PopoverAnchor>
-              <PopoverContent
-                align="center"
-                className="w-[calc(18rem-1rem)] p-1">
-                <GraphPickerContent
-                  graphs={graphPickerGraphs}
-                  loading={graphPickerLoading}
-                  error={graphPickerError}
-                  onSelect={handleGraphPickerSelect}
-                />
-              </PopoverContent>
-            </Popover>
-          )}
-
-          {/* Filter tabs */}
-          <div className="px-3 py-2 border-b border-border shrink-0">
-            <Tabs
-              value={threadStatusTab}
-              onValueChange={handleThreadStatusTabChange}
-              className="w-full">
-              <TabsList className="w-full h-7 grid grid-cols-3 p-0.5">
-                <TabsTrigger value="all" className="text-xs h-6">
-                  All
-                </TabsTrigger>
-                <TabsTrigger value="open" className="text-xs h-6">
-                  Open
-                </TabsTrigger>
-                <TabsTrigger value="resolved" className="text-xs h-6">
-                  Resolved
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-          {graphFilterId && (
-            <div className="px-3 py-2 border-b border-border shrink-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <Badge
-                  variant="secondary"
-                  className="gap-1.5 pl-1.5 pr-1 py-0.5 min-w-0 max-w-full"
-                  title={filteredGraphLabel}>
-                  <Network className="w-3 h-3 shrink-0" />
-                  <span className="truncate">{filteredGraphLabel}</span>
-                  <button
-                    type="button"
-                    className="ml-0.5 rounded-sm hover:bg-muted-foreground/20 p-0.5 shrink-0 transition-colors"
-                    onClick={handleClearGraphFilter}
-                    aria-label="Clear graph filter">
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              </div>
-            </div>
-          )}
-          <div
-            ref={threadsContainerRef}
-            onScroll={handleThreadsScroll}
-            className="flex-1 min-h-0 overflow-y-auto py-1">
-            {shouldShowDraftThread && draftThread ? (
-              <ThreadListItem
-                thread={draftThread}
-                isActive={draftThread.id === selectedThreadId}
-                graphCache={graphCache}
-                onSelect={setSelectedThreadId}
-                onDeleteThread={handleDeleteThread}
-                agents={[]}
-              />
-            ) : null}
-            {filteredThreads.map((thread) => (
-              <ThreadListItem
-                key={thread.id}
-                thread={thread}
-                isActive={thread.id === selectedThreadId}
-                graphCache={graphCache}
-                onSelect={setSelectedThreadId}
-                onDeleteThread={handleDeleteThread}
-                agents={
-                  thread.id === selectedThreadId
-                    ? agentsForSelectedThread
-                    : (agentsByGraphId[thread.graphId] ?? [])
-                }
-              />
-            ))}
-            {threadsLoading && (
-              <div className="py-6 text-center">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
-              </div>
-            )}
-            {threadsEmpty && (
-              <div className="py-10 px-4">
-                <div className="flex flex-col items-center justify-center text-center">
-                  <MessageSquare className="w-10 h-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm font-medium text-muted-foreground mb-1">
-                    {threadsEmptyDescription}
-                  </p>
-                  <p className="text-xs text-muted-foreground/70">
-                    Start a new chat to begin a conversation
-                  </p>
+              )}
+              {threadsLoadingMore && (
+                <div className="py-3 text-center">
+                  <Loader2 className="h-4 w-4 animate-spin mx-auto text-muted-foreground" />
                 </div>
-              </div>
-            )}
-            {threadsLoadingMore && (
-              <div className="py-3 text-center">
-                <Loader2 className="h-4 w-4 animate-spin mx-auto text-muted-foreground" />
-              </div>
-            )}
-          </div>
-        </aside>
+              )}
+            </div>
+          </aside>
+        )}
 
         {/* Right panel: chat + runtime sidebar */}
         <div className="flex-1 min-h-0 flex overflow-hidden">

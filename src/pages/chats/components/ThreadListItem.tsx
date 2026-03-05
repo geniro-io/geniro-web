@@ -72,17 +72,6 @@ export const ThreadListItem: React.FC<ThreadListItemProps> = React.memo(
               {thread.name || 'New Thread'}
             </span>
             <div className="flex-1" />
-            {statusMeta && (
-              <Badge
-                className={cn(
-                  'text-[10px] px-1.5 py-0 h-4 flex-shrink-0 font-medium',
-                  isDraft
-                    ? getStatusBadgeClass('draft')
-                    : getStatusBadgeClass((thread as ThreadDto).status),
-                )}>
-                {statusMeta.label}
-              </Badge>
-            )}
             {!isDraft && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -106,6 +95,17 @@ export const ThreadListItem: React.FC<ThreadListItemProps> = React.memo(
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            )}
+            {statusMeta && (
+              <Badge
+                className={cn(
+                  'text-[10px] px-1.5 py-0 h-4 flex-shrink-0 font-medium',
+                  isDraft
+                    ? getStatusBadgeClass('draft')
+                    : getStatusBadgeClass((thread as ThreadDto).status),
+                )}>
+                {statusMeta.label}
+              </Badge>
             )}
           </div>
 
