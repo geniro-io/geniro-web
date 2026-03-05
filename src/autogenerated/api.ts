@@ -805,6 +805,183 @@ export interface GraphNodeWithStatusDtoMetadata {
 /**
  *
  * @export
+ * @interface GraphPreviewDto
+ */
+export interface GraphPreviewDto {
+  /**
+   *
+   * @type {string}
+   * @memberof GraphPreviewDto
+   */
+  'id': string;
+  /**
+   *
+   * @type {string}
+   * @memberof GraphPreviewDto
+   */
+  'name': string;
+  /**
+   *
+   * @type {string}
+   * @memberof GraphPreviewDto
+   */
+  'description'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof GraphPreviewDto
+   */
+  'error'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof GraphPreviewDto
+   */
+  'version': string;
+  /**
+   * Target version after all queued revisions are applied
+   * @type {string}
+   * @memberof GraphPreviewDto
+   */
+  'targetVersion': string;
+  /**
+   *
+   * @type {string}
+   * @memberof GraphPreviewDto
+   */
+  'status': GraphPreviewDtoStatusEnum;
+  /**
+   *
+   * @type {number}
+   * @memberof GraphPreviewDto
+   */
+  'runningThreads'?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof GraphPreviewDto
+   */
+  'totalThreads'?: number;
+  /**
+   * Number of nodes in the graph schema
+   * @type {number}
+   * @memberof GraphPreviewDto
+   */
+  'nodeCount'?: number;
+  /**
+   * Number of edges in the graph schema
+   * @type {number}
+   * @memberof GraphPreviewDto
+   */
+  'edgeCount'?: number;
+  /**
+   * Agent nodes present in the graph
+   * @type {Array<GraphPreviewDtoAgentsInner>}
+   * @memberof GraphPreviewDto
+   */
+  'agents'?: Array<GraphPreviewDtoAgentsInner>;
+  /**
+   * Pre-computed trigger nodes from schema
+   * @type {Array<GraphPreviewDtoTriggerNodesInner>}
+   * @memberof GraphPreviewDto
+   */
+  'triggerNodes': Array<GraphPreviewDtoTriggerNodesInner>;
+  /**
+   * Pre-computed node display names from metadata
+   * @type {{ [key: string]: string; }}
+   * @memberof GraphPreviewDto
+   */
+  'nodeDisplayNames': { [key: string]: string };
+  /**
+   *
+   * @type {string}
+   * @memberof GraphPreviewDto
+   */
+  'createdAt': string;
+  /**
+   *
+   * @type {string}
+   * @memberof GraphPreviewDto
+   */
+  'updatedAt': string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof GraphPreviewDto
+   */
+  'temporary'?: boolean | null;
+  /**
+   *
+   * @type {string}
+   * @memberof GraphPreviewDto
+   */
+  'projectId'?: string | null;
+}
+
+export const GraphPreviewDtoStatusEnum = {
+  Created: 'created',
+  Compiling: 'compiling',
+  Running: 'running',
+  Stopped: 'stopped',
+  Error: 'error',
+} as const;
+
+export type GraphPreviewDtoStatusEnum =
+  (typeof GraphPreviewDtoStatusEnum)[keyof typeof GraphPreviewDtoStatusEnum];
+
+/**
+ *
+ * @export
+ * @interface GraphPreviewDtoAgentsInner
+ */
+export interface GraphPreviewDtoAgentsInner {
+  /**
+   *
+   * @type {string}
+   * @memberof GraphPreviewDtoAgentsInner
+   */
+  'nodeId': string;
+  /**
+   *
+   * @type {string}
+   * @memberof GraphPreviewDtoAgentsInner
+   */
+  'name': string;
+  /**
+   *
+   * @type {string}
+   * @memberof GraphPreviewDtoAgentsInner
+   */
+  'description'?: string;
+}
+/**
+ *
+ * @export
+ * @interface GraphPreviewDtoTriggerNodesInner
+ */
+export interface GraphPreviewDtoTriggerNodesInner {
+  /**
+   * Node ID
+   * @type {string}
+   * @memberof GraphPreviewDtoTriggerNodesInner
+   */
+  'id': string;
+  /**
+   * Display name (from metadata or template name)
+   * @type {string}
+   * @memberof GraphPreviewDtoTriggerNodesInner
+   */
+  'name': string;
+  /**
+   * Template identifier
+   * @type {string}
+   * @memberof GraphPreviewDtoTriggerNodesInner
+   */
+  'template': string;
+}
+/**
+ *
+ * @export
  * @interface GraphRevisionDto
  */
 export interface GraphRevisionDto {
@@ -6238,6 +6415,54 @@ export const GraphsApiAxiosParamCreator = function (
     },
     /**
      *
+     * @param {Array<string>} [ids] Filter graphs by IDs (comma-separated or repeated params)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getGraphsPreview: async (
+      ids?: Array<string>,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/v1/graphs/preview`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      if (ids) {
+        localVarQueryParameter['ids'] = ids;
+      }
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
      * @param {string} id
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -6807,6 +7032,36 @@ export const GraphsApiFp = function (configuration?: Configuration) {
     },
     /**
      *
+     * @param {Array<string>} [ids] Filter graphs by IDs (comma-separated or repeated params)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getGraphsPreview(
+      ids?: Array<string>,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<Array<GraphPreviewDto>>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getGraphsPreview(ids, options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['GraphsApi.getGraphsPreview']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
      * @param {string} id
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -7114,6 +7369,20 @@ export const GraphsApiFactory = function (
     },
     /**
      *
+     * @param {Array<string>} [ids] Filter graphs by IDs (comma-separated or repeated params)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getGraphsPreview(
+      ids?: Array<string>,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<Array<GraphPreviewDto>> {
+      return localVarFp
+        .getGraphsPreview(ids, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
      * @param {string} id
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -7328,6 +7597,22 @@ export class GraphsApi extends BaseAPI {
   ) {
     return GraphsApiFp(this.configuration)
       .getCompiledNodes(id, threadId, runId, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {Array<string>} [ids] Filter graphs by IDs (comma-separated or repeated params)
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof GraphsApi
+   */
+  public getGraphsPreview(
+    ids?: Array<string>,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return GraphsApiFp(this.configuration)
+      .getGraphsPreview(ids, options)
       .then((request) => request(this.axios, this.basePath));
   }
 

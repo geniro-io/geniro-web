@@ -26,6 +26,9 @@ docs/GithubAppApi.md
 docs/GraphDto.md
 docs/GraphNodeWithStatusDto.md
 docs/GraphNodeWithStatusDtoMetadata.md
+docs/GraphPreviewDto.md
+docs/GraphPreviewDtoAgentsInner.md
+docs/GraphPreviewDtoTriggerNodesInner.md
 docs/GraphRevisionDto.md
 docs/GraphRevisionsApi.md
 docs/GraphsApi.md

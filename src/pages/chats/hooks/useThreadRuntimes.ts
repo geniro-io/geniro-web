@@ -15,6 +15,7 @@ interface UseThreadRuntimesReturn {
 export const useThreadRuntimes = (
   threadId: string | undefined,
   graphId: string | undefined,
+  enabled = true,
 ): UseThreadRuntimesReturn => {
   const [runtimes, setRuntimes] = useState<RuntimeInstanceDto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -56,17 +57,17 @@ export const useThreadRuntimes = (
   );
 
   useEffect(() => {
-    if (!threadId) {
+    if (!threadId || !enabled) {
       setRuntimes([]);
       setLoading(false);
       setError(null);
       return;
     }
     void fetchRuntimes(threadId);
-  }, [threadId, fetchRuntimes]);
+  }, [threadId, enabled, fetchRuntimes]);
 
   useEffect(() => {
-    if (!threadId) return;
+    if (!threadId || !enabled) return;
     const POLL_INTERVAL_MS = 60_000;
     const intervalId = setInterval(() => {
       const tid = threadIdRef.current;
@@ -77,7 +78,7 @@ export const useThreadRuntimes = (
     return () => {
       clearInterval(intervalId);
     };
-  }, [threadId, fetchRuntimes]);
+  }, [threadId, enabled, fetchRuntimes]);
 
   const refresh = useCallback(() => {
     const tid = threadIdRef.current;

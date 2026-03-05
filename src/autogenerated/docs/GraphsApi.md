@@ -12,6 +12,7 @@ All URIs are relative to _http://localhost_
 | [**findGraphById**](#findgraphbyid)                       | **GET** /api/v1/graphs/{id}                                           |             |
 | [**getAllGraphs**](#getallgraphs)                         | **GET** /api/v1/graphs                                                |             |
 | [**getCompiledNodes**](#getcompilednodes)                 | **GET** /api/v1/graphs/{id}/nodes                                     |             |
+| [**getGraphsPreview**](#getgraphspreview)                 | **GET** /api/v1/graphs/preview                                        |             |
 | [**runGraph**](#rungraph)                                 | **POST** /api/v1/graphs/{id}/run                                      |             |
 | [**suggestAgentInstructions**](#suggestagentinstructions) | **POST** /api/v1/graphs/{graphId}/nodes/{nodeId}/suggest-instructions |             |
 | [**suggestGraphInstructions**](#suggestgraphinstructions) | **POST** /api/v1/graphs/{graphId}/suggest-instructions                |             |
@@ -373,6 +374,50 @@ const { status, data } = await apiInstance.getCompiledNodes(
 ### Return type
 
 **Array<GraphNodeWithStatusDto>**
+
+### Authorization
+
+[bearer](../README.md#bearer)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     |             | -                |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **getGraphsPreview**
+
+> Array<GraphPreviewDto> getGraphsPreview()
+
+### Example
+
+```typescript
+import { GraphsApi, Configuration } from './api';
+
+const configuration = new Configuration();
+const apiInstance = new GraphsApi(configuration);
+
+let ids: Array<string>; //Filter graphs by IDs (comma-separated or repeated params) (optional) (default to undefined)
+
+const { status, data } = await apiInstance.getGraphsPreview(ids);
+```
+
+### Parameters
+
+| Name    | Type                    | Description                                               | Notes                            |
+| ------- | ----------------------- | --------------------------------------------------------- | -------------------------------- |
+| **ids** | **Array&lt;string&gt;** | Filter graphs by IDs (comma-separated or repeated params) | (optional) defaults to undefined |
+
+### Return type
+
+**Array<GraphPreviewDto>**
 
 ### Authorization
 

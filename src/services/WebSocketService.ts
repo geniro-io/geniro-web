@@ -95,6 +95,11 @@ class WebSocketService {
       this.emitToHandlers('graph.update', data);
     });
 
+    // Graph preview events
+    this.socket.on('graph.preview', (data: SocketNotification) => {
+      this.emitToHandlers('graph.preview', data);
+    });
+
     // Agent message events
     this.socket.on('agent.message', (data: SocketNotification) => {
       this.emitToHandlers('agent.message', data);

@@ -47,6 +47,7 @@ import { useChatsMessages } from './hooks/useChatsMessages';
 import { useChatsThreadList } from './hooks/useChatsThreadList';
 import { useChatsUsageStats } from './hooks/useChatsUsageStats';
 import { useChatsWebSocket } from './hooks/useChatsWebSocket';
+import { useFullGraphCache } from './hooks/useFullGraphCache';
 import { useThreadRuntimes } from './hooks/useThreadRuntimes';
 import {
   formatUsd,
@@ -93,7 +94,7 @@ export const ChatsPage = () => {
     draftThread,
     setDraftThread,
     graphCache,
-    templatesById,
+    setGraphCache,
     templatesLoading,
     triggerNodesForSelectedThread,
     graphPickerOpen,
@@ -123,6 +124,12 @@ export const ChatsPage = () => {
     handleThreadChatSwitchRequest,
   } = threadList;
 
+  // --- Full graph cache ---
+  const { getFullGraph } = useFullGraphCache({
+    selectedThread,
+    selectedThreadIsDraft,
+  });
+
   // --- Usage stats hook ---
   const {
     setThreadTokenUsageByNode,
@@ -133,10 +140,6 @@ export const ChatsPage = () => {
     selectedThreadHeaderUsage,
     selectedThreadHeaderContextPercent,
     selectedThreadHeaderContextMaxTokens,
-    getNodeConfigString,
-    getNodeConfigNumber,
-    getNodeTemplateId,
-    formatNodeLabel,
     handleOpenUsageStatsModal,
     handleCloseUsageStatsModal,
     invalidateThreadUsageStats,
@@ -151,35 +154,35 @@ export const ChatsPage = () => {
     selectedThreadIsDraft,
     selectedAgentNodeId,
     graphCache,
+    getFullGraph,
   });
 
   // --- WebSocket hook ---
-  const { applyThreadCreate, isAgentNodeIdInGraph, threadSocketEvents } =
-    useChatsWebSocket({
-      graphFilterId,
-      selectedThreadId,
-      draftThread,
-      threadsRef,
-      pendingThreadSelectionRef,
-      setThreads,
-      setSelectedThreadId,
-      setSelectedThreadShadow,
-      setDraftThread,
-      setExternalThreadIds,
-      setMessageMeta,
-      setThreadTokenUsageByNode,
-      messages,
-      pendingMessages,
-      updateMessages,
-      updatePendingMessages,
-      externalThreadIds,
-      sortThreadsByTimestampDesc,
-      getThreadTimestamp,
-      ensureGraphsLoaded,
-      graphCache,
-      templatesById,
-      invalidateThreadUsageStats,
-    });
+  const { applyThreadCreate, threadSocketEvents } = useChatsWebSocket({
+    graphFilterId,
+    selectedThreadId,
+    draftThread,
+    threadsRef,
+    pendingThreadSelectionRef,
+    setThreads,
+    setSelectedThreadId,
+    setSelectedThreadShadow,
+    setDraftThread,
+    setExternalThreadIds,
+    setMessageMeta,
+    setThreadTokenUsageByNode,
+    messages,
+    pendingMessages,
+    updateMessages,
+    updatePendingMessages,
+    externalThreadIds,
+    sortThreadsByTimestampDesc,
+    getThreadTimestamp,
+    ensureGraphsLoaded,
+    graphCache,
+    setGraphCache,
+    invalidateThreadUsageStats,
+  });
 
   const socketEventsForUsageStatsThread = useMemo(() => {
     if (!usageStatsModalThreadId) return [];
@@ -230,24 +233,22 @@ export const ChatsPage = () => {
 
   const runtimeNodeNames = useMemo(() => {
     if (!selectedThread || selectedThreadIsDraft) return undefined;
-    const graph = graphCache[selectedThread.graphId]?.graph;
-    if (!graph) return undefined;
-    const metadataNames =
-      graphCache[selectedThread.graphId]?.nodeDisplayNames ?? {};
+    const entry = graphCache[selectedThread.graphId];
+    if (!entry) return undefined;
+    const displayNames = entry.nodeDisplayNames ?? {};
+    // Use nodeDisplayNames from the preview as the source of truth
     const names: Record<string, string> = {};
-    for (const node of graph.schema?.nodes ?? []) {
-      const configName = getNodeConfigString(node.id, 'name');
-      names[node.id] =
-        configName ?? metadataNames[node.id] ?? formatNodeLabel(node.id);
+    for (const [nodeId, name] of Object.entries(displayNames)) {
+      names[nodeId] = name;
+    }
+    // Also add agent names from the agents array
+    for (const agent of entry.graph.agents ?? []) {
+      if (!names[agent.nodeId]) {
+        names[agent.nodeId] = agent.name;
+      }
     }
     return names;
-  }, [
-    graphCache,
-    selectedThread,
-    selectedThreadIsDraft,
-    getNodeConfigString,
-    formatNodeLabel,
-  ]);
+  }, [graphCache, selectedThread, selectedThreadIsDraft]);
 
   const {
     runtimes,
@@ -259,6 +260,7 @@ export const ChatsPage = () => {
     selectedThread && !selectedThreadIsDraft
       ? selectedThread.graphId
       : undefined,
+    runtimeSidebarOpen,
   );
 
   // --- Auto-load messages for selected thread ---
@@ -333,41 +335,17 @@ export const ChatsPage = () => {
       }));
     }
 
-    // Fallback to graph cache for threads without agents
-    const agents: {
-      nodeId: string;
-      label: string;
-      description?: string;
-    }[] = [];
-
+    // Fallback to graph preview agents
     const graphId = selectedThread.graphId;
     const graph = graphCache[graphId]?.graph;
-    const schemaNodes = graph?.schema?.nodes ?? [];
+    if (!graph) return [];
 
-    schemaNodes.forEach((node) => {
-      const nodeId = node.id;
-      if (!isAgentNodeIdInGraph(graphId, nodeId)) return;
-
-      const configName = getNodeConfigString(nodeId, 'name');
-      const configDescription = getNodeConfigString(nodeId, 'description');
-
-      agents.push({
-        nodeId,
-        label: configName ?? formatNodeLabel(nodeId),
-        description: configDescription,
-      });
-    });
-
-    return agents;
-  }, [
-    formatNodeLabel,
-    graphCache,
-    getNodeConfigString,
-    isAgentNodeIdInGraph,
-    selectedThread,
-    selectedThreadId,
-    selectedThreadIsDraft,
-  ]);
+    return (graph.agents ?? []).map((agent) => ({
+      nodeId: agent.nodeId,
+      label: agent.name,
+      description: agent.description,
+    }));
+  }, [graphCache, selectedThread, selectedThreadId, selectedThreadIsDraft]);
 
   // Agents by graphId — used to show avatars in every thread list item
   const agentsByGraphId = useMemo(() => {
@@ -387,7 +365,7 @@ export const ChatsPage = () => {
       }));
     }
 
-    // Fallback to graph cache for graphIds not covered by thread.agents
+    // Fallback to graph preview agents for graphIds not covered by thread.agents
     const graphIds = new Set<string>();
     for (const t of filteredThreads) graphIds.add(t.graphId);
     if (draftThread) graphIds.add(draftThread.graphId);
@@ -396,87 +374,92 @@ export const ChatsPage = () => {
       if (result[gId]) continue;
       const cached = graphCache[gId];
       if (!cached) continue;
-      const graph = cached.graph;
-      const displayNames = cached.nodeDisplayNames ?? {};
-      const agents: (typeof result)[string] = [];
-
-      for (const node of graph.schema?.nodes ?? []) {
-        if (!isAgentNodeIdInGraph(gId, node.id)) continue;
-        const config = node.config as Record<string, unknown> | undefined;
-        const configName =
-          config && typeof config.name === 'string' && config.name.trim()
-            ? config.name.trim()
-            : undefined;
-        const label =
-          configName ??
-          (displayNames[node.id] && displayNames[node.id]!.trim()
-            ? displayNames[node.id]
-            : node.id.length <= 10
-              ? node.id
-              : `Node ${node.id.slice(-6)}`);
-        agents.push({
-          nodeId: node.id,
-          label,
-        });
-      }
-      result[gId] = agents;
+      result[gId] = (cached.graph.agents ?? []).map((agent) => ({
+        nodeId: agent.nodeId,
+        label: agent.name,
+      }));
     }
     return result;
-  }, [filteredThreads, draftThread, graphCache, isAgentNodeIdInGraph]);
+  }, [filteredThreads, draftThread, graphCache]);
 
   const runtimeAgentNames = useMemo(() => {
     if (!selectedThread || selectedThreadIsDraft) return {};
-    const graph = graphCache[selectedThread.graphId]?.graph;
-    if (!graph) return {};
 
-    const edges = graph.schema?.edges ?? [];
-    const agentNodeIds = new Set(agentsForSelectedThread.map((a) => a.nodeId));
+    const fullGraph = getFullGraph(selectedThread.graphId);
 
-    // Build child -> parents adjacency
-    const parentMap: Record<string, string[]> = {};
-    for (const edge of edges) {
-      if (!parentMap[edge.to]) parentMap[edge.to] = [];
-      parentMap[edge.to]!.push(edge.from);
-    }
+    // With full schema, build edge-based ancestry to find which agent owns each node
+    if (fullGraph?.schema?.edges && fullGraph.schema.edges.length > 0) {
+      const { nodes, edges } = fullGraph.schema;
 
-    // BFS from a node upward to find agent ancestors
-    const findAgentAncestors = (nodeId: string): string[] => {
-      const visited = new Set<string>();
-      const queue = [nodeId];
-      const agents: string[] = [];
-      while (queue.length > 0) {
-        const current = queue.shift()!;
-        if (visited.has(current)) continue;
-        visited.add(current);
-        if (agentNodeIds.has(current)) {
-          agents.push(current);
+      // Build adjacency: child -> parents
+      const parentMap = new Map<string, Set<string>>();
+      for (const edge of edges) {
+        let parents = parentMap.get(edge.to);
+        if (!parents) {
+          parents = new Set();
+          parentMap.set(edge.to, parents);
+        }
+        parents.add(edge.from);
+      }
+
+      // Identify agent node IDs
+      const agentNodeIds = new Set(
+        nodes.filter((n) => n.template === 'simple-agent').map((n) => n.id),
+      );
+
+      // Build a name lookup from schema config
+      const agentNameByNodeId = new Map<string, string>();
+      for (const node of nodes) {
+        if (agentNodeIds.has(node.id)) {
+          const name =
+            typeof node.config?.name === 'string' && node.config.name.trim()
+              ? node.config.name.trim()
+              : node.id;
+          agentNameByNodeId.set(node.id, name);
+        }
+      }
+
+      // For each node, BFS upward to find its closest agent ancestor
+      const result: Record<string, string> = {};
+      for (const node of nodes) {
+        if (agentNodeIds.has(node.id)) {
+          result[node.id] = agentNameByNodeId.get(node.id) ?? node.id;
           continue;
         }
-        for (const parent of parentMap[current] ?? []) {
-          queue.push(parent);
+        const visited = new Set<string>();
+        const queue = [node.id];
+        let foundAgent: string | undefined;
+        while (queue.length > 0 && !foundAgent) {
+          const current = queue.shift()!;
+          if (visited.has(current)) continue;
+          visited.add(current);
+          const parents = parentMap.get(current);
+          if (!parents) continue;
+          for (const parentId of parents) {
+            if (agentNodeIds.has(parentId)) {
+              foundAgent = agentNameByNodeId.get(parentId) ?? parentId;
+              break;
+            }
+            queue.push(parentId);
+          }
+        }
+        if (foundAgent) {
+          result[node.id] = foundAgent;
         }
       }
-      return agents;
-    };
+      return result;
+    }
 
+    // Fallback: without full schema, map each agent nodeId to its own name
     const result: Record<string, string> = {};
-    for (const node of graph.schema?.nodes ?? []) {
-      const agentAncestors = findAgentAncestors(node.id);
-      if (agentAncestors.length > 0) {
-        const labels = agentAncestors.map((agentId) => {
-          const agent = agentsForSelectedThread.find(
-            (a) => a.nodeId === agentId,
-          );
-          return agent?.label ?? agentId;
-        });
-        result[node.id] = labels.join(', ');
-      }
+    for (const agent of agentsForSelectedThread) {
+      result[agent.nodeId] = agent.label;
     }
     return result;
   }, [
-    graphCache,
     selectedThread,
     selectedThreadIsDraft,
+    getFullGraph,
     agentsForSelectedThread,
   ]);
 
@@ -989,7 +972,7 @@ export const ChatsPage = () => {
         threadId={usageStatsModalThreadId}
         threads={threads}
         graphCache={graphCache}
-        templatesById={templatesById}
+        getFullGraph={getFullGraph}
         threadUsageStats={threadUsageStats}
         threadUsageStatsLoading={threadUsageStatsLoading}
         socketEventsCount={socketEventsForUsageStatsThread.length}

@@ -59,6 +59,23 @@ export interface GraphUpdateNotification extends BaseNotification {
   };
 }
 
+// Graph preview notification
+export interface GraphPreviewNotification extends BaseNotification {
+  type: 'graph.preview';
+  data: {
+    id: string;
+    status: string;
+    triggerNodes: { id: string; name: string; template: string }[];
+    nodeDisplayNames: Record<string, string>;
+    nodeCount: number;
+    edgeCount: number;
+    agents: { nodeId: string; name: string; description?: string }[];
+    version: string;
+    targetVersion: string;
+    error?: string | null;
+  };
+}
+
 // Agent message notification
 export interface AgentMessageNotification extends BaseNotification {
   type: 'agent.message';
@@ -193,6 +210,7 @@ export interface ServerErrorNotification {
 // Union type for all notification types
 export type SocketNotification =
   | GraphUpdateNotification
+  | GraphPreviewNotification
   | AgentMessageNotification
   | AgentStateUpdateNotification
   | ThreadCreateNotification
