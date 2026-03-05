@@ -28,7 +28,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -108,6 +108,7 @@ import {
   ReasoningBlock,
   ShellBlock,
   StatusTag,
+  StreamingReasoningBlock,
   SubagentBlock,
   ToolBlock,
 } from '@/components/ui/thread-blocks';
@@ -223,6 +224,7 @@ const SECTIONS = [
   { id: 'repo-card', label: 'Repo Card' },
   { id: 'chat-message', label: 'Chat Message' },
   { id: 'thread-blocks', label: 'Thread Blocks' },
+  { id: 'live-thread', label: 'Live Thread' },
   { id: 'metrics', label: 'Metrics' },
   { id: 'json-viewer', label: 'JSON Viewer' },
   { id: 'project-card', label: 'Project Card' },
@@ -2241,6 +2243,452 @@ function ThreadBlocksSection() {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Live Thread section — simulates socket notifications streaming in         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A single step in the live-thread simulation timeline.
+ * - `reasoning` arrives as 3 socket "chunks"; each chunk extends the text and
+ *   the full reveal animation targets 3 s from the first chunk. If the next
+ *   (non-reasoning) step arrives before the animation finishes, the remainder
+ *   is flushed in 500 ms.
+ * - `tool` / `shell` appear as "running" then transition to "done".
+ * - `chat` appears instantly as a ChatBubble.
+ */
+
+type LiveTokens = {
+  input: number;
+  output: number;
+  total: number;
+  cost: string;
+  duration: string;
+};
+
+type LiveStep =
+  | {
+      kind: 'reasoning';
+      /** Socket notification chunks — each element simulates one socket event */
+      chunks: string[];
+      /** ms between chunk arrivals (default 500) */
+      chunkDelayMs?: number;
+    }
+  | {
+      kind: 'tool';
+      toolName: string;
+      args: Record<string, unknown>;
+      result: string;
+      /** ms to stay in "running" state before switching to "done" */
+      runMs?: number;
+      tokens?: LiveTokens;
+    }
+  | {
+      kind: 'shell';
+      command: string;
+      stdout: string;
+      stderr?: string;
+      exitCode: number;
+      /** ms to stay in "executing" state */
+      runMs?: number;
+      tokens?: LiveTokens;
+    }
+  | {
+      kind: 'chat';
+      sender: string;
+      agentRole?: string;
+      color: string;
+      content: string;
+      tokens?: LiveTokens;
+    };
+
+const LIVE_STEPS: LiveStep[] = [
+  {
+    kind: 'reasoning',
+    chunks: [
+      'Let me analyze the authentication module. I need to check the JWT validation logic, ',
+      'review the refresh token rotation, and verify the session management ',
+      'implementation. Starting with the token verification flow...',
+    ],
+    chunkDelayMs: 500,
+  },
+  {
+    kind: 'tool',
+    toolName: 'read_file',
+    args: { path: 'src/auth/jwt.ts', encoding: 'utf-8' },
+    result:
+      '{"algorithm":"RS256","accessTokenExpiry":"15m","refreshTokenExpiry":"7d","issuer":"geniro-auth"}',
+    runMs: 1500,
+    tokens: {
+      input: 890,
+      output: 120,
+      total: 1010,
+      cost: '$0.001',
+      duration: '0.4s',
+    },
+  },
+  {
+    kind: 'reasoning',
+    chunks: [
+      'The JWT config looks correct — RS256 with ',
+      'reasonable expiry times. Now let me check the session management ',
+      'for potential race conditions in concurrent token refresh requests.',
+    ],
+    chunkDelayMs: 400,
+  },
+  {
+    kind: 'shell',
+    command: 'npm run test:auth -- --coverage',
+    stdout: `PASS  src/auth/__tests__/login.test.ts (1.2s)
+PASS  src/auth/__tests__/jwt.test.ts (0.8s)
+PASS  src/auth/__tests__/refresh.test.ts (0.6s)
+
+Test Suites:  3 passed, 3 total
+Tests:        12 passed, 12 total
+Coverage:     87.3%`,
+    exitCode: 0,
+    runMs: 2500,
+    tokens: {
+      input: 950,
+      output: 95,
+      total: 1045,
+      cost: '$0.001',
+      duration: '4.2s',
+    },
+  },
+  {
+    kind: 'tool',
+    toolName: 'search_code',
+    args: { query: 'hardcoded secret', path: 'src/auth/' },
+    result: 'No matches found.',
+    runMs: 1200,
+    tokens: {
+      input: 420,
+      output: 30,
+      total: 450,
+      cost: '$0.001',
+      duration: '0.3s',
+    },
+  },
+  {
+    kind: 'reasoning',
+    chunks: [
+      'All tests passing with good coverage. ',
+      'No hardcoded secrets detected. ',
+      'The authentication module is secure.',
+    ],
+    chunkDelayMs: 350,
+  },
+  {
+    kind: 'chat',
+    sender: 'Samantha Hale',
+    agentRole: 'Engineering Manager',
+    color: 'bg-green-500',
+    content:
+      'Security audit complete. The authentication module passed all checks:\n\n- JWT uses RS256 with proper key rotation\n- All 12 tests passing (87.3% coverage)\n- No hardcoded secrets detected\n\nThe module is ready for production.',
+    tokens: {
+      input: 4200,
+      output: 380,
+      total: 4580,
+      cost: '$0.005',
+      duration: '2.3s',
+    },
+  },
+];
+
+/** Pause between steps (ms) */
+const STEP_GAP = 400;
+type RenderedItem =
+  | { kind: 'reasoning'; content: string; streaming: boolean }
+  | {
+      kind: 'tool';
+      toolName: string;
+      args: Record<string, unknown>;
+      status: 'running' | 'done';
+      result?: string;
+      tokens?: LiveTokens;
+    }
+  | {
+      kind: 'shell';
+      command: string;
+      stdout: string;
+      stderr?: string;
+      exitCode: number;
+      status: 'executing' | 'executed';
+      tokens?: LiveTokens;
+    }
+  | {
+      kind: 'chat';
+      sender: string;
+      agentRole?: string;
+      color: string;
+      content: string;
+      tokens?: LiveTokens;
+    };
+
+/* ── LiveThreadSection component ────────────────────────────────────────── */
+
+function LiveThreadSection() {
+  const [items, setItems] = useState<RenderedItem[]>([]);
+  const [running, setRunning] = useState(false);
+  const cancelRef = useRef(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom only while the simulation is running
+  useEffect(() => {
+    if (running) {
+      bottomRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+  }, [items, running]);
+
+  const play = useCallback(async () => {
+    cancelRef.current = false;
+    setItems([]);
+    setRunning(true);
+
+    const wait = (ms: number) =>
+      new Promise<void>((r) => {
+        setTimeout(r, ms);
+      });
+
+    for (const step of LIVE_STEPS) {
+      if (cancelRef.current) break;
+
+      if (step.kind === 'reasoning') {
+        const chunks = step.chunks;
+        const chunkDelay = step.chunkDelayMs ?? 500;
+
+        // Add with first chunk, streaming = true
+        setItems((prev) => [
+          ...prev,
+          { kind: 'reasoning', content: chunks[0], streaming: true },
+        ]);
+
+        // Deliver remaining chunks
+        for (let i = 1; i < chunks.length; i++) {
+          await wait(chunkDelay);
+          if (cancelRef.current) break;
+          const accumulated = chunks.slice(0, i + 1).join('');
+          setItems((prev) => {
+            const next = [...prev];
+            const last = next[next.length - 1];
+            if (last.kind === 'reasoning') {
+              next[next.length - 1] = { ...last, content: accumulated };
+            }
+            return next;
+          });
+        }
+      } else {
+        // Set streaming=false on last reasoning item (triggers flush via hook)
+        setItems((prev) => {
+          const next = [...prev];
+          const last = next[next.length - 1];
+          if (last?.kind === 'reasoning' && last.streaming) {
+            next[next.length - 1] = { ...last, streaming: false };
+          }
+          return next;
+        });
+
+        if (step.kind === 'tool') {
+          setItems((prev) => [
+            ...prev,
+            {
+              kind: 'tool',
+              toolName: step.toolName,
+              args: step.args,
+              status: 'running',
+            },
+          ]);
+          await wait(step.runMs ?? 1500);
+
+          if (!cancelRef.current) {
+            setItems((prev) => {
+              const next = [...prev];
+              next[next.length - 1] = {
+                kind: 'tool',
+                toolName: step.toolName,
+                args: step.args,
+                status: 'done',
+                result: step.result,
+                tokens: step.tokens,
+              };
+              return next;
+            });
+          }
+        } else if (step.kind === 'shell') {
+          setItems((prev) => [
+            ...prev,
+            {
+              kind: 'shell',
+              command: step.command,
+              stdout: '',
+              exitCode: 0,
+              status: 'executing',
+            },
+          ]);
+          await wait(step.runMs ?? 2000);
+
+          if (!cancelRef.current) {
+            setItems((prev) => {
+              const next = [...prev];
+              next[next.length - 1] = {
+                kind: 'shell',
+                command: step.command,
+                stdout: step.stdout,
+                stderr: step.stderr,
+                exitCode: step.exitCode,
+                status: 'executed',
+                tokens: step.tokens,
+              };
+              return next;
+            });
+          }
+        } else if (step.kind === 'chat') {
+          setItems((prev) => [
+            ...prev,
+            {
+              kind: 'chat',
+              sender: step.sender,
+              agentRole: step.agentRole,
+              color: step.color,
+              content: step.content,
+              tokens: step.tokens,
+            },
+          ]);
+        }
+      }
+
+      // Gap between steps
+      if (!cancelRef.current) {
+        await wait(STEP_GAP);
+      }
+    }
+
+    // Mark any trailing reasoning as done
+    setItems((prev) => {
+      const next = [...prev];
+      const last = next[next.length - 1];
+      if (last?.kind === 'reasoning' && last.streaming) {
+        next[next.length - 1] = { ...last, streaming: false };
+      }
+      return next;
+    });
+
+    setRunning(false);
+  }, []);
+
+  const reset = useCallback(() => {
+    cancelRef.current = true;
+    setItems([]);
+    setRunning(false);
+  }, []);
+
+  return (
+    <Section
+      id="live-thread"
+      title="Live Thread"
+      description="Simulates real-time socket notifications: reasoning arrives as 3 chunks and reveals over 3 s (adapting speed per chunk); non-reasoning steps flush remaining reasoning in 500 ms. Tool calls transition running → done.">
+      <div className="px-5 py-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Button
+            size="sm"
+            onClick={running ? reset : play}
+            variant={running ? 'outline' : 'default'}>
+            {running ? (
+              <>
+                <X className="w-3.5 h-3.5 mr-1" /> Reset
+              </>
+            ) : (
+              <>
+                <Zap className="w-3.5 h-3.5 mr-1" /> Play
+              </>
+            )}
+          </Button>
+          {!running && items.length > 0 && (
+            <Button size="sm" variant="ghost" onClick={reset}>
+              Clear
+            </Button>
+          )}
+          <span className="text-xs text-muted-foreground">
+            {running
+              ? 'Streaming...'
+              : items.length > 0
+                ? `${items.length} messages`
+                : 'Click Play to simulate live thread'}
+          </span>
+        </div>
+
+        <div className="w-full max-w-2xl space-y-2">
+          {/* User message that kicks things off */}
+          {items.length > 0 && (
+            <ChatBubble
+              sender="You"
+              role="human"
+              content="Run a security audit on the authentication module."
+              timestamp="3:16 PM"
+              color="bg-gray-500"
+            />
+          )}
+
+          {items.map((item, idx) => {
+            if (item.kind === 'reasoning') {
+              return (
+                <StreamingReasoningBlock
+                  key={`r-${idx}`}
+                  content={item.content}
+                  isStreaming={item.streaming}
+                />
+              );
+            }
+            if (item.kind === 'tool') {
+              return (
+                <ToolBlock
+                  key={`t-${idx}`}
+                  toolName={item.toolName}
+                  status={item.status}
+                  args={item.args}
+                  result={item.result}
+                  tokens={item.tokens}
+                />
+              );
+            }
+            if (item.kind === 'shell') {
+              return (
+                <ShellBlock
+                  key={`s-${idx}`}
+                  command={item.command}
+                  stdout={item.stdout}
+                  stderr={item.stderr}
+                  exitCode={item.exitCode}
+                  status={item.status}
+                  tokens={item.tokens}
+                />
+              );
+            }
+            if (item.kind === 'chat') {
+              return (
+                <ChatBubble
+                  key={`c-${idx}`}
+                  sender={item.sender}
+                  role="ai"
+                  agentRole={item.agentRole}
+                  color={item.color}
+                  content={item.content}
+                  tokens={item.tokens}
+                />
+              );
+            }
+            return null;
+          })}
+          <div ref={bottomRef} />
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Metrics section                                                           */
 /* -------------------------------------------------------------------------- */
 
@@ -2762,6 +3210,17 @@ function GraphNodeSection() {
           <p className="text-xs text-muted-foreground">
             Click to select · use toggle button to expand inputs/outputs
           </p>
+        </div>
+      </Row>
+      <Row label="Read-only node (no toggle)">
+        <div className="w-[280px]">
+          <GraphNodeCard
+            label="GitHub Tools"
+            templateKind="tool"
+            template="gh-tool"
+            description="GitHub tools for repository access"
+            showExpandToggle={false}
+          />
         </div>
       </Row>
     </Section>
@@ -3487,6 +3946,7 @@ export function StorybookPage() {
         <RepoCardSection />
         <ChatMessageSection />
         <ThreadBlocksSection />
+        <LiveThreadSection />
         <MetricsSection />
         <JsonViewerSection />
         <ProjectCardSection />

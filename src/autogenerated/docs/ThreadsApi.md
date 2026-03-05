@@ -6,6 +6,7 @@ All URIs are relative to _http://localhost_
 | ------------------------------------------------------------------- | --------------------------------------------------------------------- | ----------- |
 | [**analyzeThread**](#analyzethread)                                 | **POST** /api/v1/threads/{threadId}/analyze                           |             |
 | [**deleteThread**](#deletethread)                                   | **DELETE** /api/v1/threads/{threadId}                                 |             |
+| [**exportThread**](#exportthread)                                   | **GET** /api/v1/threads/{threadId}/export                             |             |
 | [**getThreadByExternalId**](#getthreadbyexternalid)                 | **GET** /api/v1/threads/external/{externalThreadId}                   |             |
 | [**getThreadById**](#getthreadbyid)                                 | **GET** /api/v1/threads/{threadId}                                    |             |
 | [**getThreadMessages**](#getthreadmessages)                         | **GET** /api/v1/threads/{threadId}/messages                           |             |
@@ -83,6 +84,50 @@ const apiInstance = new ThreadsApi(configuration);
 let threadId: string; // (default to undefined)
 
 const { status, data } = await apiInstance.deleteThread(threadId);
+```
+
+### Parameters
+
+| Name         | Type         | Description | Notes                 |
+| ------------ | ------------ | ----------- | --------------------- |
+| **threadId** | [**string**] |             | defaults to undefined |
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[bearer](../README.md#bearer)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     |             | -                |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **exportThread**
+
+> exportThread()
+
+### Example
+
+```typescript
+import { ThreadsApi, Configuration } from './api';
+
+const configuration = new Configuration();
+const apiInstance = new ThreadsApi(configuration);
+
+let threadId: string; // (default to undefined)
+
+const { status, data } = await apiInstance.exportThread(threadId);
 ```
 
 ### Parameters

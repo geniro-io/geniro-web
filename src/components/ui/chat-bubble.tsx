@@ -1,8 +1,9 @@
 import { formatDistanceToNow } from 'date-fns';
 import React from 'react';
 
+import { getAgentInitials } from '../../pages/chats/utils/chatsPageUtils';
 import { MarkdownContent } from '../markdown/MarkdownContent';
-import { Avatar, AvatarFallback, AvatarImage } from './avatar';
+import { Avatar, AvatarFallback } from './avatar';
 import { CopyButton, TokenBadge, type TokenInfo } from './token-display';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
@@ -33,7 +34,6 @@ export interface ChatBubbleProps {
   role: 'human' | 'ai';
   agentRole?: string;
   color?: string;
-  avatarSrc?: string;
   avatarTooltip?: string;
 
   // Content — data only
@@ -60,7 +60,6 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
     role,
     agentRole,
     color = 'bg-gray-500',
-    avatarSrc,
     avatarTooltip,
     content,
     copyContent,
@@ -73,14 +72,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
     customBody,
   }) => {
     const isHuman = role === 'human';
-    const initials = sender
-      .split(' ')
-      .map((n) => n[0])
-      .join('');
+    const initials = getAgentInitials(sender);
 
     const avatarElement = (
       <Avatar className="w-8 h-8 flex-shrink-0">
-        {avatarSrc && <AvatarImage src={avatarSrc} />}
         <AvatarFallback className={`${color} text-white text-[11px]`}>
           {initials}
         </AvatarFallback>

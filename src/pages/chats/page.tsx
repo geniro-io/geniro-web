@@ -1,14 +1,17 @@
+import axios from 'axios';
 import {
   BarChart3,
+  Download,
   ExternalLink,
   Loader2,
   MessageSquare,
   Network,
   Plus,
   Server,
+  Upload,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useParams } from 'react-router';
 
@@ -28,6 +31,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../components/ui/tooltip';
+import { API_URL } from '../../config';
 import {
   getStatusBadgeClass,
   getThreadStatusDisplay,
@@ -40,6 +44,10 @@ import { SocketEventsModal } from './components/SocketEventsModal';
 import ThreadChatPanel from './components/ThreadChatPanel';
 import { ThreadListItem } from './components/ThreadListItem';
 import { ThreadRuntimeSidebar } from './components/ThreadRuntimeSidebar';
+import {
+  type ThreadExportData,
+  ThreadSnapshotModal,
+} from './components/ThreadSnapshotModal';
 import { ThreadTokenUsageLine } from './components/ThreadTokenUsageLine';
 import { UsageStatsModal } from './components/UsageStatsModal';
 import { useChatsAnalysis } from './hooks/useChatsAnalysis';
@@ -220,6 +228,75 @@ export const ChatsPage = () => {
     handleCopyThreadSocketEventsJson,
     threadSocketEventsModalThreadId,
   } = analysis;
+
+  // --- Thread export/import ---
+  const [snapshotModalOpen, setSnapshotModalOpen] = useState(false);
+  const [snapshotModalData, setSnapshotModalData] =
+    useState<ThreadExportData | null>(null);
+  const importFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExportThread = async (threadId: string, threadName: string) => {
+    try {
+      const response = await axios.get<Blob>(
+        `${API_URL}/api/v1/threads/${threadId}/export`,
+        { responseType: 'blob' },
+      );
+      const date = new Date().toISOString().slice(0, 10);
+      const safeName = (threadName || 'thread').replace(/[^a-z0-9-_]/gi, '_');
+      const filename = `thread-export-${safeName}-${date}.json`;
+      const url = URL.createObjectURL(response.data);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[ChatsPage] Failed to export thread', { threadId, err });
+      toastMessage.error('Failed to export thread. Please try again.');
+    }
+  };
+
+  const handleImportFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset the input immediately so the same file can be re-selected
+    e.target.value = '';
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result;
+      if (typeof text !== 'string') {
+        toastMessage.error('Failed to read the selected file.');
+        return;
+      }
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        toastMessage.error(
+          'Invalid JSON file. Please select a valid thread export.',
+        );
+        return;
+      }
+      const p = parsed as Record<string, unknown>;
+      if (
+        !p ||
+        typeof p !== 'object' ||
+        p['version'] !== '1' ||
+        typeof p['thread'] !== 'object' ||
+        p['thread'] === null ||
+        !Array.isArray(p['messages'])
+      ) {
+        toastMessage.error(
+          'Invalid thread snapshot file: missing or invalid required fields.',
+        );
+        return;
+      }
+      setSnapshotModalData(parsed as ThreadExportData);
+      setSnapshotModalOpen(true);
+    };
+    reader.readAsText(file);
+  };
 
   // --- Agent cards expand/collapse ---
   const [agentsExpanded, setAgentsExpanded] = useState(false);
@@ -506,13 +583,27 @@ export const ChatsPage = () => {
               <span className="text-sm font-semibold text-foreground">
                 Chats
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-7 h-7 p-0"
-                onClick={handleCreateDraftThread}>
-                <Plus className="w-3.5 h-3.5" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => importFileInputRef.current?.click()}>
+                      <Upload className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Import thread snapshot</TooltipContent>
+                </Tooltip>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={handleCreateDraftThread}>
+                  <Plus className="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </div>
           ) : (
             <Popover open={graphPickerOpen} onOpenChange={setGraphPickerOpen}>
@@ -521,15 +612,29 @@ export const ChatsPage = () => {
                   <span className="text-sm font-semibold text-foreground">
                     Chats
                   </span>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-7 h-7 p-0"
-                      onClick={handleCreateDraftThread}>
-                      <Plus className="w-3.5 h-3.5" />
-                    </Button>
-                  </PopoverTrigger>
+                  <div className="flex items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => importFileInputRef.current?.click()}>
+                          <Upload className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Import thread snapshot</TooltipContent>
+                    </Tooltip>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={handleCreateDraftThread}>
+                        <Plus className="w-3.5 h-3.5" />
+                      </Button>
+                    </PopoverTrigger>
+                  </div>
                 </div>
               </PopoverAnchor>
               <PopoverContent
@@ -729,6 +834,27 @@ export const ChatsPage = () => {
                               </TooltipTrigger>
                               <TooltipContent>
                                 View detailed usage statistics
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          {!selectedThreadIsDraft && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() =>
+                                    handleExportThread(
+                                      selectedThread.id,
+                                      (selectedThread as ThreadDto).name ?? '',
+                                    )
+                                  }>
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Export thread as JSON
                               </TooltipContent>
                             </Tooltip>
                           )}
@@ -985,6 +1111,25 @@ export const ChatsPage = () => {
         threadId={threadSocketEventsModalThreadId}
         events={socketEventsForModalThread}
         onCopyJson={handleCopyThreadSocketEventsJson}
+      />
+
+      {/* Hidden file input for thread snapshot import */}
+      <input
+        ref={importFileInputRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={handleImportFileChange}
+      />
+
+      {/* Thread snapshot viewer modal */}
+      <ThreadSnapshotModal
+        open={snapshotModalOpen}
+        onClose={() => {
+          setSnapshotModalOpen(false);
+          setSnapshotModalData(null);
+        }}
+        snapshot={snapshotModalData}
       />
     </div>
   );

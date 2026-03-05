@@ -15,6 +15,8 @@ import {
 import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { useReasoningReveal } from '../../hooks/useReasoningReveal';
+import { getAgentInitials } from '../../pages/chats/utils/chatsPageUtils';
 import { getStatusBadgeClass } from '../../utils/statusColors';
 import { MarkdownContent } from '../markdown/MarkdownContent';
 import { Avatar, AvatarFallback } from './avatar';
@@ -357,6 +359,31 @@ export function ReasoningBlock({
         )}
       </div>
     </div>
+  );
+}
+
+// ─── StreamingReasoningBlock ──────────────────────────────────────────────────
+
+export function StreamingReasoningBlock({
+  content,
+  isStreaming,
+  markdownStyle,
+}: {
+  content: string;
+  isStreaming: boolean;
+  markdownStyle?: React.CSSProperties;
+}) {
+  const { displayContent, isRevealing } = useReasoningReveal(
+    content,
+    isStreaming,
+  );
+  const active = isStreaming || isRevealing;
+  return (
+    <ReasoningBlock content={displayContent} isStreaming={active}>
+      {!active && markdownStyle ? (
+        <MarkdownContent content={displayContent} style={markdownStyle} />
+      ) : undefined}
+    </ReasoningBlock>
   );
 }
 
@@ -1123,10 +1150,7 @@ export function InnerMessages({
               {!hideNames && (
                 <div
                   className={`w-5 h-5 rounded-full ${msg.color} flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0 mt-0.5`}>
-                  {msg.sender
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
+                  {getAgentInitials(msg.sender)}
                 </div>
               )}
               <div className="text-[11px] flex-1 min-w-0">
@@ -1440,21 +1464,16 @@ export function AgentAvatars({
   b: string;
   colorB: string;
 }) {
-  const init = (s: string) =>
-    s
-      .split(' ')
-      .map((n) => n[0])
-      .join('');
   return (
     <div className="flex items-center gap-1 flex-shrink-0">
       <div
         className={`w-5 h-5 rounded-full ${colorA} flex items-center justify-center text-white text-[8px] font-bold`}>
-        {init(a)}
+        {getAgentInitials(a)}
       </div>
       <ArrowRight className="w-3 h-3 text-muted-foreground" />
       <div
         className={`w-5 h-5 rounded-full ${colorB} flex items-center justify-center text-white text-[8px] font-bold`}>
-        {init(b)}
+        {getAgentInitials(b)}
       </div>
     </div>
   );
@@ -1478,7 +1497,6 @@ export interface CommunicationBlockProps {
   // --- Consumer mode (ThreadMessagesView) ---
   children?: React.ReactNode;
   targetAgentName?: string;
-  targetAvatarSrc?: string;
   /** Sending (parent) agent name — used to render AgentAvatars in consumer mode. */
   sourceAgentName?: string;
   /** Tailwind bg color class for the source agent avatar (e.g. "bg-green-500"). */
@@ -1512,7 +1530,6 @@ export function CommunicationBlock(props: CommunicationBlockProps) {
     status,
     children,
     targetAgentName,
-    targetAvatarSrc,
     sourceAgentName,
     sourceColor,
     targetColor,
@@ -1584,12 +1601,6 @@ export function CommunicationBlock(props: CommunicationBlockProps) {
           colorA={sourceColor}
           b={cleanTarget}
           colorB={targetColor}
-        />
-      ) : targetAvatarSrc ? (
-        <img
-          src={targetAvatarSrc}
-          alt=""
-          className="w-[18px] h-[18px] rounded-full flex-shrink-0"
         />
       ) : null;
 
@@ -1781,10 +1792,7 @@ export function FinishBlock({
     <div className="flex gap-3">
       <Avatar className="w-8 h-8 flex-shrink-0">
         <AvatarFallback className={`${color} text-white text-[11px]`}>
-          {sender
-            .split(' ')
-            .map((n) => n[0])
-            .join('')}
+          {getAgentInitials(sender)}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
