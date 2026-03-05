@@ -638,6 +638,8 @@ export const CustomNode = React.memo(
                   height: '12px',
                   position: 'absolute',
                   left: '-18px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
                   background: visuals.background,
                   border: visuals.border,
                   boxShadow: visuals.boxShadow,
@@ -799,6 +801,8 @@ export const CustomNode = React.memo(
                   height: '12px',
                   position: 'absolute',
                   right: '-18px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
                 }}
               />
             </div>
@@ -824,6 +828,8 @@ export const CustomNode = React.memo(
                 height: '12px',
                 position: 'absolute',
                 right: '-18px',
+                top: '50%',
+                transform: 'translateY(-50%)',
               }}
             />
           </div>
@@ -907,6 +913,8 @@ export const CustomNode = React.memo(
             height: '12px',
             position: 'absolute',
             right: '-18px',
+            top: '50%',
+            transform: 'translateY(-50%)',
           }}
         />
       </div>

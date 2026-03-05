@@ -99,7 +99,6 @@ export const normalizeGraphDiffSnapshot = (state: GraphDiffState) => {
         return {
           id: node.id,
           type: node.type,
-          position: node.position,
           data: {
             ...normalizedData,
           },

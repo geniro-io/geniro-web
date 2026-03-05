@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/logo.png" alt="Geniro" width="400" />
+
 # AI Agent Graph Platform
 
 **Build, run, and manage AI agent automations through a visual graph editor.**
