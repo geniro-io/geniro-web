@@ -32,6 +32,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../../../components/ui/dropdown-menu';
+import { Input } from '../../../components/ui/input';
 import { PickerTrigger } from '../../../components/ui/picker-trigger';
 import {
   Popover,
@@ -45,6 +46,7 @@ import {
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
 import { cn } from '../../../components/ui/utils';
+import { useSystemSettings } from '../../../hooks/useSystemSettings';
 import { extractApiErrorMessage } from '../../../utils/errors';
 import {
   extractThreadSubId,
@@ -138,6 +140,9 @@ export const ThreadChatPanel: React.FC<ThreadChatPanelProps> = ({
     () => !!thread.metadata?.repositoryId,
   );
   const [repoPopoverOpen, setRepoPopoverOpen] = useState(false);
+  const [repoSearch, setRepoSearch] = useState('');
+
+  const { settings: systemSettings } = useSystemSettings();
 
   useEffect(() => {
     setSelectedThreadExternalId(
@@ -622,16 +627,50 @@ export const ThreadChatPanel: React.FC<ThreadChatPanelProps> = ({
       );
     }
     if (repos.length === 0) {
+      if (!systemSettings.githubAppEnabled) {
+        return (
+          <div className="p-3 min-w-[220px]">
+            <p className="text-xs text-muted-foreground mb-1.5">
+              No GitHub App connected.
+            </p>
+            <a
+              href="/settings/integrations"
+              className="text-xs text-primary underline-offset-4 hover:underline">
+              Configure integrations
+            </a>
+          </div>
+        );
+      }
       return (
-        <div className="p-2">
-          <span className="text-xs text-muted-foreground">
-            No repositories available
-          </span>
+        <div className="p-3 min-w-[220px]">
+          <p className="text-xs text-muted-foreground mb-1.5">
+            No repositories synced yet.
+          </p>
+          <a
+            href="/repositories"
+            className="text-xs text-primary underline-offset-4 hover:underline">
+            Go to repositories
+          </a>
         </div>
       );
     }
+    const filteredRepos = repoSearch
+      ? repos.filter(
+          (r) =>
+            r.owner?.toLowerCase().includes(repoSearch.toLowerCase()) ||
+            r.repo?.toLowerCase().includes(repoSearch.toLowerCase()),
+        )
+      : repos;
     return (
-      <div className="max-h-[260px] overflow-y-auto min-w-[240px] flex flex-col gap-0.5">
+      <div className="min-w-[240px] flex flex-col gap-0.5">
+        <div className="px-1 pt-1 pb-0.5">
+          <Input
+            placeholder="Search repos..."
+            value={repoSearch}
+            onChange={(e) => setRepoSearch(e.target.value)}
+            className="h-7 text-xs"
+          />
+        </div>
         {selectedRepoId && (
           <Button
             variant="ghost"
@@ -641,33 +680,50 @@ export const ThreadChatPanel: React.FC<ThreadChatPanelProps> = ({
             Clear selection
           </Button>
         )}
-        {repos.map((repo) => (
-          <Button
-            key={repo.id}
-            variant="ghost"
-            size="sm"
-            className={cn(
-              'w-full justify-start text-left h-auto py-1.5 px-2 leading-snug',
-              repo.id === selectedRepoId ? 'bg-accent/50' : '',
-            )}
-            onClick={() => handleRepoChange(repo.id)}>
-            <Github className="h-3 w-3 shrink-0 text-muted-foreground" />
-            <span className="font-medium text-xs">
-              {repo.owner}/{repo.repo}
+        {filteredRepos.length === 0 ? (
+          <div className="p-2">
+            <span className="text-xs text-muted-foreground">
+              No repos match &quot;{repoSearch}&quot;
             </span>
-            {repo.defaultBranch && (
-              <Badge
-                variant="outline"
-                className="text-[9px] px-1.5 py-0 rounded-full gap-0.5">
-                <GitBranch className="h-2.5 w-2.5" />
-                {repo.defaultBranch}
-              </Badge>
-            )}
-          </Button>
-        ))}
+          </div>
+        ) : (
+          <div className="max-h-[220px] overflow-y-auto flex flex-col gap-0.5">
+            {filteredRepos.map((repo) => (
+              <Button
+                key={repo.id}
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  'w-full justify-start text-left h-auto py-1.5 px-2 leading-snug',
+                  repo.id === selectedRepoId ? 'bg-accent/50' : '',
+                )}
+                onClick={() => handleRepoChange(repo.id)}>
+                <Github className="h-3 w-3 shrink-0 text-muted-foreground" />
+                <span className="font-medium text-xs">
+                  {repo.owner}/{repo.repo}
+                </span>
+                {repo.defaultBranch && (
+                  <Badge
+                    variant="outline"
+                    className="text-[9px] px-1.5 py-0 rounded-full gap-0.5">
+                    <GitBranch className="h-2.5 w-2.5" />
+                    {repo.defaultBranch}
+                  </Badge>
+                )}
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
     );
-  }, [repos, reposLoading, selectedRepoId, handleRepoChange]);
+  }, [
+    repos,
+    reposLoading,
+    selectedRepoId,
+    handleRepoChange,
+    systemSettings,
+    repoSearch,
+  ]);
 
   // Extract input section to prevent rerenders of ThreadMessagesView when typing
   const ChatInputSection = useMemo(
@@ -756,7 +812,10 @@ export const ThreadChatPanel: React.FC<ThreadChatPanelProps> = ({
               {isDraft && !repoLocked ? (
                 <Popover
                   open={repoPopoverOpen}
-                  onOpenChange={setRepoPopoverOpen}>
+                  onOpenChange={(open) => {
+                    setRepoPopoverOpen(open);
+                    if (!open) setRepoSearch('');
+                  }}>
                   <PopoverTrigger asChild>
                     <PickerTrigger className="text-[11px] text-muted-foreground gap-1 px-2 py-1">
                       <Github className="w-3 h-3" />
@@ -820,6 +879,7 @@ export const ThreadChatPanel: React.FC<ThreadChatPanelProps> = ({
       repoLocked,
       repoPopoverOpen,
       repoPopoverContent,
+      setRepoSearch,
     ],
   );
 

@@ -1,7 +1,6 @@
 import { formatDistanceToNow } from 'date-fns';
 import {
   AlertCircle,
-  ExternalLink,
   GitBranch,
   Github,
   Loader2,
@@ -110,22 +109,13 @@ export function RepoProgressBar({ index }: { index?: RepoIndex }) {
   };
 
   return (
-    <div className="space-y-1">
-      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${barColor[status]} ${status === 'in_progress' ? 'animate-pulse' : ''}`}
-          style={{
-            width: `${Math.max(pct, status === 'not_indexed' ? 0 : 2)}%`,
-          }}
-        />
-      </div>
-      {index &&
-        (index.status === 'completed' || index.status === 'in_progress') && (
-          <p className="text-[11px] text-muted-foreground">
-            {fmtTokens(index.indexedTokens)} /{' '}
-            {fmtTokens(index.estimatedTokens)} tokens
-          </p>
-        )}
+    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+      <div
+        className={`h-full rounded-full transition-all ${barColor[status]} ${status === 'in_progress' ? 'animate-pulse' : ''}`}
+        style={{
+          width: `${Math.max(pct, status === 'not_indexed' ? 0 : 2)}%`,
+        }}
+      />
     </div>
   );
 }
@@ -149,87 +139,66 @@ export function RepoCard({
   const isReindexing = reindexing === repo.id;
 
   return (
-    <div className="bg-card border border-border rounded-xl p-5 flex flex-col gap-4 hover:shadow-sm transition-shadow">
-      {/* Header row */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-            <Github className="w-4 h-4 text-foreground" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium truncate">
-              <span className="text-muted-foreground">{repo.owner}/</span>
-              {repo.repo}
-            </p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                {repo.provider}
-              </span>
-              <span className="text-muted-foreground text-[10px]">·</span>
-              <GitBranch className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-              <span className="text-[11px] text-muted-foreground truncate">
-                {repo.defaultBranch}
-              </span>
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={() => onDelete(repo)}
-          className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0"
-          aria-label="Delete repository">
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      </div>
+    <div className="grid grid-cols-[auto_1fr_auto_10rem_6rem_9rem_auto] items-center gap-x-3 px-3 py-1.5 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors group">
+      {/* Icon */}
+      <Github className="w-3.5 h-3.5 text-muted-foreground" />
 
-      {/* URL */}
+      {/* Name — grows to fill available space */}
       <a
         href={repo.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors group truncate">
-        <ExternalLink className="w-3 h-3 flex-shrink-0 group-hover:text-foreground" />
-        <span className="truncate">{repo.url.replace('https://', '')}</span>
+        className="text-sm font-medium truncate hover:underline min-w-0">
+        <span className="text-muted-foreground font-normal">{repo.owner}/</span>
+        {repo.repo}
       </a>
 
-      {/* Commit SHA */}
-      {repo.index?.lastIndexedCommit && (
-        <p className="text-[11px] font-mono text-muted-foreground -mt-2">
-          Last commit:{' '}
-          <span className="text-foreground">
-            {repo.index.lastIndexedCommit}
-          </span>
-        </p>
-      )}
-
-      {/* Status + progress */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <IndexStatusBadge status={status} />
-        </div>
-        <RepoProgressBar index={repo.index} />
+      {/* Branch */}
+      <div className="flex items-center gap-1 text-muted-foreground">
+        <GitBranch className="w-3 h-3 flex-shrink-0" />
+        <span className="text-xs truncate max-w-16">{repo.defaultBranch}</span>
       </div>
 
-      {/* Error */}
-      {repo.index?.errorMessage && (
-        <div className="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2.5">
-          <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-red-700 leading-relaxed">
-            {repo.index.errorMessage}
-          </p>
+      {/* Progress bar + tokens */}
+      <div className="flex items-center gap-2">
+        <div className="w-20 flex-shrink-0">
+          <RepoProgressBar index={repo.index} />
         </div>
-      )}
+        {repo.index &&
+        (repo.index.status === 'completed' ||
+          repo.index.status === 'in_progress') ? (
+          <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+            {fmtTokens(repo.index.indexedTokens)}/
+            {fmtTokens(repo.index.estimatedTokens)}
+          </span>
+        ) : null}
+      </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between mt-auto pt-1 border-t border-border">
-        <span className="text-[11px] text-muted-foreground">
+      {/* Status badge */}
+      <div>
+        <IndexStatusBadge status={status} />
+      </div>
+
+      {/* Timestamp + actions */}
+      <div className="flex items-center justify-end gap-1">
+        <span className="text-[11px] text-muted-foreground whitespace-nowrap">
           {repo.index
-            ? `Updated ${formatRelativeDate(repo.index.updatedAt)}`
-            : `Added ${formatRelativeDate(repo.createdAt)}`}
+            ? formatRelativeDate(repo.index.updatedAt)
+            : formatRelativeDate(repo.createdAt)}
         </span>
+        {repo.index?.errorMessage && (
+          <div title={repo.index.errorMessage}>
+            <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+          </div>
+        )}
+      </div>
+
+      {/* Actions — reveal on hover */}
+      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="h-7 text-xs gap-1.5 px-2.5"
+          className="h-6 text-xs gap-1 px-2"
           onClick={() => onReindex(repo.id)}
           disabled={isReindexing || status === 'in_progress'}>
           {isReindexing ? (
@@ -239,6 +208,12 @@ export function RepoCard({
           )}
           {isReindexing ? 'Starting…' : 'Reindex'}
         </Button>
+        <button
+          onClick={() => onDelete(repo)}
+          className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+          aria-label="Delete repository">
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
   );

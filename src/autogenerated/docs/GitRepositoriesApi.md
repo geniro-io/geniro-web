@@ -10,6 +10,7 @@ All URIs are relative to _http://localhost_
 | [**getRepoIndexes**](#getrepoindexes)                         | **GET** /api/v1/git-repositories/indexes    |             |
 | [**getRepositories**](#getrepositories)                       | **GET** /api/v1/git-repositories            |             |
 | [**getRepositoryById**](#getrepositorybyid)                   | **GET** /api/v1/git-repositories/{id}       |             |
+| [**syncRepositories**](#syncrepositories)                     | **POST** /api/v1/git-repositories/sync      |             |
 | [**triggerReindex**](#triggerreindex)                         | **POST** /api/v1/git-repositories/reindex   |             |
 | [**updateRepository**](#updaterepository)                     | **PATCH** /api/v1/git-repositories/{id}     |             |
 
@@ -310,6 +311,46 @@ const { status, data } = await apiInstance.getRepositoryById(id);
 | Status code | Description | Response headers |
 | ----------- | ----------- | ---------------- |
 | **200**     |             | -                |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **syncRepositories**
+
+> SyncRepositoriesResponseDto syncRepositories()
+
+### Example
+
+```typescript
+import { GitRepositoriesApi, Configuration } from './api';
+
+const configuration = new Configuration();
+const apiInstance = new GitRepositoriesApi(configuration);
+
+const { status, data } = await apiInstance.syncRepositories();
+```
+
+### Parameters
+
+This endpoint does not have any parameters.
+
+### Return type
+
+**SyncRepositoriesResponseDto**
+
+### Authorization
+
+[bearer](../README.md#bearer)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **201**     |             | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

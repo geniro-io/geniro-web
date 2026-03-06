@@ -2,18 +2,20 @@
 
 ## Properties
 
-| Name              | Type       | Description                                          | Notes                  |
-| ----------------- | ---------- | ---------------------------------------------------- | ---------------------- |
-| **id**            | **string** | Repository ID                                        | [default to undefined] |
-| **owner**         | **string** | Repository owner (GitHub username or organization)   | [default to undefined] |
-| **repo**          | **string** | Repository name                                      | [default to undefined] |
-| **url**           | **string** | HTTPS URL of the repository                          | [default to undefined] |
-| **provider**      | **string** | Git repository host provider                         | [default to undefined] |
-| **defaultBranch** | **string** | Default branch of the repository (e.g. main, master) | [default to undefined] |
-| **createdBy**     | **string** | User ID who cloned the repository                    | [default to undefined] |
-| **projectId**     | **string** |                                                      | [default to undefined] |
-| **createdAt**     | **string** |                                                      | [default to undefined] |
-| **updatedAt**     | **string** |                                                      | [default to undefined] |
+| Name               | Type       | Description                                          | Notes                             |
+| ------------------ | ---------- | ---------------------------------------------------- | --------------------------------- |
+| **id**             | **string** | Repository ID                                        | [default to undefined]            |
+| **owner**          | **string** | Repository owner (GitHub username or organization)   | [default to undefined]            |
+| **repo**           | **string** | Repository name                                      | [default to undefined]            |
+| **url**            | **string** | HTTPS URL of the repository                          | [default to undefined]            |
+| **provider**       | **string** | Git repository host provider                         | [default to undefined]            |
+| **defaultBranch**  | **string** | Default branch of the repository (e.g. main, master) | [default to undefined]            |
+| **createdBy**      | **string** | User ID who cloned the repository                    | [default to undefined]            |
+| **projectId**      | **string** |                                                      | [default to undefined]            |
+| **createdAt**      | **string** |                                                      | [default to undefined]            |
+| **updatedAt**      | **string** |                                                      | [default to undefined]            |
+| **installationId** | **number** |                                                      | [optional] [default to undefined] |
+| **syncedAt**       | **string** |                                                      | [optional] [default to undefined] |
 
 ## Example
 
@@ -31,6 +33,8 @@ const instance: GitRepositoryDto = {
   projectId,
   createdAt,
   updatedAt,
+  installationId,
+  syncedAt,
 };
 ```
 

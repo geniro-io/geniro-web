@@ -576,6 +576,18 @@ export interface GitRepositoryDto {
    * @memberof GitRepositoryDto
    */
   'updatedAt': string;
+  /**
+   *
+   * @type {number}
+   * @memberof GitRepositoryDto
+   */
+  'installationId'?: number | null;
+  /**
+   *
+   * @type {string}
+   * @memberof GitRepositoryDto
+   */
+  'syncedAt'?: string | null;
 }
 
 export const GitRepositoryDtoProviderEnum = {
@@ -1796,6 +1808,31 @@ export interface SuggestGraphInstructionsResponseDtoUpdatesInner {
    * @memberof SuggestGraphInstructionsResponseDtoUpdatesInner
    */
   'instructions': string;
+}
+/**
+ *
+ * @export
+ * @interface SyncRepositoriesResponseDto
+ */
+export interface SyncRepositoriesResponseDto {
+  /**
+   *
+   * @type {number}
+   * @memberof SyncRepositoriesResponseDto
+   */
+  'synced': number;
+  /**
+   *
+   * @type {number}
+   * @memberof SyncRepositoriesResponseDto
+   */
+  'removed': number;
+  /**
+   *
+   * @type {number}
+   * @memberof SyncRepositoriesResponseDto
+   */
+  'total': number;
 }
 /**
  *
@@ -4333,6 +4370,48 @@ export const GitRepositoriesApiAxiosParamCreator = function (
     },
     /**
      *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    syncRepositories: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/v1/git-repositories/sync`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'POST',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
      * @param {TriggerReindexDto} triggerReindexDto
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -4673,6 +4752,34 @@ export const GitRepositoriesApiFp = function (configuration?: Configuration) {
     },
     /**
      *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async syncRepositories(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<SyncRepositoriesResponseDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.syncRepositories(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['GitRepositoriesApi.syncRepositories']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
      * @param {TriggerReindexDto} triggerReindexDto
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -4865,6 +4972,18 @@ export const GitRepositoriesApiFactory = function (
     },
     /**
      *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    syncRepositories(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<SyncRepositoriesResponseDto> {
+      return localVarFp
+        .syncRepositories(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
      * @param {TriggerReindexDto} triggerReindexDto
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -5016,6 +5135,18 @@ export class GitRepositoriesApi extends BaseAPI {
   public getRepositoryById(id: string, options?: RawAxiosRequestConfig) {
     return GitRepositoriesApiFp(this.configuration)
       .getRepositoryById(id, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof GitRepositoriesApi
+   */
+  public syncRepositories(options?: RawAxiosRequestConfig) {
+    return GitRepositoriesApiFp(this.configuration)
+      .syncRepositories(options)
       .then((request) => request(this.axios, this.basePath));
   }
 

@@ -167,7 +167,11 @@ export function Layout({ children }: { children?: React.ReactNode }) {
             navCollapsed ? 'w-14' : 'w-52 px-4'
           }`}>
           {navCollapsed ? (
-            <img src="/icon.png" alt="Geniro" className="w-8 h-8 object-contain" />
+            <img
+              src="/icon.png"
+              alt="Geniro"
+              className="w-8 h-8 object-contain"
+            />
           ) : (
             <img src="/logo.png" alt="Geniro" className="h-10" />
           )}

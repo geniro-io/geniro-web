@@ -467,8 +467,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
         (metadata?.nodeId && nodeDisplayNames?.[metadata.nodeId]) ||
         (metadata?.nodeId ? `Node ${metadata.nodeId.slice(-6)}` : 'Agent');
 
-      const timestamp =
-        formatMetadataLine(metadata?.createdAt) ?? '';
+      const timestamp = formatMetadataLine(metadata?.createdAt) ?? '';
 
       const finishTokens = requestTokenUsage
         ? toTokenInfo(requestTokenUsage as RawTokenUsage, durationMs)
