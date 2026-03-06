@@ -11,37 +11,30 @@ import { githubAppInstallationsApi } from '../types';
 type CallbackState =
   | { status: 'linking' }
   | { status: 'error'; message: string }
-  | { status: 'request-pending' };
+  | { status: 'request-pending' }
+  | { status: 'installation-detected' };
 
 const resolveInitialState = (
-  installationId: string | null,
   setupAction: string | null,
   code: string | null,
+  installationId: string | null,
 ): CallbackState => {
   if (setupAction === 'request') {
     return { status: 'request-pending' };
-  }
-
-  if (installationId) {
-    const numericId = Number(installationId);
-    if (!Number.isInteger(numericId) || numericId <= 0) {
-      return {
-        status: 'error',
-        message:
-          'Invalid installation ID. Please try the installation flow again.',
-      };
-    }
-    return { status: 'linking' };
   }
 
   if (code) {
     return { status: 'linking' };
   }
 
+  if (installationId) {
+    return { status: 'installation-detected' };
+  }
+
   return {
     status: 'error',
     message:
-      'No installation ID or authorization code received from GitHub. Please try again or link manually.',
+      'No authorization code received from GitHub. Please try again or link manually.',
   };
 };
 
@@ -54,27 +47,20 @@ export const GitHubAppCallbackPage = () => {
   const code = searchParams.get('code');
 
   const [state, setState] = useState<CallbackState>(() =>
-    resolveInitialState(installationId, setupAction, code),
+    resolveInitialState(setupAction, code, installationId),
   );
   const hasRun = useRef(false);
 
+  // Handle OAuth code flow
   useEffect(() => {
     if (hasRun.current) return;
+    if (state.status !== 'linking') return;
+    if (!code) return;
     hasRun.current = true;
 
-    if (state.status !== 'linking') return;
-
-    const linkInstallation = async () => {
+    const linkViaOAuth = async () => {
       try {
-        if (installationId) {
-          await githubAppInstallationsApi.link(Number(installationId));
-        } else if (code) {
-          await githubAppInstallationsApi.linkViaOAuthCode(code);
-        } else {
-          setState({ status: 'error', message: 'Missing parameters' });
-          return;
-        }
-
+        await githubAppInstallationsApi.linkViaOAuthCode(code);
         toast.success('GitHub organization linked successfully.');
         navigate('/settings/integrations', { replace: true });
       } catch (e: unknown) {
@@ -91,9 +77,36 @@ export const GitHubAppCallbackPage = () => {
       }
     };
 
-    linkInstallation();
-  }, [installationId, code, state.status, navigate]);
+    linkViaOAuth();
+  }, [code, state.status, navigate]);
 
+  // Handle installation-only callback (no OAuth code) — auto-redirect to OAuth authorize URL
+  useEffect(() => {
+    if (state.status !== 'installation-detected') return;
+
+    const redirectToOAuth = async () => {
+      try {
+        const response = await githubAppInstallationsApi.getSetupInfo();
+        const { installUrl, callbackPath } = response.data;
+        if (!installUrl) {
+          throw new Error('No install URL available');
+        }
+        const callbackUrl = `${window.location.origin}${callbackPath}`;
+        const url = new URL(installUrl);
+        url.searchParams.set('redirect_uri', callbackUrl);
+        window.location.href = url.toString();
+      } catch {
+        toast.info(
+          'GitHub App installed. Redirecting to settings to complete linking.',
+        );
+        navigate('/settings/integrations', { replace: true });
+      }
+    };
+
+    redirectToOAuth();
+  }, [state.status, navigate]);
+
+  // Handle request-pending callback — redirect to settings
   useEffect(() => {
     if (state.status !== 'request-pending') return;
     const timer = setTimeout(() => {
@@ -109,6 +122,15 @@ export const GitHubAppCallbackPage = () => {
         <p className="text-muted-foreground">
           Linking GitHub App installation...
         </p>
+      </div>
+    );
+  }
+
+  if (state.status === 'installation-detected') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center max-w-lg mx-auto">
+        <Loader2 className="w-9 h-9 text-primary animate-spin" />
+        <p className="text-muted-foreground">Completing installation...</p>
       </div>
     );
   }

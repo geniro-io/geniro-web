@@ -20,9 +20,9 @@ docs/CreateRepositoryDto.md
 docs/ExecuteTriggerDto.md
 docs/ExecuteTriggerResponseDto.md
 docs/GetRepoIndexesBranchesParameter.md
+docs/GitAuthApi.md
 docs/GitRepositoriesApi.md
 docs/GitRepositoryDto.md
-docs/GithubAppApi.md
 docs/GraphDto.md
 docs/GraphNodeWithStatusDto.md
 docs/GraphNodeWithStatusDtoMetadata.md

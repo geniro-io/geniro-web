@@ -5,7 +5,7 @@
 | Name                 | Type       | Description                             | Notes                  |
 | -------------------- | ---------- | --------------------------------------- | ---------------------- |
 | **id**               | **string** | Runtime instance ID                     | [default to undefined] |
-| **graphId**          | **string** | Graph ID                                | [default to undefined] |
+| **graphId**          | **string** |                                         | [default to undefined] |
 | **nodeId**           | **string** | Node ID                                 | [default to undefined] |
 | **externalThreadId** | **string** | External thread ID (graphId:threadUUID) | [default to undefined] |
 | **type**             | **string** | Runtime type                            | [default to undefined] |

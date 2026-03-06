@@ -56,11 +56,6 @@ export const githubAppInstallationsApi = {
 
   list: () => axios.get<ListInstallationsResponse>(`${BASE}/installations`),
 
-  link: (installationId: number) =>
-    axios.post<LinkInstallationResponseDto>(
-      `${BASE}/installations/${installationId}/link`,
-    ),
-
   linkViaOAuthCode: (code: string) =>
     axios.post<LinkInstallationResponseDto>(`${BASE}/oauth/link`, { code }),
 

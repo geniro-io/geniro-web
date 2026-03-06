@@ -115,7 +115,7 @@ export const IntegrationsPage = () => {
     return url.toString();
   })();
 
-  const addOrgHref = setupInfo?.newInstallationUrl || undefined;
+  const addOrgHref = setupInfo?.newInstallationUrl;
 
   let connectionState: GitHubConnectionState = 'disconnected';
   if (loading) {
