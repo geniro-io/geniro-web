@@ -166,10 +166,16 @@ export function RepoCard({
         </div>
         {repo.index &&
         (repo.index.status === 'completed' ||
-          repo.index.status === 'in_progress') ? (
+          repo.index.status === 'in_progress' ||
+          repo.index.status === 'pending') ? (
           <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-            {fmtTokens(repo.index.indexedTokens)}/
-            {fmtTokens(repo.index.estimatedTokens)}
+            {repo.index.status === 'completed'
+              ? `${fmtTokens(repo.index.indexedTokens)}/${fmtTokens(repo.index.indexedTokens)}`
+              : repo.index.estimatedTokens > 0
+                ? `${fmtTokens(repo.index.indexedTokens)}/~${fmtTokens(repo.index.estimatedTokens)}`
+                : repo.index.indexedTokens > 0
+                  ? fmtTokens(repo.index.indexedTokens)
+                  : 'Calculating…'}
           </span>
         ) : null}
       </div>
