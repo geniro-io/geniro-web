@@ -103,6 +103,22 @@ export const GitHubAppCallbackPage = () => {
           'Failed to link installation',
         );
         if (errorMessage.includes('NO_INSTALLATIONS_FOUND')) {
+          // No installations found — redirect to GitHub App install flow
+          // so the user can install the app, then come back and link.
+          try {
+            const setupResponse =
+              await githubAppInstallationsApi.getSetupInfo();
+            const { newInstallationUrl } = setupResponse.data;
+            if (newInstallationUrl) {
+              toast.info(
+                'GitHub App is not installed yet. Redirecting to install...',
+              );
+              window.location.href = newInstallationUrl;
+              return;
+            }
+          } catch {
+            // Failed to fetch setup info — fall through to settings page
+          }
           toast.error('No GitHub organizations were linked. Please try again.');
           navigate('/settings/integrations', { replace: true });
         } else {

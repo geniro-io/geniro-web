@@ -433,7 +433,7 @@ export function GitHubIntegrationCard({
           <p className="text-xs text-muted-foreground">
             {state === 'connected'
               ? 'Use the actions below to sync repository access, reconnect already-installed organizations, or update GitHub-side configuration.'
-              : 'Connect GitHub through OAuth to link organizations already installed for this GitHub App.'}
+              : 'Connect your GitHub account to start using repositories and pull requests with Geniro.'}
           </p>
         </div>
         <div className="grid gap-3 md:grid-cols-2">
@@ -529,10 +529,10 @@ export function GitHubIntegrationCard({
             </>
           ) : (
             <>
-              {connectHref ? (
-                <ActionBlock
-                  title="Connect GitHub"
-                  description="Authorize GitHub and relink organizations that are already installed for this app back into Geniro.">
+              <ActionBlock
+                title="Connect GitHub"
+                description="Connect your GitHub account to grant Geniro access to repositories and pull requests. If the app is not yet installed, you will be redirected to install it.">
+                {connectHref ? (
                   <Button
                     size="sm"
                     className="gap-1.5"
@@ -549,11 +549,7 @@ export function GitHubIntegrationCard({
                         : 'Connect GitHub'}
                     </a>
                   </Button>
-                </ActionBlock>
-              ) : (
-                <ActionBlock
-                  title="Install GitHub App"
-                  description="Start the GitHub App install flow so Geniro can access repositories and pull requests.">
+                ) : (
                   <Button
                     size="sm"
                     className="gap-1.5"
@@ -566,38 +562,10 @@ export function GitHubIntegrationCard({
                     )}
                     {state === 'connecting'
                       ? 'Connecting...'
-                      : 'Install GitHub App'}
+                      : 'Connect GitHub'}
                   </Button>
-                </ActionBlock>
-              )}
-              {addOrgHref && (
-                <ActionBlock
-                  title="Add organization"
-                  description="Open GitHub's install flow to add this app to another organization or personal account. Use Connect GitHub above to relink installations that already exist on GitHub.">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    asChild>
-                    <a
-                      href={addOrgHref}
-                      target="_blank"
-                      rel="noopener noreferrer">
-                      <Github className="w-3.5 h-3.5" />
-                      Add organization
-                    </a>
-                  </Button>
-                </ActionBlock>
-              )}
-              {callbackUrl && (
-                <ActionBlock
-                  title="Callback URL"
-                  description="Set this callback URL in the GitHub App settings so GitHub can return users to Geniro after authorization.">
-                  <div className="rounded-lg border border-border bg-background px-3 py-2 text-xs text-muted-foreground break-all">
-                    <code>{callbackUrl}</code>
-                  </div>
-                </ActionBlock>
-              )}
+                )}
+              </ActionBlock>
             </>
           )}
         </div>
