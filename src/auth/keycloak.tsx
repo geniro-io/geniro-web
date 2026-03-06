@@ -92,6 +92,7 @@ export function createKeycloakModule({
           };
         }
       } catch (error) {
+        // TODO: integrate with error monitoring service (e.g., Sentry) to track auth failures in production
         console.error('Authentication check error:', error);
         return {
           authenticated: false,

@@ -1,5 +1,6 @@
 import { createZitadelAuth, ZitadelConfig } from '@zitadel/react';
 import axios from 'axios';
+import { WebStorageStateStore } from 'oidc-client-ts';
 import { ReactNode, useEffect, useState } from 'react';
 
 import { GraphStorageService } from '../services/GraphStorageService';
@@ -19,6 +20,7 @@ export function createZitadelModule({
     redirect_uri: `${origin}/callback`,
     post_logout_redirect_uri: origin,
     silent_redirect_uri: `${origin}/silent-renew`,
+    userStore: new WebStorageStateStore({ store: window.sessionStorage }),
   };
 
   const zitadelAuth = createZitadelAuth(zitadelConfig);
@@ -63,6 +65,10 @@ export function createZitadelModule({
           }
         } catch (err) {
           console.error('Auth initialization error:', err);
+          if (window.location.pathname === '/callback') {
+            window.location.replace('/');
+            return;
+          }
         }
         setInitialized(true);
       };

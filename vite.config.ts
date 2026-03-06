@@ -23,11 +23,14 @@ export default defineConfig({
     },
   },
   preview: {
-    allowedHosts: true,
     host: '0.0.0.0',
+    // In EKS, Host header validation is handled by the ingress controller.
+    // Set ALLOWED_HOSTS env var to restrict (comma-separated), or leave unset for all.
+    allowedHosts: process.env.ALLOWED_HOSTS
+      ? process.env.ALLOWED_HOSTS.split(',').map((h) => h.trim())
+      : true,
   },
   server: {
-    // allowedHosts: [],
     host: '0.0.0.0',
   },
 });

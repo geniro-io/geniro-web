@@ -1,4 +1,5 @@
 import { AnsiUp } from 'ansi_up';
+import DOMPurify from 'dompurify';
 import {
   AlertCircle,
   ArrowRight,
@@ -140,7 +141,9 @@ const stripAnsiSgr = (text: string): string => {
 };
 
 const renderAnsiHtml = (text: string): string =>
-  ansiUp.ansi_to_html(normalizeShellText(text));
+  DOMPurify.sanitize(ansiUp.ansi_to_html(normalizeShellText(text)), {
+    ALLOWED_ATTR: ['style', 'class'],
+  });
 
 const truncateToLines = (
   text: string,

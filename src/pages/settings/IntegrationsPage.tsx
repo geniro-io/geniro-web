@@ -109,13 +109,28 @@ export const IntegrationsPage = () => {
 
   const installHref = (() => {
     if (!setupInfo?.installUrl) return undefined;
+    try {
+      const parsed = new URL(setupInfo.installUrl);
+      if (parsed.hostname !== 'github.com') return undefined;
+    } catch {
+      return undefined;
+    }
     if (!callbackUrl) return setupInfo.installUrl;
     const url = new URL(setupInfo.installUrl);
     url.searchParams.set('redirect_uri', callbackUrl);
     return url.toString();
   })();
 
-  const addOrgHref = setupInfo?.newInstallationUrl;
+  const addOrgHref = (() => {
+    if (!setupInfo?.newInstallationUrl) return undefined;
+    try {
+      const parsed = new URL(setupInfo.newInstallationUrl);
+      if (parsed.hostname !== 'github.com') return undefined;
+    } catch {
+      return undefined;
+    }
+    return setupInfo.newInstallationUrl;
+  })();
 
   let connectionState: GitHubConnectionState = 'disconnected';
   if (loading) {

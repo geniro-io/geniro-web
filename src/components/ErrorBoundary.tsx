@@ -57,7 +57,7 @@ export class ErrorBoundary extends Component<
             <h2 className="text-lg font-semibold text-foreground mb-2">
               Something went wrong
             </h2>
-            {this.state.error?.message && (
+            {import.meta.env.DEV && this.state.error?.message && (
               <p className="text-sm text-muted-foreground mb-6 break-words">
                 {this.state.error.message}
               </p>

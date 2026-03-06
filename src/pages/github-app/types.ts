@@ -56,8 +56,11 @@ export const githubAppInstallationsApi = {
 
   list: () => axios.get<ListInstallationsResponse>(`${BASE}/installations`),
 
-  linkViaOAuthCode: (code: string) =>
-    axios.post<LinkInstallationResponseDto>(`${BASE}/oauth/link`, { code }),
+  linkViaOAuthCode: (code: string, installationId?: number) =>
+    axios.post<LinkInstallationResponseDto>(`${BASE}/oauth/link`, {
+      code,
+      installationId,
+    }),
 
   disconnect: (installationId: number) =>
     axios.delete(`${BASE}/installations/${installationId}`),

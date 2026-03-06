@@ -78,7 +78,7 @@ export const useWebSocket = (
   options: UseWebSocketOptions = {},
 ): UseWebSocketReturn => {
   const { autoConnect = true, graphId, handlers } = options;
-  const { token, userInfo } = useAuth();
+  const { token } = useAuth();
   const handlersRef = useRef(handlers);
   const unsubscribeFnsRef = useRef<(() => void)[]>([]);
 
@@ -96,19 +96,18 @@ export const useWebSocket = (
       return;
     }
 
-    // Get user ID from token for dev mode
-    const userId = userInfo.sub;
-
-    // Connect if not already connected
+    // Connect if not already connected, otherwise update the token
     if (!webSocketService.isConnected()) {
-      webSocketService.connect(token, userId);
+      webSocketService.connect(token);
+    } else {
+      webSocketService.updateToken(token);
     }
 
     return () => {
       // Don't disconnect on unmount - keep the connection alive
       // The service is a singleton and other components may be using it
     };
-  }, [autoConnect, token, userInfo.sub]);
+  }, [autoConnect, token]);
 
   // Subscribe to graph
   useEffect(() => {

@@ -5,7 +5,6 @@ import {
   Github,
   Info,
   Loader2,
-  Plus,
   RefreshCw,
   Trash2,
   Unplug,
@@ -224,8 +223,8 @@ export function GitHubIntegrationCard({
             <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
               <Button variant="outline" size="sm" className="gap-1.5" asChild>
                 <a href={addOrgHref} target="_blank" rel="noopener noreferrer">
-                  <Plus className="w-3.5 h-3.5" />
-                  Add organization
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Update permissions
                 </a>
               </Button>
               {syncHref && (

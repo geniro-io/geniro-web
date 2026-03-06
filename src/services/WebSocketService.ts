@@ -19,7 +19,7 @@ export type SocketEventHandler = (data: SocketNotification) => void;
 class WebSocketService {
   private socket: Socket | null = null;
   private token: string | null = null;
-  private userId: string | null = null;
+  // userId field removed — x-dev-jwt-sub is no longer sent from the frontend
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 20;
   private eventHandlers: Map<string, Set<SocketEventHandler>> = new Map();
@@ -29,9 +29,8 @@ class WebSocketService {
   /**
    * Initialize and connect to the WebSocket server
    * @param token JWT token for authentication
-   * @param userId User ID for dev mode authentication
    */
-  connect(token: string, userId?: string): void {
+  connect(token: string): void {
     if (this.socket?.connected || this.isConnecting) {
       console.debug('[WebSocket] Already connected or connecting');
       return;
@@ -39,15 +38,13 @@ class WebSocketService {
 
     this.isConnecting = true;
     this.token = token;
-    this.userId = userId || null;
 
     console.debug('[WebSocket] Connecting to:', API_URL);
 
     // Create socket connection with authentication
     this.socket = io(API_URL, {
-      auth: {
-        token: this.token,
-        ...(this.userId && { 'x-dev-jwt-sub': this.userId }),
+      auth: (cb) => {
+        cb({ token: this.token });
       },
       transports: ['websocket'],
       reconnection: true,
@@ -317,6 +314,13 @@ class WebSocketService {
         this.eventHandlers.delete(eventType);
       }
     }
+  }
+
+  /**
+   * Update the stored token so reconnections use the latest credentials
+   */
+  updateToken(token: string): void {
+    this.token = token;
   }
 
   /**

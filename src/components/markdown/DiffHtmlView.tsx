@@ -1,6 +1,7 @@
 import 'diff2html/bundles/css/diff2html.min.css';
 
 import * as Diff2Html from 'diff2html';
+import DOMPurify from 'dompurify';
 import React, { useMemo } from 'react';
 
 export interface DiffHtmlViewProps {
@@ -21,10 +22,15 @@ export const DiffHtmlView: React.FC<DiffHtmlViewProps> = ({
     const normalized = (diff ?? '').trimEnd();
     if (!normalized) return '';
 
-    return Diff2Html.html(normalized, {
+    const raw = Diff2Html.html(normalized, {
       drawFileList: false,
       matching: 'lines',
       outputFormat: 'line-by-line',
+    });
+
+    return DOMPurify.sanitize(raw, {
+      ADD_TAGS: ['ins', 'del'],
+      ADD_ATTR: ['class'],
     });
   }, [diff]);
 

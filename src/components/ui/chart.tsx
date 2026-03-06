@@ -5,6 +5,8 @@ import { cn } from './utils';
 
 const THEMES = { light: '', dark: '.dark' } as const;
 
+const CSS_COLOR_RE = /^(?:#[0-9a-fA-F]{3,8}|(?:rgb|hsl)a?\([^)]+\)|[a-zA-Z]+)$/;
+
 export type ChartConfig = {
   [k in string]: {
     label?: React.ReactNode;
@@ -95,7 +97,9 @@ ${colorConfig
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
       itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    return color && CSS_COLOR_RE.test(color)
+      ? `  --color-${key}: ${color};`
+      : null;
   })
   .join('\n')}
 }

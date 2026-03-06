@@ -45,6 +45,7 @@ export const GitHubAppCallbackPage = () => {
   const installationId = searchParams.get('installation_id');
   const setupAction = searchParams.get('setup_action');
   const code = searchParams.get('code');
+  const stateParam = searchParams.get('state');
 
   const [state, setState] = useState<CallbackState>(() =>
     resolveInitialState(setupAction, code, installationId),
@@ -60,7 +61,32 @@ export const GitHubAppCallbackPage = () => {
 
     const linkViaOAuth = async () => {
       try {
-        await githubAppInstallationsApi.linkViaOAuthCode(code);
+        let hintedInstallationId: number | undefined;
+        // Check URL params first (GitHub sends both code + installation_id
+        // when "Request user authorization during installation" is enabled)
+        if (installationId) {
+          const numericId = Number(installationId);
+          if (Number.isInteger(numericId) && numericId > 0) {
+            hintedInstallationId = numericId;
+          }
+        }
+        // Fallback: check OAuth state param (from our redirect flow)
+        if (!hintedInstallationId && stateParam) {
+          try {
+            const parsed = JSON.parse(stateParam) as {
+              installationId?: number;
+            };
+            if (parsed.installationId) {
+              hintedInstallationId = Number(parsed.installationId);
+            }
+          } catch {
+            // Invalid state param, ignore
+          }
+        }
+        await githubAppInstallationsApi.linkViaOAuthCode(
+          code,
+          hintedInstallationId,
+        );
         toast.success('GitHub organization linked successfully.');
         navigate('/settings/integrations', { replace: true });
       } catch (e: unknown) {
@@ -78,7 +104,7 @@ export const GitHubAppCallbackPage = () => {
     };
 
     linkViaOAuth();
-  }, [code, state.status, navigate]);
+  }, [code, state.status, navigate, stateParam]);
 
   // Handle installation-only callback (no OAuth code) — auto-redirect to OAuth authorize URL
   useEffect(() => {
@@ -94,6 +120,12 @@ export const GitHubAppCallbackPage = () => {
         const callbackUrl = `${window.location.origin}${callbackPath}`;
         const url = new URL(installUrl);
         url.searchParams.set('redirect_uri', callbackUrl);
+        if (installationId) {
+          const oauthState = JSON.stringify({
+            installationId: Number(installationId),
+          });
+          url.searchParams.set('state', oauthState);
+        }
         window.location.href = url.toString();
       } catch {
         toast.info(
@@ -104,7 +136,7 @@ export const GitHubAppCallbackPage = () => {
     };
 
     redirectToOAuth();
-  }, [state.status, navigate]);
+  }, [state.status, navigate, installationId]);
 
   // Handle request-pending callback — redirect to settings
   useEffect(() => {
