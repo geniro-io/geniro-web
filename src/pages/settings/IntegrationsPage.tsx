@@ -65,6 +65,8 @@ export const IntegrationsPage = () => {
 
   const hasInstallations = installations.length > 0;
 
+  const [disconnectingAll, setDisconnectingAll] = useState(false);
+
   const handleRemoveInstallation = useCallback(
     async (installationId: number) => {
       setRemovingInstallationId(installationId);
@@ -83,6 +85,23 @@ export const IntegrationsPage = () => {
     },
     [fetchData],
   );
+
+  const handleDisconnectAll = useCallback(async () => {
+    if (installations.length === 0) return;
+    setDisconnectingAll(true);
+    try {
+      await githubAppInstallationsApi.disconnectAll();
+      await fetchData();
+    } catch (e: unknown) {
+      const errorMessage = extractApiErrorMessage(
+        e,
+        'Failed to disconnect GitHub App',
+      );
+      setError(errorMessage);
+    } finally {
+      setDisconnectingAll(false);
+    }
+  }, [fetchData, installations]);
 
   const callbackUrl = setupInfo?.callbackPath
     ? `${window.location.origin}${setupInfo.callbackPath}`
@@ -136,6 +155,8 @@ export const IntegrationsPage = () => {
             installations={installations}
             onRemoveInstallation={handleRemoveInstallation}
             removingInstallationId={removingInstallationId}
+            onDisconnect={handleDisconnectAll}
+            disconnecting={disconnectingAll}
             addOrgHref={setupInfo?.configured ? addOrgHref : undefined}
             syncHref={setupInfo?.configured ? installHref : undefined}
           />

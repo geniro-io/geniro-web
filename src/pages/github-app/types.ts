@@ -5,7 +5,6 @@ import { API_URL } from '../../config';
 // --- Enums ---
 
 export enum GitHubAuthMethod {
-  Pat = 'pat',
   GitHubApp = 'github_app',
 }
 
@@ -67,4 +66,6 @@ export const githubAppInstallationsApi = {
 
   disconnect: (installationId: number) =>
     axios.delete(`${BASE}/installations/${installationId}`),
+
+  disconnectAll: () => axios.delete(`${BASE}/disconnect`),
 };

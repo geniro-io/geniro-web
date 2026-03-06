@@ -275,8 +275,21 @@ export function GitHubIntegrationCard({
         </p>
         <div className="flex items-center gap-2 flex-shrink-0">
           {state === 'connected' ? (
-            // In multi-install mode, hide the global Disconnect button
-            !isMultiInstallMode && (
+            isMultiInstallMode ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5"
+                disabled={disconnecting}
+                onClick={onDisconnect}>
+                {disconnecting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Unplug className="w-3.5 h-3.5" />
+                )}
+                Disconnect all
+              </Button>
+            ) : (
               <Button
                 variant="outline"
                 size="sm"

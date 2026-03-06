@@ -271,7 +271,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
         <aside
-          className={`bg-card border-r border-border flex flex-col flex-shrink-0 ${
+          className={`bg-card border-r border-border flex flex-col flex-shrink-0 overflow-hidden ${
             navCollapsed ? 'w-14' : 'w-52'
           }`}>
           <nav className="flex-1 p-2 space-y-0.5">
@@ -280,7 +280,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
               const active = isActive(item.path);
               const linkClassName = `flex items-center rounded-lg transition-colors ${
                 navCollapsed
-                  ? 'justify-center px-2 py-2.5'
+                  ? 'justify-center w-10 h-10 mx-auto'
                   : 'gap-3 px-3 py-2.5'
               } ${
                 active

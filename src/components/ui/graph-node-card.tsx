@@ -228,7 +228,7 @@ export const GraphNodeCard: React.FC<GraphNodeCardProps> = ({
 
         {/* Description */}
         {description && (
-          <p className="text-xs text-muted-foreground leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
             {description}
           </p>
         )}
@@ -994,7 +994,13 @@ export const CustomNode = React.memo(
     );
 
     return (
-      <div style={{ minWidth: 300, position: 'relative', zIndex: 1 }}>
+      <div
+        style={{
+          minWidth: 300,
+          maxWidth: 420,
+          position: 'relative',
+          zIndex: 1,
+        }}>
         <GraphNodeCard
           label={nodeData.label}
           templateKind={templateKind}

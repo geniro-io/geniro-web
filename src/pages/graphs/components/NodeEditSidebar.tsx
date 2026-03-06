@@ -1026,6 +1026,7 @@ export const NodeEditSidebar = React.memo(
                   isGraphRunning && graphId && node?.id,
                 )}
                 githubAppEnabled={githubAppEnabled}
+                templateId={nodeData?.template}
               />
             ) : (
               <span className="text-muted-foreground">
@@ -1044,6 +1045,7 @@ export const NodeEditSidebar = React.memo(
       liteLlmModels,
       litellmModelsLoading,
       node?.id,
+      nodeData?.template,
       openAiSuggestionModal,
       schemaPropertyKeys.length,
       templateSchema,

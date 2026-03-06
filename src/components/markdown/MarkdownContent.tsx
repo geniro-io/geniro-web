@@ -1,8 +1,10 @@
-import React from 'react';
+import { Check, Copy } from 'lucide-react';
+import React, { useState } from 'react';
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { Button } from '../ui/button';
 import { SyntaxHighlighter } from '../ui/syntax-highlighter';
 
 /** Remark plugin that converts "loose" lists (items separated by blank lines
@@ -36,6 +38,44 @@ type MarkdownElementProps<T> = React.HTMLAttributes<T> & {
   children?: React.ReactNode;
 };
 
+function CodeBlockCopyButton({
+  code,
+  light,
+}: {
+  code: string;
+  light?: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className={`absolute top-2 right-1 h-6 w-6 z-10 bg-transparent hover:bg-transparent ${
+        light
+          ? 'text-gray-400 hover:text-gray-700'
+          : 'text-gray-400 hover:text-white'
+      }`}
+      onClick={() => {
+        navigator.clipboard.writeText(code).then(
+          () => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          },
+          () => {
+            /* silently ignore clipboard failures */
+          },
+        );
+      }}
+      title="Copy code">
+      {copied ? (
+        <Check className="w-3.5 h-3.5 text-green-500" />
+      ) : (
+        <Copy className="w-3.5 h-3.5" />
+      )}
+    </Button>
+  );
+}
+
 type MarkdownCodeProps = React.HTMLAttributes<HTMLElement> & {
   inline?: boolean;
   className?: string;
@@ -68,70 +108,75 @@ const renderMarkdownCode = ({
   if (!inline && (isDiffLanguage || looksLikeDiff)) {
     const lines = codeContent.split('\n');
     return (
-      <pre
-        style={{
-          margin: 0,
-          padding: 0,
-          borderRadius: 6,
-          overflow: 'auto',
-          background: '#ffffff',
-          border: '1px solid #f0f0f0',
-          color: '#111',
-          fontSize: 12,
-          lineHeight: 1.55,
-        }}>
-        <code style={{ display: 'block' }}>
-          {lines.map((line, index) => {
-            const isInsert = line.startsWith('+') && !line.startsWith('+++');
-            const isDelete = line.startsWith('-') && !line.startsWith('---');
-            const isHunk = line.startsWith('@@');
-            const isHeader = line.startsWith('+++') || line.startsWith('---');
+      <div style={{ position: 'relative' }}>
+        <CodeBlockCopyButton code={codeContent} light />
+        <pre
+          style={{
+            margin: 0,
+            padding: 0,
+            borderRadius: 6,
+            overflow: 'auto',
+            background: '#ffffff',
+            border: '1px solid #f0f0f0',
+            color: '#111',
+            fontSize: 12,
+            lineHeight: 1.55,
+          }}>
+          <code style={{ display: 'block' }}>
+            {lines.map((line, index) => {
+              const isInsert = line.startsWith('+') && !line.startsWith('+++');
+              const isDelete = line.startsWith('-') && !line.startsWith('---');
+              const isHunk = line.startsWith('@@');
+              const isHeader = line.startsWith('+++') || line.startsWith('---');
 
-            const style: React.CSSProperties = {};
-            if (isHeader) {
-              // GitHub-ish header colors
-              style.color = '#0969da';
-              style.background = '#ddf4ff';
-            } else if (isHunk) {
-              style.color = '#8250df';
-              style.background = '#fbefff';
-            } else if (isInsert) {
-              style.background = '#e6ffed';
-              style.color = '#1a7f37';
-              style.borderLeft = '3px solid #1a7f37';
-            } else if (isDelete) {
-              style.background = '#ffebe9';
-              style.color = '#cf222e';
-              style.borderLeft = '3px solid #cf222e';
-            }
+              const style: React.CSSProperties = {};
+              if (isHeader) {
+                // GitHub-ish header colors
+                style.color = '#0969da';
+                style.background = '#ddf4ff';
+              } else if (isHunk) {
+                style.color = '#8250df';
+                style.background = '#fbefff';
+              } else if (isInsert) {
+                style.background = '#e6ffed';
+                style.color = '#1a7f37';
+                style.borderLeft = '3px solid #1a7f37';
+              } else if (isDelete) {
+                style.background = '#ffebe9';
+                style.color = '#cf222e';
+                style.borderLeft = '3px solid #cf222e';
+              }
 
-            return (
-              <div
-                key={index}
-                style={{
-                  fontFamily:
-                    'ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  padding: '2px 10px',
-                  ...style,
-                }}>
-                {line.length === 0 ? '\u00A0' : line}
-              </div>
-            );
-          })}
-        </code>
-      </pre>
+              return (
+                <div
+                  key={index}
+                  style={{
+                    fontFamily:
+                      'ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    padding: '2px 10px',
+                    ...style,
+                  }}>
+                  {line.length === 0 ? '\u00A0' : line}
+                </div>
+              );
+            })}
+          </code>
+        </pre>
+      </div>
     );
   }
   if (!inline && match) {
     return (
       <div
         style={{
+          position: 'relative',
           margin: '8px 0',
           borderRadius: 6,
           overflow: 'auto',
         }}>
+        <CodeBlockCopyButton code={codeContent} />
         <SyntaxHighlighter
           language={match[1]}
           preTag="div"
