@@ -13,7 +13,19 @@ import {
   Trash2,
   Unplug,
 } from 'lucide-react';
+import type { ReactNode } from 'react';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -62,6 +74,38 @@ export interface GitHubIntegrationCardProps {
   onToggleExpand?: (installationId: number) => void;
   reposByInstallation?: Record<number, GitRepositoryDto[]>;
   loadingReposForInstallation?: number | null;
+}
+
+function ActionBlock({
+  title,
+  description,
+  children,
+  destructive = false,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+  destructive?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-xl border p-3 space-y-3 ${
+        destructive
+          ? 'border-destructive/20 bg-destructive/5'
+          : 'border-border bg-muted/30'
+      }`}>
+      <div className="space-y-1">
+        <p
+          className={`text-sm font-medium ${
+            destructive ? 'text-destructive' : 'text-foreground'
+          }`}>
+          {title}
+        </p>
+        <p className="text-xs leading-5 text-muted-foreground">{description}</p>
+      </div>
+      <div>{children}</div>
+    </div>
+  );
 }
 
 function StatusBadge({
@@ -195,6 +239,7 @@ export function GitHubIntegrationCard({
     installations && installations.length === 1
       ? installations[0].accountLogin
       : accountLogin;
+  const connectHref = installHref || addOrgHref;
 
   return (
     <Card className="gap-0">
@@ -292,41 +337,55 @@ export function GitHubIntegrationCard({
                           </div>
                         </button>
                       </CollapsibleTrigger>
-                      <div className="flex items-center gap-1 flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         {onReconfigure && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                  onClick={() =>
-                                    onReconfigure(inst.installationId)
-                                  }>
-                                  <Settings className="w-3.5 h-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="text-xs">Reconfigure on GitHub</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={() => onReconfigure(inst.installationId)}>
+                            <Settings className="w-3.5 h-3.5" />
+                            Configure
+                          </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-                          disabled={isRemoving}
-                          onClick={() =>
-                            onRemoveInstallation?.(inst.installationId)
-                          }>
-                          {isRemoving ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-3.5 h-3.5" />
-                          )}
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                              disabled={isRemoving}>
+                              {isRemoving ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3.5 h-3.5" />
+                              )}
+                              Remove
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Remove organization
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to disconnect{' '}
+                                {inst.accountLogin}? Synced repositories from
+                                this organization will be removed.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-white hover:bg-destructive/90"
+                                onClick={() =>
+                                  onRemoveInstallation?.(inst.installationId)
+                                }>
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                     <CollapsibleContent>
@@ -335,24 +394,6 @@ export function GitHubIntegrationCard({
                   </Collapsible>
                 );
               })}
-            </div>
-          )}
-          {addOrgHref && (
-            <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
-              <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                <a href={addOrgHref} target="_blank" rel="noopener noreferrer">
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Update permissions
-                </a>
-              </Button>
-              {syncHref && !onReload && (
-                <Button variant="ghost" size="sm" className="gap-1.5" asChild>
-                  <a href={syncHref}>
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    Sync
-                  </a>
-                </Button>
-              )}
             </div>
           )}
         </div>
@@ -384,107 +425,161 @@ export function GitHubIntegrationCard({
       )}
 
       {/* Card footer / actions */}
-      <div className="flex items-center justify-between px-5 py-4">
-        <p className="text-xs text-muted-foreground max-w-sm">
-          {state === 'connected'
-            ? 'GitHub App is active. Geniro can access your repositories and manage pull requests.'
-            : 'Install the Geniro GitHub App to allow repository access and workflow automation.'}
-        </p>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {state === 'connected' && onReload && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              disabled={reloading}
-              onClick={onReload}>
-              {reloading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="w-3.5 h-3.5" />
-              )}
-              {reloading ? 'Syncing...' : 'Reload'}
-            </Button>
-          )}
+      <div className="px-5 py-4 space-y-4">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Actions
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {state === 'connected'
+              ? 'Use the actions below to sync repository access, reconnect already-installed organizations, or update GitHub-side configuration.'
+              : 'Connect GitHub through OAuth to link organizations already installed for this GitHub App.'}
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
           {state === 'connected' ? (
-            isMultiInstallMode ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5"
-                disabled={disconnecting}
-                onClick={onDisconnect}>
-                {disconnecting ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Unplug className="w-3.5 h-3.5" />
-                )}
-                Disconnect all
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5"
-                disabled={disconnecting}
-                onClick={onDisconnect}>
-                {disconnecting ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Unplug className="w-3.5 h-3.5" />
-                )}
-                Disconnect
-              </Button>
-            )
-          ) : installHref || addOrgHref ? (
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                className="gap-1.5"
-                disabled={state === 'connecting'}
-                asChild>
-                <a href={addOrgHref || installHref}>
-                  {state === 'connecting' ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <>
+              {(onReload || syncHref) && (
+                <ActionBlock
+                  title="Sync repositories"
+                  description="Refresh the repository list in Geniro after changing repository selection or permissions on GitHub.">
+                  {onReload ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      disabled={reloading}
+                      onClick={onReload}>
+                      {reloading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      )}
+                      {reloading ? 'Syncing...' : 'Sync now'}
+                    </Button>
                   ) : (
-                    <Github className="w-3.5 h-3.5" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      asChild>
+                      <a href={syncHref}>
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        Sync now
+                      </a>
+                    </Button>
                   )}
-                  {state === 'connecting'
-                    ? 'Connecting...'
-                    : 'Install GitHub App'}
-                </a>
-              </Button>
-              {callbackUrl && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="w-4 h-4 text-primary cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-xs">
-                      <p className="text-xs">
-                        Add <code>{callbackUrl}</code> as a{' '}
-                        <strong>Callback URL</strong> in your GitHub App
-                        settings and set <strong>GITHUB_APP_CLIENT_ID</strong>{' '}
-                        env var.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                </ActionBlock>
               )}
-            </div>
+              {installHref && (
+                <ActionBlock
+                  title="Reconnect existing installation"
+                  description="Relink organizations that are still installed on GitHub but were removed locally from Geniro. This keeps the same GitHub installation ID.">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    asChild>
+                    <a href={installHref}>
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Reconnect existing
+                    </a>
+                  </Button>
+                </ActionBlock>
+              )}
+              {addOrgHref && (
+                <ActionBlock
+                  title="Add organization"
+                  description="Open GitHub's install flow to add this app to another organization or personal account. Existing installations will appear as Configure on GitHub.">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    asChild>
+                    <a
+                      href={addOrgHref}
+                      target="_blank"
+                      rel="noopener noreferrer">
+                      <Github className="w-3.5 h-3.5" />
+                      Add organization
+                    </a>
+                  </Button>
+                </ActionBlock>
+              )}
+              {onDisconnect && (
+                <ActionBlock
+                  title={isMultiInstallMode ? 'Disconnect all' : 'Disconnect'}
+                  description="Remove GitHub links from Geniro for this user only. This does not uninstall the GitHub App from GitHub."
+                  destructive>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 hover:bg-destructive/5"
+                    disabled={disconnecting}
+                    onClick={onDisconnect}>
+                    {disconnecting ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Unplug className="w-3.5 h-3.5" />
+                    )}
+                    {isMultiInstallMode ? 'Disconnect all' : 'Disconnect'}
+                  </Button>
+                </ActionBlock>
+              )}
+            </>
           ) : (
-            <Button
-              size="sm"
-              className="gap-1.5"
-              disabled={state === 'connecting' || state === 'loading'}
-              onClick={onInstall}>
-              {state === 'connecting' ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <>
+              {connectHref ? (
+                <ActionBlock
+                  title="Connect GitHub"
+                  description="Authorize GitHub and relink organizations that are already installed for this app back into Geniro.">
+                  <Button
+                    size="sm"
+                    className="gap-1.5"
+                    disabled={state === 'connecting'}
+                    asChild>
+                    <a href={connectHref}>
+                      {state === 'connecting' ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Github className="w-3.5 h-3.5" />
+                      )}
+                      {state === 'connecting'
+                        ? 'Connecting...'
+                        : 'Connect GitHub'}
+                    </a>
+                  </Button>
+                </ActionBlock>
               ) : (
-                <Github className="w-3.5 h-3.5" />
+                <ActionBlock
+                  title="Install GitHub App"
+                  description="Start the GitHub App install flow so Geniro can access repositories and pull requests.">
+                  <Button
+                    size="sm"
+                    className="gap-1.5"
+                    disabled={state === 'connecting' || state === 'loading'}
+                    onClick={onInstall}>
+                    {state === 'connecting' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Github className="w-3.5 h-3.5" />
+                    )}
+                    {state === 'connecting'
+                      ? 'Connecting...'
+                      : 'Install GitHub App'}
+                  </Button>
+                </ActionBlock>
               )}
-              {state === 'connecting' ? 'Connecting...' : 'Install GitHub App'}
-            </Button>
+              {callbackUrl && (
+                <ActionBlock
+                  title="Callback URL"
+                  description="Set this callback URL in the GitHub App settings so GitHub can return users to Geniro after authorization.">
+                  <div className="rounded-lg border border-border bg-background px-3 py-2 text-xs text-muted-foreground break-all">
+                    <code>{callbackUrl}</code>
+                  </div>
+                </ActionBlock>
+              )}
+            </>
           )}
         </div>
       </div>
