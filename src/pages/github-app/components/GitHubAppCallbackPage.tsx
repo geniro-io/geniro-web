@@ -104,7 +104,7 @@ export const GitHubAppCallbackPage = () => {
     };
 
     linkViaOAuth();
-  }, [code, state.status, navigate, stateParam]);
+  }, [code, state.status, navigate, stateParam, installationId]);
 
   // Handle installation-only callback (no OAuth code) — auto-redirect to OAuth authorize URL
   useEffect(() => {
