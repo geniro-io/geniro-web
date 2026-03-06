@@ -239,7 +239,7 @@ export function GitHubIntegrationCard({
     installations && installations.length === 1
       ? installations[0].accountLogin
       : accountLogin;
-  const connectHref = installHref || addOrgHref;
+  const connectHref = installHref;
 
   return (
     <Card className="gap-0">
@@ -567,6 +567,25 @@ export function GitHubIntegrationCard({
                     {state === 'connecting'
                       ? 'Connecting...'
                       : 'Install GitHub App'}
+                  </Button>
+                </ActionBlock>
+              )}
+              {addOrgHref && (
+                <ActionBlock
+                  title="Add organization"
+                  description="Open GitHub's install flow to add this app to another organization or personal account. Use Connect GitHub above to relink installations that already exist on GitHub.">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    asChild>
+                    <a
+                      href={addOrgHref}
+                      target="_blank"
+                      rel="noopener noreferrer">
+                      <Github className="w-3.5 h-3.5" />
+                      Add organization
+                    </a>
                   </Button>
                 </ActionBlock>
               )}
