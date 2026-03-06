@@ -3803,11 +3803,7 @@ function GitHubIntegrationSection() {
       description="Card component for GitHub App integration status and actions.">
       <Row label="Disconnected">
         <div className="w-full max-w-xl">
-          <GitHubIntegrationCard
-            state="disconnected"
-            installHref="#"
-            callbackUrl="https://app.geniro.io/github-app/callback"
-          />
+          <GitHubIntegrationCard state="disconnected" installHref="#" />
         </div>
       </Row>
       <Row label="Connecting">

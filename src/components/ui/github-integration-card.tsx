@@ -58,7 +58,6 @@ export interface GitHubIntegrationCardProps {
   accountLogin?: string | null;
   accountType?: string | null;
   installHref?: string;
-  callbackUrl?: string | null;
   onInstall?: () => void;
   onDisconnect?: () => void;
   disconnecting?: boolean;
@@ -216,7 +215,6 @@ export function GitHubIntegrationCard({
   accountLogin,
   accountType,
   installHref,
-  callbackUrl,
   onInstall,
   onDisconnect,
   disconnecting,

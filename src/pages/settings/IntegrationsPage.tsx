@@ -285,7 +285,6 @@ export const IntegrationsPage = () => {
           <GitHubIntegrationCard
             state={connectionState}
             installHref={setupInfo?.configured ? installHref : undefined}
-            callbackUrl={callbackUrl}
             installations={installations}
             onRemoveInstallation={handleRemoveInstallation}
             removingInstallationId={removingInstallationId}
