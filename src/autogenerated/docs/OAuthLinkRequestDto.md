@@ -2,9 +2,10 @@
 
 ## Properties
 
-| Name     | Type       | Description                     | Notes                  |
-| -------- | ---------- | ------------------------------- | ---------------------- |
-| **code** | **string** | GitHub OAuth authorization code | [default to undefined] |
+| Name               | Type       | Description                                                                                                 | Notes                             |
+| ------------------ | ---------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| **code**           | **string** | GitHub OAuth authorization code                                                                             | [default to undefined]            |
+| **installationId** | **number** | Optional GitHub App installation ID hint — used when the user was redirected from a GitHub App install flow | [optional] [default to undefined] |
 
 ## Example
 
@@ -13,6 +14,7 @@ import { OAuthLinkRequestDto } from './api';
 
 const instance: OAuthLinkRequestDto = {
   code,
+  installationId,
 };
 ```
 

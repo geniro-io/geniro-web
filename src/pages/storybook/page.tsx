@@ -3847,6 +3847,53 @@ function GitHubIntegrationSection() {
               },
             ]}
             addOrgHref="#"
+            onReload={() => {}}
+            onReconfigure={() => {}}
+            onToggleExpand={() => {}}
+          />
+        </div>
+      </Row>
+      <Row label="Connected — expanded with repos">
+        <div className="w-full max-w-xl">
+          <GitHubIntegrationCard
+            state="connected"
+            installations={[
+              {
+                id: 'story-expand-1',
+                installationId: 44444,
+                accountLogin: 'expanded-org',
+                accountType: 'Organization',
+                isActive: true,
+                createdAt: new Date().toISOString(),
+              },
+            ]}
+            addOrgHref="#"
+            onReload={() => {}}
+            onReconfigure={() => {}}
+            expandedInstallationId={44444}
+            onToggleExpand={() => {}}
+            reposByInstallation={{
+              44444: [
+                {
+                  id: 'repo-1',
+                  owner: 'expanded-org',
+                  repo: 'frontend',
+                  url: 'https://github.com/expanded-org/frontend',
+                  provider: 'github',
+                  defaultBranch: 'main',
+                  installationId: 44444,
+                },
+                {
+                  id: 'repo-2',
+                  owner: 'expanded-org',
+                  repo: 'backend-api',
+                  url: 'https://github.com/expanded-org/backend-api',
+                  provider: 'github',
+                  defaultBranch: 'develop',
+                  installationId: 44444,
+                },
+              ],
+            }}
           />
         </div>
       </Row>
@@ -3865,6 +3912,9 @@ function GitHubIntegrationSection() {
               },
             ]}
             addOrgHref="#"
+            onReload={() => {}}
+            onReconfigure={() => {}}
+            onToggleExpand={() => {}}
           />
         </div>
       </Row>

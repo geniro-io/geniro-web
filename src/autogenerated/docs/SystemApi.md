@@ -2,10 +2,10 @@
 
 All URIs are relative to _http://localhost_
 
-| Method                              | HTTP request                    | Description |
-| ----------------------------------- | ------------------------------- | ----------- |
-| [**getAuthConfig**](#getauthconfig) | **GET** /api/v1/system/config   |             |
-| [**getSettings**](#getsettings)     | **GET** /api/v1/system/settings |             |
+| Method                              | HTTP request                    | Description                                                                                                                                                                                                              |
+| ----------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [**getAuthConfig**](#getauthconfig) | **GET** /api/v1/system/config   | Public endpoint (no @OnlyForAuthorized) — intentionally unauthenticated. Returns OIDC provider config needed by the frontend before login. Only expose non-sensitive values here (provider type, issuer URL, client ID). |
+| [**getSettings**](#getsettings)     | **GET** /api/v1/system/settings |                                                                                                                                                                                                                          |
 
 # **getAuthConfig**
 

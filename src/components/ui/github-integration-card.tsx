@@ -1,11 +1,15 @@
 import {
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Circle,
   ExternalLink,
+  GitBranch,
   Github,
   Info,
   Loader2,
   RefreshCw,
+  Settings,
   Trash2,
   Unplug,
 } from 'lucide-react';
@@ -15,12 +19,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import type { GitHubAppInstallationDto } from '@/pages/github-app/types';
+import type {
+  GitHubAppInstallationDto,
+  GitRepositoryDto,
+} from '@/pages/github-app/types';
 
 export type GitHubConnectionState =
   | 'disconnected'
@@ -42,6 +55,13 @@ export interface GitHubIntegrationCardProps {
   removingInstallationId?: number | null;
   addOrgHref?: string;
   syncHref?: string;
+  onReload?: () => void;
+  reloading?: boolean;
+  onReconfigure?: (installationId: number) => void;
+  expandedInstallationId?: number | null;
+  onToggleExpand?: (installationId: number) => void;
+  reposByInstallation?: Record<number, GitRepositoryDto[]>;
+  loadingReposForInstallation?: number | null;
 }
 
 function StatusBadge({
@@ -95,6 +115,58 @@ function StatusBadge({
   );
 }
 
+function RepoList({
+  repos,
+  loading,
+}: {
+  repos?: GitRepositoryDto[];
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <div className="pl-11 py-2 space-y-2">
+        <Skeleton className="h-4 w-48" />
+        <Skeleton className="h-4 w-40" />
+        <Skeleton className="h-4 w-44" />
+      </div>
+    );
+  }
+
+  if (!repos || repos.length === 0) {
+    return (
+      <div className="pl-11 py-2">
+        <p className="text-xs text-muted-foreground">
+          No repositories synced for this installation.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pl-11 py-2 space-y-1.5">
+      {repos.map((repo) => (
+        <div key={repo.id} className="flex items-center gap-2">
+          <a
+            href={repo.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium hover:underline truncate text-foreground">
+            {repo.owner}/{repo.repo}
+          </a>
+          {repo.defaultBranch && (
+            <Badge
+              variant="outline"
+              className="text-[10px] gap-1 px-1.5 py-0 h-4 flex-shrink-0">
+              <GitBranch className="w-2.5 h-2.5" />
+              {repo.defaultBranch}
+            </Badge>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function GitHubIntegrationCard({
   state,
   accountLogin,
@@ -109,6 +181,13 @@ export function GitHubIntegrationCard({
   removingInstallationId,
   addOrgHref,
   syncHref,
+  onReload,
+  reloading,
+  onReconfigure,
+  expandedInstallationId,
+  onToggleExpand,
+  reposByInstallation,
+  loadingReposForInstallation,
 }: GitHubIntegrationCardProps) {
   const isMultiInstallMode = installations !== undefined;
   const installationCount = installations?.length;
@@ -166,55 +245,94 @@ export function GitHubIntegrationCard({
               No organizations linked yet.
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {installations.map((inst) => {
                 const isRemoving =
                   removingInstallationId === inst.installationId;
                 const initials = inst.accountLogin.slice(0, 2).toUpperCase();
+                const isExpanded =
+                  expandedInstallationId === inst.installationId;
+                const isLoadingRepos =
+                  loadingReposForInstallation === inst.installationId;
+                const repos = reposByInstallation?.[inst.installationId];
+
                 return (
-                  <div
+                  <Collapsible
                     key={inst.id}
-                    className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Avatar className="size-8 flex-shrink-0">
-                        <AvatarImage
-                          src={`https://github.com/${inst.accountLogin}.png?size=48`}
-                          alt={inst.accountLogin}
-                        />
-                        <AvatarFallback className="text-xs">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <a
-                          href={`https://github.com/${inst.accountLogin}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium hover:underline truncate">
-                          {inst.accountLogin}
-                        </a>
-                        <Badge
-                          variant="outline"
-                          className="text-xs flex-shrink-0">
-                          {inst.accountType}
-                        </Badge>
+                    open={isExpanded}
+                    onOpenChange={() => onToggleExpand?.(inst.installationId)}>
+                    <div className="flex items-center justify-between gap-3 py-1">
+                      <CollapsibleTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex items-center gap-3 min-w-0 cursor-pointer hover:opacity-80 transition-opacity">
+                          {isExpanded ? (
+                            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                          ) : (
+                            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                          )}
+                          <Avatar className="size-8 flex-shrink-0">
+                            <AvatarImage
+                              src={`https://github.com/${inst.accountLogin}.png?size=48`}
+                              alt={inst.accountLogin}
+                            />
+                            <AvatarFallback className="text-xs">
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-medium truncate">
+                              {inst.accountLogin}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className="text-xs flex-shrink-0">
+                              {inst.accountType}
+                            </Badge>
+                          </div>
+                        </button>
+                      </CollapsibleTrigger>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {onReconfigure && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  onClick={() =>
+                                    onReconfigure(inst.installationId)
+                                  }>
+                                  <Settings className="w-3.5 h-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">Reconfigure on GitHub</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                          disabled={isRemoving}
+                          onClick={() =>
+                            onRemoveInstallation?.(inst.installationId)
+                          }>
+                          {isRemoving ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                        </Button>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
-                      disabled={isRemoving}
-                      onClick={() =>
-                        onRemoveInstallation?.(inst.installationId)
-                      }>
-                      {isRemoving ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-3.5 h-3.5" />
-                      )}
-                    </Button>
-                  </div>
+                    <CollapsibleContent>
+                      <RepoList repos={repos} loading={isLoadingRepos} />
+                    </CollapsibleContent>
+                  </Collapsible>
                 );
               })}
             </div>
@@ -227,7 +345,7 @@ export function GitHubIntegrationCard({
                   Update permissions
                 </a>
               </Button>
-              {syncHref && (
+              {syncHref && !onReload && (
                 <Button variant="ghost" size="sm" className="gap-1.5" asChild>
                   <a href={syncHref}>
                     <RefreshCw className="w-3.5 h-3.5" />
@@ -273,6 +391,21 @@ export function GitHubIntegrationCard({
             : 'Install the Geniro GitHub App to allow repository access and workflow automation.'}
         </p>
         <div className="flex items-center gap-2 flex-shrink-0">
+          {state === 'connected' && onReload && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              disabled={reloading}
+              onClick={onReload}>
+              {reloading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5" />
+              )}
+              {reloading ? 'Syncing...' : 'Reload'}
+            </Button>
+          )}
           {state === 'connected' ? (
             isMultiInstallMode ? (
               <Button
@@ -303,14 +436,14 @@ export function GitHubIntegrationCard({
                 Disconnect
               </Button>
             )
-          ) : installHref ? (
+          ) : installHref || addOrgHref ? (
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
                 className="gap-1.5"
                 disabled={state === 'connecting'}
                 asChild>
-                <a href={installHref}>
+                <a href={addOrgHref || installHref}>
                   {state === 'connecting' ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (

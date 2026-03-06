@@ -227,6 +227,7 @@ const apiInstance = new GitRepositoriesApi(configuration);
 let owner: string; //Filter by repository owner (optional) (default to undefined)
 let repo: string; //Filter by repository name (optional) (default to undefined)
 let provider: 'GITHUB'; //Filter by host provider (optional) (default to undefined)
+let installationId: number; //Filter by GitHub App installation ID (optional) (default to undefined)
 let limit: number; //Maximum number of repositories to return (optional) (default to 50)
 let offset: number; //Number of repositories to skip (optional) (default to 0)
 
@@ -234,6 +235,7 @@ const { status, data } = await apiInstance.getRepositories(
   owner,
   repo,
   provider,
+  installationId,
   limit,
   offset,
 );
@@ -241,13 +243,14 @@ const { status, data } = await apiInstance.getRepositories(
 
 ### Parameters
 
-| Name         | Type                                              | Description                              | Notes                            |
-| ------------ | ------------------------------------------------- | ---------------------------------------- | -------------------------------- |
-| **owner**    | [**string**]                                      | Filter by repository owner               | (optional) defaults to undefined |
-| **repo**     | [**string**]                                      | Filter by repository name                | (optional) defaults to undefined |
-| **provider** | [**&#39;GITHUB&#39;**]**Array<&#39;GITHUB&#39;>** | Filter by host provider                  | (optional) defaults to undefined |
-| **limit**    | [**number**]                                      | Maximum number of repositories to return | (optional) defaults to 50        |
-| **offset**   | [**number**]                                      | Number of repositories to skip           | (optional) defaults to 0         |
+| Name               | Type                                              | Description                              | Notes                            |
+| ------------------ | ------------------------------------------------- | ---------------------------------------- | -------------------------------- |
+| **owner**          | [**string**]                                      | Filter by repository owner               | (optional) defaults to undefined |
+| **repo**           | [**string**]                                      | Filter by repository name                | (optional) defaults to undefined |
+| **provider**       | [**&#39;GITHUB&#39;**]**Array<&#39;GITHUB&#39;>** | Filter by host provider                  | (optional) defaults to undefined |
+| **installationId** | [**number**]                                      | Filter by GitHub App installation ID     | (optional) defaults to undefined |
+| **limit**          | [**number**]                                      | Maximum number of repositories to return | (optional) defaults to 50        |
+| **offset**         | [**number**]                                      | Number of repositories to skip           | (optional) defaults to 0         |
 
 ### Return type
 

@@ -87,6 +87,14 @@ export const GitHubAppCallbackPage = () => {
           code,
           hintedInstallationId,
         );
+        try {
+          await githubAppInstallationsApi.syncRepos();
+        } catch (syncError: unknown) {
+          console.warn(
+            'Auto-sync after link failed, user can manually reload:',
+            syncError,
+          );
+        }
         toast.success('GitHub organization linked successfully.');
         navigate('/settings/integrations', { replace: true });
       } catch (e: unknown) {

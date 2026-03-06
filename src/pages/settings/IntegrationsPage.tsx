@@ -1,5 +1,6 @@
 import { Info } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
@@ -11,6 +12,7 @@ import { useSystemSettings } from '../../hooks/useSystemSettings';
 import { extractApiErrorMessage } from '../../utils/errors';
 import type {
   GitHubAppInstallationDto,
+  GitRepositoryDto,
   SetupInfoResponseDto,
 } from '../github-app/types';
 import { githubAppInstallationsApi } from '../github-app/types';
@@ -26,6 +28,14 @@ export const IntegrationsPage = () => {
   >([]);
   const [error, setError] = useState<string | null>(null);
   const [setupInfo, setSetupInfo] = useState<SetupInfoResponseDto | null>(null);
+  const [reloading, setReloading] = useState(false);
+  const [expandedInstallationId, setExpandedInstallationId] = useState<
+    number | null
+  >(null);
+  const [reposByInstallation, setReposByInstallation] = useState<
+    Record<number, GitRepositoryDto[]>
+  >({});
+  const [loadingReposFor, setLoadingReposFor] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!settings.githubAppEnabled) {
@@ -43,6 +53,7 @@ export const IntegrationsPage = () => {
       ]);
 
       setInstallations(installationsResponse.data.installations || []);
+      setReposByInstallation({});
 
       if (setupResponse) {
         setSetupInfo(setupResponse.data);
@@ -72,7 +83,34 @@ export const IntegrationsPage = () => {
       setRemovingInstallationId(installationId);
       try {
         await githubAppInstallationsApi.disconnect(installationId);
+        // Collapse and remove cached repos for the removed installation
+        if (expandedInstallationId === installationId) {
+          setExpandedInstallationId(null);
+        }
+        setReposByInstallation((prev) => {
+          const next = { ...prev };
+          delete next[installationId];
+          return next;
+        });
         await fetchData();
+        // Re-fetch repos for the still-expanded installation
+        if (
+          expandedInstallationId &&
+          expandedInstallationId !== installationId
+        ) {
+          try {
+            const response =
+              await githubAppInstallationsApi.listReposByInstallation(
+                expandedInstallationId,
+              );
+            setReposByInstallation((prev) => ({
+              ...prev,
+              [expandedInstallationId]: response.data,
+            }));
+          } catch {
+            // Non-critical
+          }
+        }
       } catch (e: unknown) {
         const errorMessage = extractApiErrorMessage(
           e,
@@ -83,7 +121,7 @@ export const IntegrationsPage = () => {
         setRemovingInstallationId(null);
       }
     },
-    [fetchData],
+    [fetchData, expandedInstallationId],
   );
 
   const handleDisconnectAll = useCallback(async () => {
@@ -102,6 +140,87 @@ export const IntegrationsPage = () => {
       setDisconnectingAll(false);
     }
   }, [fetchData, installations]);
+
+  const handleReload = useCallback(async () => {
+    setReloading(true);
+    try {
+      await githubAppInstallationsApi.syncRepos();
+      await fetchData();
+      // Re-fetch repos for the currently expanded installation
+      if (expandedInstallationId) {
+        try {
+          const response =
+            await githubAppInstallationsApi.listReposByInstallation(
+              expandedInstallationId,
+            );
+          setReposByInstallation((prev) => ({
+            ...prev,
+            [expandedInstallationId]: response.data,
+          }));
+        } catch {
+          // Non-critical — user can re-expand to retry
+        }
+      }
+      toast.success('Repositories synced successfully.');
+    } catch (e: unknown) {
+      const errorMessage = extractApiErrorMessage(
+        e,
+        'Failed to sync repositories',
+      );
+      setError(errorMessage);
+    } finally {
+      setReloading(false);
+    }
+  }, [fetchData, expandedInstallationId]);
+
+  const handleToggleExpand = useCallback(
+    async (installationId: number) => {
+      if (expandedInstallationId === installationId) {
+        setExpandedInstallationId(null);
+        return;
+      }
+      setExpandedInstallationId(installationId);
+      if (reposByInstallation[installationId]) return;
+
+      setLoadingReposFor(installationId);
+      try {
+        const response =
+          await githubAppInstallationsApi.listReposByInstallation(
+            installationId,
+          );
+        setReposByInstallation((prev) => ({
+          ...prev,
+          [installationId]: response.data,
+        }));
+      } catch (e: unknown) {
+        console.error(
+          'Failed to load repos for installation',
+          installationId,
+          e,
+        );
+      } finally {
+        setLoadingReposFor(null);
+      }
+    },
+    [expandedInstallationId, reposByInstallation],
+  );
+
+  const handleReconfigure = useCallback(
+    (installationId: number) => {
+      const inst = installations.find(
+        (i) => i.installationId === installationId,
+      );
+      if (!inst) return;
+
+      const isOrg =
+        inst.accountType === 'Organization' || inst.accountType === 'Org';
+      const url = isOrg
+        ? `https://github.com/organizations/${inst.accountLogin}/settings/installations/${installationId}`
+        : `https://github.com/settings/installations/${installationId}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    },
+    [installations],
+  );
 
   const callbackUrl = setupInfo?.callbackPath
     ? `${window.location.origin}${setupInfo.callbackPath}`
@@ -174,6 +293,15 @@ export const IntegrationsPage = () => {
             disconnecting={disconnectingAll}
             addOrgHref={setupInfo?.configured ? addOrgHref : undefined}
             syncHref={setupInfo?.configured ? installHref : undefined}
+            onReload={handleReload}
+            reloading={reloading}
+            onReconfigure={
+              setupInfo?.reconfigureUrlTemplate ? handleReconfigure : undefined
+            }
+            expandedInstallationId={expandedInstallationId}
+            onToggleExpand={handleToggleExpand}
+            reposByInstallation={reposByInstallation}
+            loadingReposForInstallation={loadingReposFor}
           />
         </div>
       )}

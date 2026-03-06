@@ -30,6 +30,17 @@ export interface SetupInfoResponseDto {
   configured: boolean;
   callbackPath: string;
   newInstallationUrl: string;
+  reconfigureUrlTemplate?: string;
+}
+
+export interface GitRepositoryDto {
+  id: string;
+  owner: string;
+  repo: string;
+  url: string;
+  provider: string;
+  defaultBranch: string;
+  installationId: number | null;
 }
 
 // --- API Service ---
@@ -66,4 +77,14 @@ export const githubAppInstallationsApi = {
     axios.delete(`${BASE}/installations/${installationId}`),
 
   disconnectAll: () => axios.delete(`${BASE}/disconnect`),
+
+  syncRepos: () =>
+    axios.post<{ synced: number; removed: number; total: number }>(
+      `${API_URL}/api/v1/git-repositories/sync`,
+    ),
+
+  listReposByInstallation: (installationId: number) =>
+    axios.get<GitRepositoryDto[]>(`${API_URL}/api/v1/git-repositories`, {
+      params: { installationId },
+    }),
 };

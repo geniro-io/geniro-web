@@ -1390,6 +1390,12 @@ export interface OAuthLinkRequestDto {
    * @memberof OAuthLinkRequestDto
    */
   'code': string;
+  /**
+   * Optional GitHub App installation ID hint — used when the user was redirected from a GitHub App install flow
+   * @type {number}
+   * @memberof OAuthLinkRequestDto
+   */
+  'installationId'?: number;
 }
 /**
  *
@@ -1701,6 +1707,12 @@ export interface SetupInfoResponseDto {
    * @memberof SetupInfoResponseDto
    */
   'callbackPath': string;
+  /**
+   * URL template for reconfiguring a GitHub App installation (replace {id} with the installation ID)
+   * @type {string}
+   * @memberof SetupInfoResponseDto
+   */
+  'reconfigureUrlTemplate'?: string;
 }
 /**
  *
@@ -4798,6 +4810,7 @@ export const GitRepositoriesApiAxiosParamCreator = function (
      * @param {string} [owner] Filter by repository owner
      * @param {string} [repo] Filter by repository name
      * @param {GetRepositoriesProviderEnum} [provider] Filter by host provider
+     * @param {number} [installationId] Filter by GitHub App installation ID
      * @param {number} [limit] Maximum number of repositories to return
      * @param {number} [offset] Number of repositories to skip
      * @param {*} [options] Override http request option.
@@ -4807,6 +4820,7 @@ export const GitRepositoriesApiAxiosParamCreator = function (
       owner?: string,
       repo?: string,
       provider?: GetRepositoriesProviderEnum,
+      installationId?: number,
       limit?: number,
       offset?: number,
       options: RawAxiosRequestConfig = {},
@@ -4841,6 +4855,10 @@ export const GitRepositoriesApiAxiosParamCreator = function (
 
       if (provider !== undefined) {
         localVarQueryParameter['provider'] = provider;
+      }
+
+      if (installationId !== undefined) {
+        localVarQueryParameter['installationId'] = installationId;
       }
 
       if (limit !== undefined) {
@@ -5227,6 +5245,7 @@ export const GitRepositoriesApiFp = function (configuration?: Configuration) {
      * @param {string} [owner] Filter by repository owner
      * @param {string} [repo] Filter by repository name
      * @param {GetRepositoriesProviderEnum} [provider] Filter by host provider
+     * @param {number} [installationId] Filter by GitHub App installation ID
      * @param {number} [limit] Maximum number of repositories to return
      * @param {number} [offset] Number of repositories to skip
      * @param {*} [options] Override http request option.
@@ -5236,6 +5255,7 @@ export const GitRepositoriesApiFp = function (configuration?: Configuration) {
       owner?: string,
       repo?: string,
       provider?: GetRepositoriesProviderEnum,
+      installationId?: number,
       limit?: number,
       offset?: number,
       options?: RawAxiosRequestConfig,
@@ -5249,6 +5269,7 @@ export const GitRepositoriesApiFp = function (configuration?: Configuration) {
         owner,
         repo,
         provider,
+        installationId,
         limit,
         offset,
         options,
@@ -5485,6 +5506,7 @@ export const GitRepositoriesApiFactory = function (
      * @param {string} [owner] Filter by repository owner
      * @param {string} [repo] Filter by repository name
      * @param {GetRepositoriesProviderEnum} [provider] Filter by host provider
+     * @param {number} [installationId] Filter by GitHub App installation ID
      * @param {number} [limit] Maximum number of repositories to return
      * @param {number} [offset] Number of repositories to skip
      * @param {*} [options] Override http request option.
@@ -5494,12 +5516,21 @@ export const GitRepositoriesApiFactory = function (
       owner?: string,
       repo?: string,
       provider?: GetRepositoriesProviderEnum,
+      installationId?: number,
       limit?: number,
       offset?: number,
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<Array<GitRepositoryDto>> {
       return localVarFp
-        .getRepositories(owner, repo, provider, limit, offset, options)
+        .getRepositories(
+          owner,
+          repo,
+          provider,
+          installationId,
+          limit,
+          offset,
+          options,
+        )
         .then((request) => request(axios, basePath));
     },
     /**
@@ -5652,6 +5683,7 @@ export class GitRepositoriesApi extends BaseAPI {
    * @param {string} [owner] Filter by repository owner
    * @param {string} [repo] Filter by repository name
    * @param {GetRepositoriesProviderEnum} [provider] Filter by host provider
+   * @param {number} [installationId] Filter by GitHub App installation ID
    * @param {number} [limit] Maximum number of repositories to return
    * @param {number} [offset] Number of repositories to skip
    * @param {*} [options] Override http request option.
@@ -5662,12 +5694,21 @@ export class GitRepositoriesApi extends BaseAPI {
     owner?: string,
     repo?: string,
     provider?: GetRepositoriesProviderEnum,
+    installationId?: number,
     limit?: number,
     offset?: number,
     options?: RawAxiosRequestConfig,
   ) {
     return GitRepositoriesApiFp(this.configuration)
-      .getRepositories(owner, repo, provider, limit, offset, options)
+      .getRepositories(
+        owner,
+        repo,
+        provider,
+        installationId,
+        limit,
+        offset,
+        options,
+      )
       .then((request) => request(this.axios, this.basePath));
   }
 
@@ -9914,6 +9955,7 @@ export const SystemApiAxiosParamCreator = function (
   return {
     /**
      *
+     * @summary Public endpoint (no @OnlyForAuthorized) — intentionally unauthenticated. Returns OIDC provider config needed by the frontend before login. Only expose non-sensitive values here (provider type, issuer URL, client ID).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
@@ -10004,6 +10046,7 @@ export const SystemApiFp = function (configuration?: Configuration) {
   return {
     /**
      *
+     * @summary Public endpoint (no @OnlyForAuthorized) — intentionally unauthenticated. Returns OIDC provider config needed by the frontend before login. Only expose non-sensitive values here (provider type, issuer URL, client ID).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
@@ -10074,6 +10117,7 @@ export const SystemApiFactory = function (
   return {
     /**
      *
+     * @summary Public endpoint (no @OnlyForAuthorized) — intentionally unauthenticated. Returns OIDC provider config needed by the frontend before login. Only expose non-sensitive values here (provider type, issuer URL, client ID).
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
@@ -10108,6 +10152,7 @@ export const SystemApiFactory = function (
 export class SystemApi extends BaseAPI {
   /**
    *
+   * @summary Public endpoint (no @OnlyForAuthorized) — intentionally unauthenticated. Returns OIDC provider config needed by the frontend before login. Only expose non-sensitive values here (provider type, issuer URL, client ID).
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof SystemApi
