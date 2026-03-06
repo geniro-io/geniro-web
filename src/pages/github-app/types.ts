@@ -34,7 +34,7 @@ export interface SetupInfoResponseDto {
 
 // --- API Service ---
 
-const BASE = `${API_URL}/api/v1/github-app`;
+const BASE = `${API_URL}/api/v1/git-auth/github`;
 
 interface ListInstallationsResponse {
   installations: GitHubAppInstallationDto[];

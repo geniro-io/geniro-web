@@ -1242,7 +1242,7 @@ export function SubagentBlock(props: SubagentBlockProps) {
     statistics,
     popoverContent,
     usageIn,
-    usageOut,
+    usageOut: _usageOut, // not displayed in consumer mode
     showThinkingIndicator,
   } = props;
 
@@ -1543,7 +1543,7 @@ export function CommunicationBlock(props: CommunicationBlockProps) {
     model,
     popoverContent,
     usageIn,
-    usageOut,
+    usageOut: _usageOut, // not displayed in consumer mode
     showThinkingIndicator,
     thinkingText,
     // storybook mode

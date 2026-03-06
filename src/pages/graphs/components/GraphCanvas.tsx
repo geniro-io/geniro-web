@@ -18,7 +18,15 @@ import {
   useReactFlow,
   Viewport,
 } from '@xyflow/react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   GraphDtoStatusEnum,
@@ -120,9 +128,11 @@ const GraphCanvasInner = ({
 
   // Store stable refs so the context value doesn't change on every render.
   const onNodeEditRef = useRef(onNodeEdit);
-  onNodeEditRef.current = onNodeEdit;
   const onNodeDeleteRef = useRef(onNodeDelete);
-  onNodeDeleteRef.current = onNodeDelete;
+  useLayoutEffect(() => {
+    onNodeEditRef.current = onNodeEdit;
+    onNodeDeleteRef.current = onNodeDelete;
+  });
 
   // Stable callbacks that read from refs — identity never changes.
   const stableOnNodeEdit = useCallback(

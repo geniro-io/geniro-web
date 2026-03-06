@@ -386,6 +386,7 @@ export const CustomNode = React.memo(
       ensureNodeStatusPulseStyle();
     }, []);
 
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization -- nodeData is from an unsafe cast; sub-property deps avoid re-running on position changes
     const metadataProperties = useMemo(() => {
       if (!nodeData.templateSchema?.properties)
         return [] as { key: string; value: unknown; title: string }[];
@@ -411,6 +412,7 @@ export const CustomNode = React.memo(
               templates,
             )
           : [],
+      // eslint-disable-next-line react-hooks/preserve-manual-memoization
       [connectedEdges, allNodes, nodeId, templates],
     );
     const inputRules = useMemo(
@@ -426,6 +428,7 @@ export const CustomNode = React.memo(
               templates,
             )
           : [],
+      // eslint-disable-next-line react-hooks/preserve-manual-memoization
       [nodeData, nodeId, templates],
     );
 

@@ -77,6 +77,7 @@ export function useReasoningReveal(
         startTime.current = performance.now();
         speed.current = arrivedLen / duration;
         flushing.current = false;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: animation start must trigger re-render
         setIsRevealing(true);
       } else if (!flushing.current) {
         // Subsequent chunk — recalculate speed for remaining time

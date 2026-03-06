@@ -74,7 +74,7 @@ interface SnapshotNodeData extends Record<string, unknown> {
 const MAX_DESC = 120;
 
 const SnapshotNode: FC<NodeProps<Node<SnapshotNodeData>>> = ({
-  id,
+  id: _id,
   data,
   selected,
 }) => {
