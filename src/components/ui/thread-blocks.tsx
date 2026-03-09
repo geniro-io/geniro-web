@@ -17,9 +17,9 @@ import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useReasoningReveal } from '../../hooks/useReasoningReveal';
-import { getAgentInitials } from '../../pages/chats/utils/chatsPageUtils';
 import { getStatusBadgeClass } from '../../utils/statusColors';
 import { MarkdownContent } from '../markdown/MarkdownContent';
+import { AgentAvatar, getAgentInitials } from './agent-avatar';
 import { Avatar, AvatarFallback } from './avatar';
 import { Badge } from './badge';
 import { JsonViewer } from './json-view';
@@ -1773,6 +1773,7 @@ export function CommunicationBlock(props: CommunicationBlockProps) {
 export function FinishBlock({
   sender,
   agentRole,
+  nodeId,
   color,
   timestamp,
   variant,
@@ -1782,7 +1783,10 @@ export function FinishBlock({
 }: {
   sender: string;
   agentRole?: string;
-  color: string;
+  /** Node ID — drives deterministic avatar color via AgentAvatar. */
+  nodeId?: string;
+  /** Explicit Tailwind bg class — overrides nodeId-based color. */
+  color?: string;
   timestamp: string;
   variant: 'done' | 'need_more';
   message: string;
@@ -1793,11 +1797,12 @@ export function FinishBlock({
   const accentColor = isDone ? '#52c41a' : '#faad14';
   return (
     <div className="flex gap-3">
-      <Avatar className="w-8 h-8 flex-shrink-0">
-        <AvatarFallback className={`${color} text-white text-[11px]`}>
-          {getAgentInitials(sender)}
-        </AvatarFallback>
-      </Avatar>
+      <AgentAvatar
+        label={sender}
+        nodeId={nodeId}
+        colorOverride={color}
+        size="md"
+      />
       <div className="flex-1 min-w-0">
         <div
           className={`flex items-center gap-2 px-3 py-2 rounded-t-xl border ${isDone ? 'bg-green-100 border-green-200 text-green-800' : 'bg-amber-100 border-amber-200 text-amber-800'}`}

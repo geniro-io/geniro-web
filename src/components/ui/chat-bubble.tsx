@@ -1,11 +1,9 @@
 import { formatDistanceToNow } from 'date-fns';
 import React from 'react';
 
-import { getAgentInitials } from '../../pages/chats/utils/chatsPageUtils';
 import { MarkdownContent } from '../markdown/MarkdownContent';
-import { Avatar, AvatarFallback } from './avatar';
+import { AgentAvatar } from './agent-avatar';
 import { CopyButton, TokenBadge, type TokenInfo } from './token-display';
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 export type { TokenInfo } from './token-display';
 export { CopyButton } from './token-display';
@@ -33,6 +31,9 @@ export interface ChatBubbleProps {
   sender: string;
   role: 'human' | 'ai';
   agentRole?: string;
+  /** Node ID — drives deterministic avatar color via AgentAvatar. */
+  nodeId?: string;
+  /** Explicit Tailwind bg class — overrides nodeId-based color. */
   color?: string;
   avatarTooltip?: string;
 
@@ -59,7 +60,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
     sender,
     role,
     agentRole,
-    color = 'bg-gray-500',
+    nodeId,
+    color,
     avatarTooltip,
     content,
     copyContent,
@@ -72,25 +74,16 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
     customBody,
   }) => {
     const isHuman = role === 'human';
-    const initials = getAgentInitials(sender);
 
-    const avatarElement = (
-      <Avatar className="w-8 h-8 flex-shrink-0">
-        <AvatarFallback className={`${color} text-white text-[11px]`}>
-          {initials}
-        </AvatarFallback>
-      </Avatar>
-    );
-
-    const wrappedAvatar = avatarTooltip ? (
-      <Tooltip>
-        <TooltipTrigger asChild>{avatarElement}</TooltipTrigger>
-        <TooltipContent side={isHuman ? 'left' : 'right'}>
-          {avatarTooltip}
-        </TooltipContent>
-      </Tooltip>
-    ) : (
-      avatarElement
+    const wrappedAvatar = (
+      <AgentAvatar
+        label={sender}
+        nodeId={nodeId}
+        colorOverride={color ?? (isHuman ? 'bg-gray-500' : undefined)}
+        tooltip={avatarTooltip}
+        tooltipSide={isHuman ? 'left' : 'right'}
+        size="md"
+      />
     );
 
     const copyText = copyContent ?? content ?? '';
@@ -165,7 +158,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
                 <TokenBadge tokens={tokens} />
               </>
             )}
-            <CopyButton text={copyText} />
+            {!isWorking && <CopyButton text={copyText} />}
           </div>
           {pendingNote && (
             <span className="text-[11px] mt-1 text-muted-foreground italic">

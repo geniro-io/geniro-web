@@ -16,6 +16,7 @@ import { Play } from 'lucide-react';
 import type { FC } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
+import { getAgentInitials } from '../../../components/ui/agent-avatar';
 import { Avatar, AvatarFallback } from '../../../components/ui/avatar';
 import {
   GRAPH_HANDLE_STYLE_SOURCE,
@@ -31,7 +32,6 @@ import {
   PopoverAnchor,
   PopoverContent,
 } from '../../../components/ui/popover';
-import { getAgentInitials } from '../utils/chatsPageUtils';
 import type { ThreadExportData } from './ThreadSnapshotModal';
 
 type SnapshotGraph = NonNullable<ThreadExportData['graph']>;

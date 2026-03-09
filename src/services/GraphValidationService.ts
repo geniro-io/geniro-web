@@ -676,9 +676,43 @@ export class GraphValidationService {
 
     const requiredFields = asStringArray(schemaUnknown['required']);
 
+    // Resolve $ref pointers so we can inspect defaults/const on referenced
+    // definitions (Zod emits $ref when .refine()/.transform() is used).
+    const definitions = isRecord(schemaUnknown['definitions'])
+      ? schemaUnknown['definitions']
+      : {};
+    const resolveProperty = (
+      prop: Record<string, unknown>,
+    ): Record<string, unknown> => {
+      const merged: Record<string, unknown> = { ...prop };
+      // Direct $ref
+      if (typeof prop['$ref'] === 'string') {
+        const refKey = prop['$ref'].replace('#/definitions/', '');
+        const def = definitions[refKey];
+        if (isRecord(def)) Object.assign(merged, def);
+      }
+      // allOf with $ref entries
+      if (Array.isArray(prop['allOf'])) {
+        for (const entry of prop['allOf']) {
+          if (isRecord(entry) && typeof entry['$ref'] === 'string') {
+            const refKey = (entry['$ref'] as string).replace(
+              '#/definitions/',
+              '',
+            );
+            const def = definitions[refKey];
+            if (isRecord(def)) Object.assign(merged, def);
+          }
+        }
+      }
+      return merged;
+    };
+
     for (const fieldKey of requiredFields) {
       const propertyUnknown = propertiesUnknown[fieldKey];
-      const property = isRecord(propertyUnknown) ? propertyUnknown : undefined;
+      const rawProperty = isRecord(propertyUnknown)
+        ? propertyUnknown
+        : undefined;
+      const property = rawProperty ? resolveProperty(rawProperty) : undefined;
 
       // Skip validation if the field has a default value in the schema
       // Fields with defaults are effectively optional since they'll use the default
