@@ -432,7 +432,35 @@ export const CustomNode = React.memo(
       [nodeData, nodeId, templates],
     );
 
-    const hasValidationErrors = validationErrors.length > 0;
+    const hasMissingInputConnections = inputRules.some(
+      (t) =>
+        t.required &&
+        !connectedEdges.some(
+          (e) =>
+            e.target === nodeId && e.targetHandle === makeHandleId('target', t),
+        ),
+    );
+
+    const hasMissingOutputConnections = Boolean(
+      nodeTemplate?.outputs?.some(
+        (output) =>
+          output.required &&
+          !connectedEdges.some(
+            (e) =>
+              e.source === nodeId &&
+              e.sourceHandle ===
+                makeHandleId('source', {
+                  type: output.type as 'kind' | 'template',
+                  value: String(output.value),
+                }),
+          ),
+      ),
+    );
+
+    const hasValidationErrors =
+      validationErrors.length > 0 ||
+      hasMissingInputConnections ||
+      hasMissingOutputConnections;
 
     const outMissing =
       inputRules.some((r) => r.required) &&
@@ -522,7 +550,8 @@ export const CustomNode = React.memo(
         return 'allowed';
       }
 
-      return 'none';
+      // Same-type handles can never connect (output→output, input→input)
+      return 'blocked';
     };
 
     const resolveHandleVisuals = (
@@ -536,7 +565,7 @@ export const CustomNode = React.memo(
       const background = isBlocked
         ? '#bfbfbf'
         : isAllowed
-          ? '#52c41a'
+          ? '#13c2c2'
           : missing
             ? '#ff5d5d'
             : base.bg;
@@ -544,7 +573,7 @@ export const CustomNode = React.memo(
       const boxShadow = isBlocked
         ? '0 0 0 1px rgba(191,191,191,0.8)'
         : isAllowed
-          ? '0 0 0 1px rgba(82,196,26,0.6)'
+          ? '0 0 6px rgba(19,194,194,0.7), 0 0 0 1px rgba(19,194,194,0.6)'
           : base.sh;
 
       return {
@@ -649,6 +678,17 @@ export const CustomNode = React.memo(
                     {'\u2022'} {e.message}
                   </div>
                 ))}
+                {hasMissingInputConnections &&
+                  !validationErrors.some((e) => e.type === 'required') && (
+                    <div className="text-xs">
+                      {'\u2022'} Missing required input connections
+                    </div>
+                  )}
+                {hasMissingOutputConnections && (
+                  <div className="text-xs">
+                    {'\u2022'} Missing required output connections
+                  </div>
+                )}
               </div>
             </TooltipContent>
           </Tooltip>
@@ -755,8 +795,42 @@ export const CustomNode = React.memo(
       </div>
     );
 
-    const inputsCollapsed =
-      inputRules.length > 0 ? (
+    const inputsCollapsed = (() => {
+      if (inputRules.length === 0) return null;
+
+      const highlights = inputRules.map((t) => getHandleHighlight('target', t));
+      const hasAllowed = highlights.includes('allowed');
+      const allBlocked =
+        highlights.length > 0 &&
+        highlights.every((h) => h === 'blocked') &&
+        connectionPreview?.template != null;
+      const hasMissing = inputRules.some(
+        (t) =>
+          t.required &&
+          !connectedEdges.some(
+            (e) =>
+              e.target === nodeId &&
+              e.targetHandle === makeHandleId('target', t),
+          ),
+      );
+
+      const labelBg = hasAllowed
+        ? 'rgba(19,194,194,0.15)'
+        : allBlocked
+          ? 'rgba(191,191,191,0.15)'
+          : hasMissing
+            ? 'rgba(255,93,93,0.12)'
+            : 'rgba(107,143,212,0.12)';
+      const labelColor = hasAllowed
+        ? '#13c2c2'
+        : allBlocked
+          ? '#bfbfbf'
+          : hasMissing
+            ? '#ff5d5d'
+            : '#4a6fa8';
+      const labelShadow = hasAllowed ? '0 0 6px rgba(19,194,194,0.4)' : 'none';
+
+      return (
         <div className="relative" style={{ minHeight: 28 }}>
           {inputRules.map((t) => {
             const id = makeHandleId('target', t);
@@ -790,16 +864,31 @@ export const CustomNode = React.memo(
               />
             );
           })}
-          <div className="bg-[#6b8fd4]/12 px-2 py-1 rounded">
-            <div className="text-[10px] font-semibold text-[#4a6fa8] leading-tight">
+          <div
+            className="px-2 py-1 rounded"
+            style={{
+              background: labelBg,
+              boxShadow: labelShadow,
+              transition: 'background 0.2s, box-shadow 0.2s',
+            }}>
+            <div
+              className="text-[10px] font-semibold leading-tight"
+              style={{ color: labelColor, transition: 'color 0.2s' }}>
               inputs
             </div>
-            <div className="text-[10px] text-[#4a6fa8]/60 leading-tight">
+            <div
+              className="text-[10px] leading-tight"
+              style={{
+                color: labelColor,
+                opacity: 0.6,
+                transition: 'color 0.2s',
+              }}>
               {inputRules.length} connections
             </div>
           </div>
         </div>
-      ) : null;
+      );
+    })();
 
     // ── Outputs ──────────────────────────────────────────────────────────────
 
@@ -915,59 +1004,123 @@ export const CustomNode = React.memo(
 
     const outputsCollapsed = nodeTemplate?.outputs ? (
       nodeTemplate.outputs.length > 0 ? (
-        <div className="relative w-full" style={{ minHeight: 28 }}>
-          {nodeTemplate.outputs.map((output) => {
-            const outRule: {
-              type: 'kind' | 'template';
-              value: string;
-              required?: boolean;
-              multiple?: boolean;
-            } = {
+        (() => {
+          const outHighlights = nodeTemplate.outputs.map((output) => {
+            const outRule = {
               type: output.type as 'kind' | 'template',
               value: String(output.value),
               required: output.required,
               multiple: output.multiple,
             };
-            const id = makeHandleId('source', outRule);
-            const miss = Boolean(
+            return getHandleHighlight('source', outRule);
+          });
+          const hasAllowed = outHighlights.includes('allowed');
+          const allBlocked =
+            outHighlights.length > 0 &&
+            outHighlights.every((h) => h === 'blocked') &&
+            connectionPreview?.template != null;
+          const hasMissing = nodeTemplate.outputs.some(
+            (output) =>
               output.required &&
               !connectedEdges.some(
-                (e) => e.source === nodeId && e.sourceHandle === id,
+                (e) =>
+                  e.source === nodeId &&
+                  e.sourceHandle ===
+                    makeHandleId('source', {
+                      type: output.type as 'kind' | 'template',
+                      value: String(output.value),
+                    }),
               ),
-            );
-            const c = color('source', output.required || false, miss);
-            const highlight = getHandleHighlight('source', outRule);
-            const visuals = resolveHandleVisuals(c, miss, highlight);
-            return (
-              <Handle
-                key={id}
-                type="source"
-                id={id}
-                isConnectable={isConnectable ?? true}
-                position={Position.Right}
+          );
+
+          const labelBg = hasAllowed
+            ? 'rgba(19,194,194,0.15)'
+            : allBlocked
+              ? 'rgba(191,191,191,0.15)'
+              : hasMissing
+                ? 'rgba(255,93,93,0.12)'
+                : 'rgba(90,158,113,0.12)';
+          const labelColor = hasAllowed
+            ? '#13c2c2'
+            : allBlocked
+              ? '#bfbfbf'
+              : hasMissing
+                ? '#ff5d5d'
+                : '#3d7a52';
+          const labelShadow = hasAllowed
+            ? '0 0 6px rgba(19,194,194,0.4)'
+            : 'none';
+
+          return (
+            <div className="relative w-full" style={{ minHeight: 28 }}>
+              {nodeTemplate.outputs.map((output) => {
+                const outRule: {
+                  type: 'kind' | 'template';
+                  value: string;
+                  required?: boolean;
+                  multiple?: boolean;
+                } = {
+                  type: output.type as 'kind' | 'template',
+                  value: String(output.value),
+                  required: output.required,
+                  multiple: output.multiple,
+                };
+                const id = makeHandleId('source', outRule);
+                const miss = Boolean(
+                  output.required &&
+                  !connectedEdges.some(
+                    (e) => e.source === nodeId && e.sourceHandle === id,
+                  ),
+                );
+                const c = color('source', output.required || false, miss);
+                const highlight = getHandleHighlight('source', outRule);
+                const visuals = resolveHandleVisuals(c, miss, highlight);
+                return (
+                  <Handle
+                    key={id}
+                    type="source"
+                    id={id}
+                    isConnectable={isConnectable ?? true}
+                    position={Position.Right}
+                    style={{
+                      width: '12px',
+                      height: '12px',
+                      position: 'absolute',
+                      right: '-18px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: visuals.background,
+                      border: visuals.border,
+                      boxShadow: visuals.boxShadow,
+                    }}
+                  />
+                );
+              })}
+              <div
+                className="px-2 py-1 rounded text-right"
                 style={{
-                  width: '12px',
-                  height: '12px',
-                  position: 'absolute',
-                  right: '-18px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: visuals.background,
-                  border: visuals.border,
-                  boxShadow: visuals.boxShadow,
-                }}
-              />
-            );
-          })}
-          <div className="bg-[#5a9e71]/12 px-2 py-1 rounded text-right">
-            <div className="text-[10px] font-semibold text-[#3d7a52] leading-tight">
-              outputs
+                  background: labelBg,
+                  boxShadow: labelShadow,
+                  transition: 'background 0.2s, box-shadow 0.2s',
+                }}>
+                <div
+                  className="text-[10px] font-semibold leading-tight"
+                  style={{ color: labelColor, transition: 'color 0.2s' }}>
+                  outputs
+                </div>
+                <div
+                  className="text-[10px] leading-tight"
+                  style={{
+                    color: labelColor,
+                    opacity: 0.6,
+                    transition: 'color 0.2s',
+                  }}>
+                  {nodeTemplate.outputs.length} connections
+                </div>
+              </div>
             </div>
-            <div className="text-[10px] text-[#3d7a52]/60 leading-tight">
-              {nodeTemplate.outputs.length} connections
-            </div>
-          </div>
-        </div>
+          );
+        })()
       ) : null
     ) : (
       <div

@@ -249,9 +249,58 @@ const GraphCanvasInner = ({
     [clearConnectionPreview, findRuleForHandle, nodes, templates],
   );
 
+  // When connecting to a collapsed node, React Flow picks the first stacked
+  // handle which may not be compatible.  Try every output×input combination
+  // to find a valid pair.
+  const findCompatibleHandles = useCallback(
+    (
+      sourceNode: GraphNode,
+      targetNode: GraphNode,
+    ): { sourceHandle: string; targetHandle: string } | null => {
+      const srcTpl = templates.find(
+        (t) => t.id === (sourceNode.data as unknown as GraphNodeData).template,
+      );
+      const tgtTpl = templates.find(
+        (t) => t.id === (targetNode.data as unknown as GraphNodeData).template,
+      );
+      if (!srcTpl || !tgtTpl) return null;
+
+      const outputRules = (srcTpl.outputs ?? []).map(normalizeRule);
+      const inputRules = GraphValidationService.getAvailableConnectionTypes(
+        {
+          id: targetNode.id,
+          data: targetNode.data,
+          position: { x: 0, y: 0 },
+          type: 'custom',
+        },
+        templates,
+      );
+
+      for (const outRule of outputRules) {
+        const outId = makeHandleId('source', outRule);
+        for (const inRule of inputRules) {
+          const inId = makeHandleId('target', inRule);
+          const result = GraphValidationService.validateConnection(
+            sourceNode,
+            targetNode,
+            templates,
+            { sourceHandleId: outId, targetHandleId: inId },
+          );
+          if (result.isValid)
+            return { sourceHandle: outId, targetHandle: inId };
+        }
+      }
+      return null;
+    },
+    [normalizeRule, templates],
+  );
+
   const onConnect = useCallback(
     (params: Connection) => {
       clearConnectionPreview();
+
+      let finalSourceHandle = params.sourceHandle ?? undefined;
+      let finalTargetHandle = params.targetHandle ?? undefined;
 
       if (templates.length > 0) {
         const sourceNode = nodes.find((n) => n.id === params.source);
@@ -263,17 +312,20 @@ const GraphCanvasInner = ({
             targetNode,
             templates,
             {
-              sourceHandleId: params.sourceHandle ?? undefined,
-              targetHandleId: params.targetHandle ?? undefined,
+              sourceHandleId: finalSourceHandle,
+              targetHandleId: finalTargetHandle,
             },
           );
 
           if (!validation.isValid) {
-            const errorMessage = validation.errors
-              .map((e) => e.message)
-              .join('; ');
-            onValidationError?.(errorMessage);
-            return;
+            const match = findCompatibleHandles(sourceNode, targetNode);
+            if (!match) {
+              const msg = validation.errors.map((e) => e.message).join('; ');
+              onValidationError?.(msg);
+              return;
+            }
+            finalSourceHandle = match.sourceHandle;
+            finalTargetHandle = match.targetHandle;
           }
         }
       }
@@ -281,8 +333,8 @@ const GraphCanvasInner = ({
       const newEdge = createEdge(
         params.source || '',
         params.target || '',
-        params.sourceHandle || undefined,
-        params.targetHandle || undefined,
+        finalSourceHandle,
+        finalTargetHandle,
       );
       onEdgesChange([
         {
@@ -293,6 +345,7 @@ const GraphCanvasInner = ({
     },
     [
       clearConnectionPreview,
+      findCompatibleHandles,
       onEdgesChange,
       nodes,
       templates,
