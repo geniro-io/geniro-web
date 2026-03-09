@@ -153,7 +153,7 @@ export const TemplateSidebar = ({
         </p>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 overflow-hidden">
         <div className="px-3 py-2 space-y-1">
           {filteredTemplates.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
