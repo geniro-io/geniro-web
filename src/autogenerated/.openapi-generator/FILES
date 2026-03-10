@@ -43,6 +43,7 @@ docs/ListInstallationsResponseDto.md
 docs/ListInstallationsResponseDtoInstallationsInner.md
 docs/LiteLlmModelDto.md
 docs/LitellmApi.md
+docs/ModelDefaultsDto.md
 docs/OAuthLinkRequestDto.md
 docs/ProjectDto.md
 docs/ProjectsApi.md
@@ -109,5 +110,10 @@ docs/UpdateGraphResponseDtoRevisionConfigDiffInnerOneOf5.md
 docs/UpdateGraphResponseDtoRevisionNewConfig.md
 docs/UpdateProjectDto.md
 docs/UpdateRepositoryDto.md
+docs/UpdateUserPreferencesDto.md
+docs/UserPreferencesApi.md
+docs/UserPreferencesDto.md
+docs/UserPreferencesDtoPreferences.md
+docs/UserPreferencesDtoPreferencesModels.md
 git_push.sh
 index.ts

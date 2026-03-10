@@ -1,6 +1,7 @@
-import { Plug } from 'lucide-react';
+import { Cpu, Plug } from 'lucide-react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/components/ui/utils';
 
 interface SettingsNavItem {
@@ -11,6 +12,7 @@ interface SettingsNavItem {
 
 const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
   { path: '/settings/integrations', label: 'Integrations', icon: Plug },
+  { path: '/settings/models', label: 'Models', icon: Cpu },
 ];
 
 export const SettingsLayout = () => {
@@ -44,7 +46,7 @@ export const SettingsLayout = () => {
         </aside>
 
         {/* Divider */}
-        <div className="w-px bg-border flex-shrink-0" />
+        <Separator orientation="vertical" className="flex-shrink-0" />
 
         {/* Section content */}
         <div className="flex-1 min-w-0">

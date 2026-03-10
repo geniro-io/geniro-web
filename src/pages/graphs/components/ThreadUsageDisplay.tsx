@@ -127,8 +127,15 @@ export const ThreadUsageDisplay: React.FC<ThreadUsageDisplayProps> = ({
     return null;
   }
 
-  const { total, requests, byNode, byTool, toolsAggregate, userMessageCount } =
-    usage;
+  const {
+    total,
+    requests,
+    byNode,
+    byTool,
+    toolsAggregate,
+    userMessageCount,
+    modelsUsed,
+  } = usage;
 
   // Prepare byNode data
   const byNodeData = byNode
@@ -236,6 +243,24 @@ export const ThreadUsageDisplay: React.FC<ThreadUsageDisplayProps> = ({
           )}
         </div>
       </div>
+
+      {/* Models Used */}
+      {modelsUsed && modelsUsed.length > 0 && (
+        <div className="border border-border rounded-lg p-4">
+          <p className="font-semibold mb-3">
+            Models Used ({modelsUsed.length})
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {modelsUsed.map((model) => (
+              <span
+                key={model}
+                className="font-mono text-xs bg-muted px-2 py-1 rounded">
+                {model}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tools Aggregate */}
       {toolsAggregate && (

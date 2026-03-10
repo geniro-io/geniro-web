@@ -1377,6 +1377,55 @@ export interface LiteLlmModelDto {
    * @memberof LiteLlmModelDto
    */
   'ownedBy': string;
+  /**
+   * Whether this model supports embedding
+   * @type {boolean}
+   * @memberof LiteLlmModelDto
+   */
+  'supportsEmbedding': boolean;
+}
+/**
+ *
+ * @export
+ * @interface ModelDefaultsDto
+ */
+export interface ModelDefaultsDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ModelDefaultsDto
+   */
+  'llmLargeModel': string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelDefaultsDto
+   */
+  'llmLargeCodeModel': string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelDefaultsDto
+   */
+  'llmMiniCodeModel': string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelDefaultsDto
+   */
+  'llmCodeExplorerSubagentModel': string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelDefaultsDto
+   */
+  'llmMiniModel': string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelDefaultsDto
+   */
+  'llmEmbeddingModel': string;
 }
 /**
  *
@@ -2602,6 +2651,12 @@ export interface ThreadUsageStatisticsDto {
    * @memberof ThreadUsageStatisticsDto
    */
   'userMessageCount': number;
+  /**
+   * Distinct LLM model identifiers used across all messages in the thread
+   * @type {Array<string>}
+   * @memberof ThreadUsageStatisticsDto
+   */
+  'modelsUsed': Array<string>;
 }
 /**
  *
@@ -3687,6 +3742,112 @@ export interface UpdateRepositoryDto {
    * @memberof UpdateRepositoryDto
    */
   'defaultBranch'?: string;
+}
+/**
+ *
+ * @export
+ * @interface UpdateUserPreferencesDto
+ */
+export interface UpdateUserPreferencesDto {
+  /**
+   *
+   * @type {UserPreferencesDtoPreferencesModels}
+   * @memberof UpdateUserPreferencesDto
+   */
+  'models'?: UserPreferencesDtoPreferencesModels;
+}
+/**
+ *
+ * @export
+ * @interface UserPreferencesDto
+ */
+export interface UserPreferencesDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UserPreferencesDto
+   */
+  'id': string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserPreferencesDto
+   */
+  'userId': string;
+  /**
+   *
+   * @type {UserPreferencesDtoPreferences}
+   * @memberof UserPreferencesDto
+   */
+  'preferences': UserPreferencesDtoPreferences;
+  /**
+   *
+   * @type {string}
+   * @memberof UserPreferencesDto
+   */
+  'createdAt': string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserPreferencesDto
+   */
+  'updatedAt': string;
+}
+/**
+ *
+ * @export
+ * @interface UserPreferencesDtoPreferences
+ */
+export interface UserPreferencesDtoPreferences {
+  /**
+   *
+   * @type {UserPreferencesDtoPreferencesModels}
+   * @memberof UserPreferencesDtoPreferences
+   */
+  'models'?: UserPreferencesDtoPreferencesModels;
+}
+/**
+ *
+ * @export
+ * @interface UserPreferencesDtoPreferencesModels
+ */
+export interface UserPreferencesDtoPreferencesModels {
+  /**
+   *
+   * @type {string}
+   * @memberof UserPreferencesDtoPreferencesModels
+   */
+  'llmLargeModel'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof UserPreferencesDtoPreferencesModels
+   */
+  'llmLargeCodeModel'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof UserPreferencesDtoPreferencesModels
+   */
+  'llmMiniCodeModel'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof UserPreferencesDtoPreferencesModels
+   */
+  'llmCodeExplorerSubagentModel'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof UserPreferencesDtoPreferencesModels
+   */
+  'llmMiniModel'?: string | null;
+  /**
+   *
+   * @type {string}
+   * @memberof UserPreferencesDtoPreferencesModels
+   */
+  'llmEmbeddingModel'?: string | null;
 }
 
 /**
@@ -9055,6 +9216,48 @@ export const LitellmApiAxiosParamCreator = function (
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
+    getModelDefaults: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/v1/litellm/model-defaults`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
     listModels: async (
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
@@ -9107,6 +9310,34 @@ export const LitellmApiFp = function (configuration?: Configuration) {
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
+    async getModelDefaults(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<ModelDefaultsDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getModelDefaults(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['LitellmApi.getModelDefaults']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
     async listModels(
       options?: RawAxiosRequestConfig,
     ): Promise<
@@ -9149,6 +9380,18 @@ export const LitellmApiFactory = function (
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
+    getModelDefaults(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<ModelDefaultsDto> {
+      return localVarFp
+        .getModelDefaults(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
     listModels(
       options?: RawAxiosRequestConfig,
     ): AxiosPromise<Array<LiteLlmModelDto>> {
@@ -9166,6 +9409,18 @@ export const LitellmApiFactory = function (
  * @extends {BaseAPI}
  */
 export class LitellmApi extends BaseAPI {
+  /**
+   *
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof LitellmApi
+   */
+  public getModelDefaults(options?: RawAxiosRequestConfig) {
+    return LitellmApiFp(this.configuration)
+      .getModelDefaults(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
   /**
    *
    * @param {*} [options] Override http request option.
@@ -12247,3 +12502,261 @@ export const GetThreadsStatusesEnum = {
 } as const;
 export type GetThreadsStatusesEnum =
   (typeof GetThreadsStatusesEnum)[keyof typeof GetThreadsStatusesEnum];
+
+/**
+ * UserPreferencesApi - axios parameter creator
+ * @export
+ */
+export const UserPreferencesApiAxiosParamCreator = function (
+  configuration?: Configuration,
+) {
+  return {
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getPreferences: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/v1/user-preferences`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @param {UpdateUserPreferencesDto} updateUserPreferencesDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    updatePreferences: async (
+      updateUserPreferencesDto: UpdateUserPreferencesDto,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'updateUserPreferencesDto' is not null or undefined
+      assertParamExists(
+        'updatePreferences',
+        'updateUserPreferencesDto',
+        updateUserPreferencesDto,
+      );
+      const localVarPath = `/api/v1/user-preferences`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'PUT',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter['Content-Type'] = 'application/json';
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        updateUserPreferencesDto,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+  };
+};
+
+/**
+ * UserPreferencesApi - functional programming interface
+ * @export
+ */
+export const UserPreferencesApiFp = function (configuration?: Configuration) {
+  const localVarAxiosParamCreator =
+    UserPreferencesApiAxiosParamCreator(configuration);
+  return {
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async getPreferences(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<UserPreferencesDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.getPreferences(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['UserPreferencesApi.getPreferences']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @param {UpdateUserPreferencesDto} updateUserPreferencesDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async updatePreferences(
+      updateUserPreferencesDto: UpdateUserPreferencesDto,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<UserPreferencesDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.updatePreferences(
+          updateUserPreferencesDto,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['UserPreferencesApi.updatePreferences']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+  };
+};
+
+/**
+ * UserPreferencesApi - factory interface
+ * @export
+ */
+export const UserPreferencesApiFactory = function (
+  configuration?: Configuration,
+  basePath?: string,
+  axios?: AxiosInstance,
+) {
+  const localVarFp = UserPreferencesApiFp(configuration);
+  return {
+    /**
+     *
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    getPreferences(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<UserPreferencesDto> {
+      return localVarFp
+        .getPreferences(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @param {UpdateUserPreferencesDto} updateUserPreferencesDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    updatePreferences(
+      updateUserPreferencesDto: UpdateUserPreferencesDto,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<UserPreferencesDto> {
+      return localVarFp
+        .updatePreferences(updateUserPreferencesDto, options)
+        .then((request) => request(axios, basePath));
+    },
+  };
+};
+
+/**
+ * UserPreferencesApi - object-oriented interface
+ * @export
+ * @class UserPreferencesApi
+ * @extends {BaseAPI}
+ */
+export class UserPreferencesApi extends BaseAPI {
+  /**
+   *
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserPreferencesApi
+   */
+  public getPreferences(options?: RawAxiosRequestConfig) {
+    return UserPreferencesApiFp(this.configuration)
+      .getPreferences(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @param {UpdateUserPreferencesDto} updateUserPreferencesDto
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof UserPreferencesApi
+   */
+  public updatePreferences(
+    updateUserPreferencesDto: UpdateUserPreferencesDto,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return UserPreferencesApiFp(this.configuration)
+      .updatePreferences(updateUserPreferencesDto, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+}

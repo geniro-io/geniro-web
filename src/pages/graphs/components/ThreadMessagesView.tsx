@@ -1090,18 +1090,32 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
         const workingTimestamp = items.find((it) => it.createdAt)?.createdAt;
 
         // Aggregate token usage from tool items in the group
-        let workingTokens: { input: number; output: number; total: number; cost: number; durationMs: number } | undefined;
+        let workingTokens:
+          | {
+              input: number;
+              output: number;
+              total: number;
+              cost: number;
+              durationMs: number;
+            }
+          | undefined;
         for (const it of items) {
           if (it.type === 'tool' && it.requestTokenUsage) {
             const raw = it.requestTokenUsage as RawTokenUsage;
             if (!workingTokens) {
-              workingTokens = { input: 0, output: 0, total: 0, cost: 0, durationMs: 0 };
+              workingTokens = {
+                input: 0,
+                output: 0,
+                total: 0,
+                cost: 0,
+                durationMs: 0,
+              };
             }
-            workingTokens.input += (raw.inputTokens ?? 0);
-            workingTokens.output += (raw.outputTokens ?? 0);
-            workingTokens.total += (raw.totalTokens ?? 0);
-            workingTokens.cost += (raw.totalPrice ?? 0);
-            workingTokens.durationMs += (it.durationMs ?? 0);
+            workingTokens.input += raw.inputTokens ?? 0;
+            workingTokens.output += raw.outputTokens ?? 0;
+            workingTokens.total += raw.totalTokens ?? 0;
+            workingTokens.cost += raw.totalPrice ?? 0;
+            workingTokens.durationMs += it.durationMs ?? 0;
           }
         }
 

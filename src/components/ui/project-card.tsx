@@ -1,5 +1,12 @@
 import { formatDistanceToNow } from 'date-fns';
-import { Folder, MessageCircle, Network, Pencil, Trash2 } from 'lucide-react';
+import {
+  Folder,
+  MessageCircle,
+  Network,
+  Pencil,
+  Settings,
+  Trash2,
+} from 'lucide-react';
 
 import { Button } from './button';
 import { Card } from './card';
@@ -15,6 +22,7 @@ export interface ProjectCardProps {
   onClick?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onSettings?: () => void;
 }
 
 export function ProjectCard({
@@ -28,6 +36,7 @@ export function ProjectCard({
   onClick,
   onEdit,
   onDelete,
+  onSettings,
 }: ProjectCardProps) {
   const accentColor = color ?? '#3B82F6';
 
@@ -53,8 +62,17 @@ export function ProjectCard({
           </div>
           <h3 className="text-sm font-semibold">{name}</h3>
         </div>
-        {(onEdit ?? onDelete) && (
+        {(onEdit ?? onDelete ?? onSettings) && (
           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            {onSettings && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={onSettings}>
+                <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+              </Button>
+            )}
             {onEdit && (
               <Button
                 variant="ghost"

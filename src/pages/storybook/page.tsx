@@ -2908,6 +2908,7 @@ function ProjectCardSection() {
               graphCount={project.graphCount}
               threadCount={project.threadCount}
               updatedAt={project.updatedAt}
+              onSettings={() => {}}
               onEdit={() => {}}
               onDelete={() => {}}
             />
