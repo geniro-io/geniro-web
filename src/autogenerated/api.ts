@@ -2362,12 +2362,6 @@ export interface ThreadMessageDtoMessageOneOf1 {
    */
   'runId'?: string | null;
   /**
-   *
-   * @type {any}
-   * @memberof ThreadMessageDtoMessageOneOf1
-   */
-  'rawContent'?: any;
-  /**
    * Tool calls in the message
    * @type {Array<ThreadMessageDtoMessageOneOf1ToolCallsInner>}
    * @memberof ThreadMessageDtoMessageOneOf1

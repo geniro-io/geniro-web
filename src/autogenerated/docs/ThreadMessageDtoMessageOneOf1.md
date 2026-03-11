@@ -8,7 +8,6 @@
 | **content**          | **string**                                                                                                     | Message content             | [default to undefined]            |
 | **id**               | **string**                                                                                                     | Message ID                  | [optional] [default to undefined] |
 | **runId**            | **string**                                                                                                     |                             | [optional] [default to undefined] |
-| **rawContent**       | **any**                                                                                                        |                             | [optional] [default to undefined] |
 | **toolCalls**        | [**Array&lt;ThreadMessageDtoMessageOneOf1ToolCallsInner&gt;**](ThreadMessageDtoMessageOneOf1ToolCallsInner.md) | Tool calls in the message   | [optional] [default to undefined] |
 | **additionalKwargs** | **{ [key: string]: any; }**                                                                                    | Additional message metadata | [optional] [default to undefined] |
 
@@ -22,7 +21,6 @@ const instance: ThreadMessageDtoMessageOneOf1 = {
   content,
   id,
   runId,
-  rawContent,
   toolCalls,
   additionalKwargs,
 };

@@ -1648,8 +1648,9 @@ function CollapsibleInnerArea({
     if (!isCollapsible || expanded) return items;
     const result: PreparedMessage[] = [];
     let count = 0;
-    for (const m of items) {
-      result.push(m);
+    for (let i = items.length - 1; i >= 0; i--) {
+      const m = items[i];
+      result.unshift(m);
       if (m.type !== 'reasoning') count++;
       if (count >= COLLAPSED_MESSAGE_COUNT) break;
     }

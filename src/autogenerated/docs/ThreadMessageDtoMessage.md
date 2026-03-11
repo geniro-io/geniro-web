@@ -9,7 +9,6 @@
 | **runId**            | **string**                                                                                                     |                                         | [optional] [default to undefined] |
 | **additionalKwargs** | **{ [key: string]: any; }**                                                                                    | Additional message metadata             | [optional] [default to undefined] |
 | **id**               | **string**                                                                                                     | Message ID                              | [optional] [default to undefined] |
-| **rawContent**       | **any**                                                                                                        |                                         | [optional] [default to undefined] |
 | **toolCalls**        | [**Array&lt;ThreadMessageDtoMessageOneOf1ToolCallsInner&gt;**](ThreadMessageDtoMessageOneOf1ToolCallsInner.md) | Tool calls in the message               | [optional] [default to undefined] |
 | **name**             | **string**                                                                                                     | Tool name                               | [default to undefined]            |
 | **toolCallId**       | **string**                                                                                                     | Tool call ID                            | [default to undefined]            |
@@ -26,7 +25,6 @@ const instance: ThreadMessageDtoMessage = {
   runId,
   additionalKwargs,
   id,
-  rawContent,
   toolCalls,
   name,
   toolCallId,
