@@ -101,7 +101,7 @@
     "full-check": "pnpm -s build && pnpm -s lint:fix",
     "dev": "vite --port 5174",
     "build": "tsc && vite build",
-    "lint:fix": "pnpm prettier --write . && pnpm eslint \"src/**/*.{js,ts,tsx}\" --fix",
+    "lint:fix": "pnpm prettier --write . && pnpm eslint src --fix",
     "start": "vite preview",
     "up-versions": "./scripts/up-versions.sh",
     "generate:api": "SWAGGER_URL=http://localhost:5000/swagger-api-json ./scripts/generate-api.sh && pnpm run lint:fix"

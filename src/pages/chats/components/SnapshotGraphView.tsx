@@ -55,7 +55,7 @@ function inferTemplateKind(template: string): string {
 
 interface EdgeInfo {
   handleId: string;
-  /** Display label of the connected node */
+  /** Template kind of the connected node (e.g. "tool", "runtime", "simpleagent") */
   peerLabel: string;
 }
 
@@ -320,6 +320,12 @@ const SnapshotGraphViewInner: FC<SnapshotGraphViewProps> = ({
       nodeOutEdges[n.id] = [];
     }
 
+    // Build a map from node ID → template kind for type labels
+    const nodeTemplateKinds: Record<string, string> = {};
+    for (const n of graph.nodes) {
+      nodeTemplateKinds[n.id] = inferTemplateKind(n.template);
+    }
+
     // Track per-edge handle assignments so rfEdges can reference the right IDs
     const edgeHandles: { sourceHandle: string; targetHandle: string }[] = [];
 
@@ -331,11 +337,11 @@ const SnapshotGraphViewInner: FC<SnapshotGraphViewProps> = ({
 
       nodeInEdges[e.to].push({
         handleId: targetHandle,
-        peerLabel: nodeDisplayNames[e.from] ?? e.from,
+        peerLabel: nodeTemplateKinds[e.from] ?? e.from,
       });
       nodeOutEdges[e.from].push({
         handleId: sourceHandle,
-        peerLabel: nodeDisplayNames[e.to] ?? e.to,
+        peerLabel: nodeTemplateKinds[e.to] ?? e.to,
       });
       edgeHandles.push({ sourceHandle, targetHandle });
     }
