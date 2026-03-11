@@ -1676,6 +1676,12 @@ export interface RuntimeInstanceDto {
    */
   'containerName': string;
   /**
+   * Container image used to start the runtime (if available)
+   * @type {string}
+   * @memberof RuntimeInstanceDto
+   */
+  'image'?: string;
+  /**
    * Last used timestamp
    * @type {string}
    * @memberof RuntimeInstanceDto

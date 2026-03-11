@@ -201,6 +201,18 @@ const RuntimeCard = ({
             </span>
           </>
         )}
+        {runtime.image && (
+          <>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/60 leading-4">
+              Image
+            </span>
+            <span
+              className="text-xs text-foreground font-mono truncate"
+              title={runtime.image}>
+              {runtime.image}
+            </span>
+          </>
+        )}
       </div>
 
       {/* Lifecycle row — visually separated */}
