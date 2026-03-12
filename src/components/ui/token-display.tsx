@@ -112,6 +112,7 @@ export function TokenBadge({
   light,
   additionalUsage,
   additionalLabel,
+  messageKind,
 }: {
   tokens: TokenInfo;
   light?: boolean;
@@ -119,6 +120,8 @@ export function TokenBadge({
   additionalUsage?: RawTokenUsage | null;
   /** Label for the additional usage section (default: "Additional Token Usage"). */
   additionalLabel?: string;
+  /** Contextual note about what the token usage represents. */
+  messageKind?: 'tool' | 'text';
 }) {
   const textCls = light
     ? 'text-[#888] hover:text-[#ccc]'
@@ -136,16 +139,22 @@ export function TokenBadge({
       <PopoverContent className="w-52 p-3 text-xs space-y-1" align="start">
         <p className="font-semibold text-foreground mb-2">Token Usage</p>
         {tokens.input !== undefined && (
-          <StatRow label="Input" value={tokens.input.toLocaleString()} />
+          <StatRow
+            label="Context window"
+            value={tokens.input.toLocaleString()}
+          />
         )}
         {!!tokens.cachedInput && (
           <StatRow
-            label="Cached input"
+            label="Cached context"
             value={tokens.cachedInput.toLocaleString()}
           />
         )}
         {tokens.output !== undefined && (
-          <StatRow label="Output" value={tokens.output.toLocaleString()} />
+          <StatRow
+            label="Generated tokens"
+            value={tokens.output.toLocaleString()}
+          />
         )}
         {!!tokens.reasoning && (
           <StatRow
@@ -155,7 +164,7 @@ export function TokenBadge({
         )}
         {tokens.currentContext !== undefined && (
           <StatRow
-            label="Current context"
+            label="Running context size"
             value={tokens.currentContext.toLocaleString()}
           />
         )}
@@ -163,7 +172,7 @@ export function TokenBadge({
         <StatRow label="Total" value={tokens.total.toLocaleString()} bold />
         <StatRow label="Cost" value={tokens.cost} bold />
         {tokens.duration && (
-          <StatRow label="Duration" value={tokens.duration} />
+          <StatRow label="LLM response time" value={tokens.duration} />
         )}
         {additionalUsage && (
           <>
@@ -173,6 +182,13 @@ export function TokenBadge({
               label={`${additionalLabel || 'Additional Token Usage'}:`}
             />
           </>
+        )}
+        {messageKind && (
+          <p className="text-[10px] text-muted-foreground/70 leading-tight border-t border-border pt-1.5 mt-1">
+            {messageKind === 'tool'
+              ? "Reflects the LLM generating this tool call, not the tool's execution time."
+              : 'Reflects the LLM generating this response.'}
+          </p>
         )}
       </PopoverContent>
     </Popover>
@@ -210,15 +226,15 @@ export function UsageSection({
         Total: {fmtK(usage.totalTokens ?? 0)} ({formatUsd(usage.totalPrice)})
       </span>
       <span className="text-xs text-muted-foreground">
-        Input tokens: {fmt(usage.inputTokens)}
+        Context window: {fmt(usage.inputTokens)}
       </span>
       {typeof usage.cachedInputTokens === 'number' && (
         <span className="text-xs text-muted-foreground">
-          Cached input tokens: {fmt(usage.cachedInputTokens)}
+          Cached context: {fmt(usage.cachedInputTokens)}
         </span>
       )}
       <span className="text-xs text-muted-foreground">
-        Output tokens: {fmt(usage.outputTokens)}
+        Generated tokens: {fmt(usage.outputTokens)}
       </span>
       {typeof usage.reasoningTokens === 'number' && (
         <span className="text-xs text-muted-foreground">
@@ -227,7 +243,7 @@ export function UsageSection({
       )}
       {typeof usage.currentContext === 'number' && (
         <span className="text-xs text-muted-foreground">
-          Current context: {fmt(usage.currentContext)}
+          Running context size: {fmt(usage.currentContext)}
         </span>
       )}
     </>
@@ -281,7 +297,7 @@ export function TokenUsageDetail({
           )}
           {typeof durationMs === 'number' && durationMs > 0 && (
             <span className="text-xs text-muted-foreground">
-              Duration: {formatDuration(durationMs)}
+              LLM response time: {formatDuration(durationMs)}
             </span>
           )}
         </div>
@@ -325,7 +341,7 @@ export function StatisticsBar({
   }
   if (typeof tokens?.durationMs === 'number' && tokens.durationMs > 0) {
     const dur = formatDuration(tokens.durationMs);
-    if (dur) items.push({ label: 'Duration', value: dur });
+    if (dur) items.push({ label: 'LLM response time', value: dur });
   }
   if (typeof toolCount === 'number') {
     items.push({

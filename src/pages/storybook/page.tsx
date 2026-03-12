@@ -115,6 +115,7 @@ import {
 import {
   type RawTokenUsage,
   StatisticsBar,
+  TokenBadge,
   TokenUsageDetail,
   toTokenInfo,
 } from '@/components/ui/token-display';
@@ -2217,6 +2218,57 @@ function ThreadBlocksSection() {
           <StatusTag status="executed" />
           <StatusTag status="stopped" />
           <StatusTag status="stopped" hasError />
+        </div>
+      </Row>
+      <Row label="TokenBadge" code="TokenBadge">
+        <div className="w-full max-w-2xl space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground w-32">
+              Default (no kind):
+            </span>
+            <TokenBadge
+              tokens={{
+                input: 5200,
+                cachedInput: 1200,
+                output: 988,
+                total: 6188,
+                cost: '$0.008',
+                duration: '2.3s',
+                currentContext: 32000,
+              }}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground w-32">
+              messageKind="text":
+            </span>
+            <TokenBadge
+              tokens={{
+                input: 8430,
+                output: 95,
+                reasoning: 340,
+                total: 8525,
+                cost: '$0.012',
+                duration: '4.1s',
+              }}
+              messageKind="text"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground w-32">
+              messageKind="tool":
+            </span>
+            <TokenBadge
+              tokens={{
+                input: 3100,
+                output: 450,
+                total: 3550,
+                cost: '$0.004',
+                duration: '1.8s',
+              }}
+              messageKind="tool"
+            />
+          </div>
         </div>
       </Row>
       <Row label="StatisticsBar" code="StatisticsBar">

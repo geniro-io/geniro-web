@@ -155,7 +155,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
             {tokens && (
               <>
                 <span>·</span>
-                <TokenBadge tokens={tokens} />
+                <TokenBadge tokens={tokens} messageKind="text" />
               </>
             )}
             {!isWorking && <CopyButton text={copyText} />}

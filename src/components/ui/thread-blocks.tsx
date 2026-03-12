@@ -406,20 +406,23 @@ function UsageRows({ usage, label }: { usage: RawTokenUsage; label?: string }) {
         </p>
       )}
       {typeof usage.inputTokens === 'number' && (
-        <StatRow label="Input" value={fmt(usage.inputTokens)} />
+        <StatRow label="Context window" value={fmt(usage.inputTokens)} />
       )}
       {typeof usage.cachedInputTokens === 'number' && (
-        <StatRow label="Cached input" value={fmt(usage.cachedInputTokens)} />
+        <StatRow label="Cached context" value={fmt(usage.cachedInputTokens)} />
       )}
       {typeof usage.outputTokens === 'number' && (
-        <StatRow label="Output" value={fmt(usage.outputTokens)} />
+        <StatRow label="Generated tokens" value={fmt(usage.outputTokens)} />
       )}
       {typeof usage.reasoningTokens === 'number' &&
         usage.reasoningTokens > 0 && (
           <StatRow label="Reasoning" value={fmt(usage.reasoningTokens)} />
         )}
       {typeof usage.currentContext === 'number' && (
-        <StatRow label="Current context" value={fmt(usage.currentContext)} />
+        <StatRow
+          label="Running context size"
+          value={fmt(usage.currentContext)}
+        />
       )}
       <div className="border-t border-border my-1" />
       <StatRow label="Total" value={fmtK(usage.totalTokens ?? 0)} bold />
@@ -535,11 +538,14 @@ export function ToolPopoverPanel({
             <SectionLabel>Statistics</SectionLabel>
             <div className="text-xs space-y-1">
               {tokens.input !== undefined && (
-                <StatRow label="Input" value={tokens.input.toLocaleString()} />
+                <StatRow
+                  label="Context window"
+                  value={tokens.input.toLocaleString()}
+                />
               )}
               {tokens.output !== undefined && (
                 <StatRow
-                  label="Output"
+                  label="Generated tokens"
                   value={tokens.output.toLocaleString()}
                 />
               )}
@@ -551,7 +557,7 @@ export function ToolPopoverPanel({
               />
               <StatRow label="Cost" value={tokens.cost} bold />
               {tokens.duration && (
-                <StatRow label="Duration" value={tokens.duration} />
+                <StatRow label="LLM response time" value={tokens.duration} />
               )}
             </div>
           </div>
@@ -571,7 +577,7 @@ export function ToolPopoverPanel({
               )}
               {typeof durationMs === 'number' && durationMs > 0 && (
                 <StatRow
-                  label="Duration"
+                  label="LLM response time"
                   value={formatDurationMs(durationMs)}
                 />
               )}
@@ -1120,6 +1126,7 @@ export function ShellBlock({
               light
               additionalUsage={usageIn}
               additionalLabel="Additional Token Usage"
+              messageKind="tool"
             />
           )}
           {!tokens && hasUsage && usageIn && (
@@ -1127,6 +1134,7 @@ export function ShellBlock({
               tokens={toTokenInfo(usageIn, llmDurationMs)}
               light
               additionalLabel="Additional Token Usage"
+              messageKind="tool"
             />
           )}
           {typeof durationMs === 'number' && durationMs > 0 && (
@@ -1878,7 +1886,7 @@ export function FinishBlock({
           {tokens && (
             <>
               <span>·</span>
-              <TokenBadge tokens={tokens} />
+              <TokenBadge tokens={tokens} messageKind="text" />
             </>
           )}
           <CopyButton text={message} />
