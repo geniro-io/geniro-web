@@ -11,12 +11,14 @@ import {
   Copy,
   Loader2,
   Terminal,
+  Timer,
   XCircle,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useReasoningReveal } from '../../hooks/useReasoningReveal';
+import { formatDurationMs } from '../../pages/graphs/components/threadMessages/threadMessagesViewUtils';
 import { getStatusBadgeClass } from '../../utils/statusColors';
 import { MarkdownContent } from '../markdown/MarkdownContent';
 import { AgentAvatar, getAgentInitials } from './agent-avatar';
@@ -570,11 +572,7 @@ export function ToolPopoverPanel({
               {typeof durationMs === 'number' && durationMs > 0 && (
                 <StatRow
                   label="Duration"
-                  value={
-                    durationMs < 1000
-                      ? `${Math.round(durationMs)}ms`
-                      : `${(durationMs / 1000).toFixed(1)}s`
-                  }
+                  value={formatDurationMs(durationMs)}
                 />
               )}
             </div>
@@ -762,8 +760,10 @@ export interface ShellBlockProps {
   /** Dual token usage for the footer popover. */
   usageIn?: RawTokenUsage | null;
   usageOut?: RawTokenUsage | null;
-  /** LLM request duration in milliseconds. */
+  /** Shell execution duration in milliseconds. */
   durationMs?: number;
+  /** LLM request duration in milliseconds (separate from shell duration). */
+  llmDurationMs?: number;
   /** Tool options object for popover inspection. */
   toolOptions?: Record<string, unknown>;
   /** Tool popover content (pre-rendered). */
@@ -782,6 +782,7 @@ export function ShellBlock({
   usageIn,
   usageOut,
   durationMs,
+  llmDurationMs,
   popoverContent,
 }: ShellBlockProps) {
   const [commandExpanded, setCommandExpanded] = useState(false);
@@ -813,6 +814,8 @@ export function ShellBlock({
 
   const headerLabel = title || command;
   const hasUsage = usageIn || usageOut;
+  const hasFooter =
+    tokens || hasUsage || (typeof durationMs === 'number' && durationMs > 0);
 
   const renderOutputText = (
     text: string,
@@ -882,27 +885,46 @@ export function ShellBlock({
     </div>
   );
 
+  const headerElement = (
+    <div className={`flex items-center justify-between px-3 py-2 ${headerBg}`}>
+      <div className="flex items-center gap-2 min-w-0">
+        {status === 'executing' ? (
+          <Loader2 className="w-3 h-3 text-gray-400 animate-spin flex-shrink-0" />
+        ) : (
+          <Terminal
+            className={`w-3 h-3 flex-shrink-0 ${isError ? 'text-red-400' : 'text-gray-500'}`}
+          />
+        )}
+        <span className="text-[#e8e8e8] truncate">$ {headerLabel}</span>
+      </div>
+      <span
+        className={`text-[10px] ml-3 flex-shrink-0 ${status === 'executing' ? 'text-gray-400 italic' : isError ? 'text-red-400' : 'text-green-400'}`}>
+        {status === 'executing' ? 'executing…' : `exit ${exitCode}`}
+      </span>
+    </div>
+  );
+
   const shellContent = (
     <div
       className={`rounded-lg overflow-hidden border font-mono text-[11px] ${isError ? 'border-[#5c2b2b] bg-[#1e1e1e]' : 'border-[#333] bg-[#1e1e1e]'}`}>
-      {/* Header */}
-      <div
-        className={`flex items-center justify-between px-3 py-2 ${headerBg}`}>
-        <div className="flex items-center gap-2 min-w-0">
-          {status === 'executing' ? (
-            <Loader2 className="w-3 h-3 text-gray-400 animate-spin flex-shrink-0" />
-          ) : (
-            <Terminal
-              className={`w-3 h-3 flex-shrink-0 ${isError ? 'text-red-400' : 'text-gray-500'}`}
-            />
-          )}
-          <span className="text-[#e8e8e8] truncate">$ {headerLabel}</span>
-        </div>
-        <span
-          className={`text-[10px] ml-3 flex-shrink-0 ${status === 'executing' ? 'text-gray-400 italic' : isError ? 'text-red-400' : 'text-green-400'}`}>
-          {status === 'executing' ? 'executing…' : `exit ${exitCode}`}
-        </span>
-      </div>
+      {/* Header — clickable for tool details popover */}
+      {popoverContent ? (
+        <Popover>
+          <PopoverTrigger asChild>
+            <div className="cursor-pointer hover:opacity-90 transition-opacity">
+              {headerElement}
+            </div>
+          </PopoverTrigger>
+          <PopoverContent
+            align="start"
+            className="w-auto max-w-[560px] p-4"
+            onClick={(e) => e.stopPropagation()}>
+            {popoverContent}
+          </PopoverContent>
+        </Popover>
+      ) : (
+        headerElement
+      )}
 
       {/* Command (collapsible if > 3 lines) */}
       {command && (
@@ -1090,39 +1112,35 @@ export function ShellBlock({
       )}
 
       {/* Token footer */}
-      {(tokens || hasUsage) && (
+      {hasFooter && (
         <div className="px-3 py-1.5 border-t border-[#2e2e2e] flex justify-end items-center gap-2">
-          {tokens && <TokenBadge tokens={tokens} light />}
-          {hasUsage && (
-            <TokenUsageDetail
-              usageIn={usageIn}
-              usageOut={usageOut}
-              durationMs={durationMs}
+          {tokens && (
+            <TokenBadge
+              tokens={tokens}
+              light
+              additionalUsage={usageIn}
+              additionalLabel="Additional Token Usage"
             />
+          )}
+          {!tokens && hasUsage && usageIn && (
+            <TokenBadge
+              tokens={toTokenInfo(usageIn, llmDurationMs)}
+              light
+              additionalLabel="Additional Token Usage"
+            />
+          )}
+          {typeof durationMs === 'number' && durationMs > 0 && (
+            <span className="inline-flex items-center gap-1 text-[10px] text-gray-400">
+              <Timer className="w-2.5 h-2.5" />
+              {formatDurationMs(durationMs)}
+            </span>
           )}
         </div>
       )}
     </div>
   );
 
-  // Wrap in popover if content provided
-  if (popoverContent) {
-    return (
-      <Popover>
-        <PopoverTrigger asChild>
-          <div className="cursor-pointer hover:opacity-90 transition-opacity">
-            {shellContent}
-          </div>
-        </PopoverTrigger>
-        <PopoverContent
-          align="start"
-          className="w-auto max-w-[560px] p-4"
-          onClick={(e) => e.stopPropagation()}>
-          {popoverContent}
-        </PopoverContent>
-      </Popover>
-    );
-  }
+  // popoverContent is now handled inside shellContent (header-only trigger)
 
   return shellContent;
 }
@@ -1139,8 +1157,17 @@ export function InnerMessages({
   const [expanded, setExpanded] = useState(false);
   const limit = 4;
   const shown = expanded ? messages : messages.slice(0, limit);
+  const hasHidden = messages.length > limit;
   return (
     <div className="space-y-2">
+      {hasHidden && !expanded && (
+        <button
+          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          onClick={() => setExpanded((v) => !v)}>
+          <ChevronDown className="w-3 h-3" />
+          {`${messages.length - limit} more messages`}
+        </button>
+      )}
       {shown.map((msg, i) => {
         if (msg.type === 'reasoning')
           return <ReasoningBlock key={i} content={msg.content} />;
@@ -1175,14 +1202,12 @@ export function InnerMessages({
           );
         return null;
       })}
-      {messages.length > limit && (
+      {hasHidden && expanded && (
         <button
           className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
           onClick={() => setExpanded((v) => !v)}>
-          <ChevronDown
-            className={`w-3 h-3 transition-transform ${expanded ? 'rotate-180' : ''}`}
-          />
-          {expanded ? 'Show less' : `${messages.length - limit} more messages`}
+          <ChevronDown className="w-3 h-3 rotate-180" />
+          Show less
         </button>
       )}
     </div>

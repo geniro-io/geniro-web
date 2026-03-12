@@ -1841,6 +1841,40 @@ const SB_INNER_MSGS: InnerMsg[] = [
       duration: '30.1s',
     },
   },
+  {
+    type: 'tool',
+    toolName: 'search_files',
+    status: 'done',
+    args: { pattern: 'JWT_SECRET', path: 'src/' },
+    result: 'src/auth/config.ts:12: JWT_SECRET = "hardcoded-secret-value"',
+    tokens: {
+      input: 420,
+      output: 60,
+      total: 480,
+      cost: '$0.001',
+      duration: '0.2s',
+    },
+  },
+  {
+    type: 'reasoning',
+    content:
+      'I found a hardcoded JWT secret in src/auth/config.ts. This is a critical security vulnerability. I need to check if it is used in production or only tests.',
+  },
+  {
+    type: 'tool',
+    toolName: 'read_file',
+    status: 'done',
+    args: { path: 'src/auth/config.ts', encoding: 'utf-8' },
+    result:
+      '{"JWT_SECRET":"hardcoded-secret-value","REFRESH_SECRET":"another-hardcoded-secret"}',
+    tokens: {
+      input: 310,
+      output: 45,
+      total: 355,
+      cost: '$0.001',
+      duration: '0.1s',
+    },
+  },
 ];
 
 function ThreadBlocksSection() {
@@ -1978,19 +2012,34 @@ function ThreadBlocksSection() {
           />
         </div>
       </Row>
-      <Row label="Shell — executed">
+      <Row label="Shell — executed (shell duration only)">
         <div className="w-full max-w-2xl">
           <ShellBlock
             command="git diff HEAD~1 -- src/auth/"
             stdout={`diff --git a/src/auth/login.ts b/src/auth/login.ts\n--- a/src/auth/login.ts\n+++ b/src/auth/login.ts\n@@ -45,6 +45,8 @@ export async function login(req, res) {\n-  const user = await db.query(\`SELECT * FROM users WHERE email = '\${email}'\`);\n+  const q = 'SELECT * FROM users WHERE email = ?';\n+  const user = await db.query(q, [email]);`}
             exitCode={0}
             status="executed"
-            tokens={{
-              input: 1200,
-              output: 95,
-              total: 1295,
-              cost: '$0.002',
-              duration: '0.8s',
+            durationMs={2350}
+          />
+        </div>
+      </Row>
+      <Row
+        label="Shell — executed (shell + LLM duration)"
+        code="outputFocus with LLM call">
+        <div className="w-full max-w-2xl">
+          <ShellBlock
+            command="cat src/auth/login.ts"
+            stdout="(focused output extracted by LLM)"
+            focusResult="The login function validates email format, queries the database with parameterized SQL, checks bcrypt hash, and returns a signed JWT with 1h expiry."
+            exitCode={0}
+            status="executed"
+            durationMs={8420}
+            llmDurationMs={3200}
+            usageIn={{
+              inputTokens: 1200,
+              outputTokens: 95,
+              totalTokens: 1295,
+              totalPrice: 0.002,
             }}
           />
         </div>
@@ -2013,6 +2062,7 @@ function ThreadBlocksSection() {
             stderr="FATAL: Connection refused to target. Is the dev server running?"
             exitCode={1}
             status="error"
+            durationMs={1850}
           />
         </div>
       </Row>
@@ -2023,6 +2073,7 @@ function ThreadBlocksSection() {
             stdout={`\x1b[32mPASS\x1b[0m src/auth/__tests__/login.test.ts (1.2s)\n\x1b[32mPASS\x1b[0m src/auth/__tests__/jwt.test.ts (0.8s)\n\x1b[31mFAIL\x1b[0m src/auth/__tests__/refresh.test.ts (2.1s)\n\n\x1b[1mTest Suites:\x1b[0m \x1b[32m2 passed\x1b[0m, \x1b[31m1 failed\x1b[0m, 3 total`}
             exitCode={1}
             status="error"
+            durationMs={95200}
             tokens={{
               input: 950,
               output: 95,
@@ -2050,6 +2101,29 @@ function ThreadBlocksSection() {
               cost: '$0.02',
               duration: '7.5s',
               toolCount: 4,
+            }}
+          />
+        </div>
+      </Row>
+      <Row
+        label="Communication — collapsed messages"
+        code="innerMessages (>4 items shows '… more messages' above first visible message)">
+        <div className="w-full max-w-2xl">
+          <CommunicationBlock
+            fromAgent="Alice Chen"
+            toAgent="Bob Martinez"
+            fromColor="bg-purple-500"
+            toColor="bg-blue-500"
+            status="done"
+            model="claude-sonnet-4-6"
+            instructions="Run a full dependency audit and check for outdated packages with security advisories."
+            result="Audit complete. 3 critical vulnerabilities found in direct dependencies. Patches available."
+            innerMessages={SB_INNER_MSGS}
+            tokens={{
+              total: 12800,
+              cost: '$0.015',
+              duration: '6.2s',
+              toolCount: 6,
             }}
           />
         </div>

@@ -13,6 +13,7 @@ import {
   argsToObject,
   extractDurationMs,
   extractShellCommandFromArgs,
+  extractShellDurationMs,
   getAdditionalKwargs,
   getMessageRunId,
   getMessageString,
@@ -893,7 +894,10 @@ export const prepareReadyMessages = (
           requestTokenUsage: m.requestTokenUsage,
           requestTokenUsageIn: m.requestTokenUsage,
           requestTokenUsageOut: matched?.requestTokenUsage,
-          durationMs: extractDurationMs(m.message),
+          durationMs: isShell
+            ? extractShellDurationMs(matched?.message)
+            : extractDurationMs(m.message),
+          llmDurationMs: isShell ? extractDurationMs(m.message) : undefined,
           nodeId: matched?.nodeId ?? m.nodeId,
           createdAt: matched?.createdAt ?? m.createdAt,
           roleLabel: effectiveTitle || name || 'tool',
@@ -956,7 +960,10 @@ export const prepareReadyMessages = (
         toolOptions,
         requestTokenUsage: m.requestTokenUsage,
         requestTokenUsageOut: m.requestTokenUsage,
-        durationMs: extractDurationMs(m.message),
+        durationMs: isShell
+          ? extractShellDurationMs(m.message)
+          : extractDurationMs(m.message),
+        llmDurationMs: isShell ? extractDurationMs(m.message) : undefined,
         nodeId: m.nodeId,
         createdAt: m.createdAt,
         roleLabel: title || name || 'tool',

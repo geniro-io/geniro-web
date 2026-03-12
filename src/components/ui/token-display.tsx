@@ -110,9 +110,15 @@ export function StatRow({
 export function TokenBadge({
   tokens,
   light,
+  additionalUsage,
+  additionalLabel,
 }: {
   tokens: TokenInfo;
   light?: boolean;
+  /** Optional additional token usage (e.g. from outputFocus LLM call). */
+  additionalUsage?: RawTokenUsage | null;
+  /** Label for the additional usage section (default: "Additional Token Usage"). */
+  additionalLabel?: string;
 }) {
   const textCls = light
     ? 'text-[#888] hover:text-[#ccc]'
@@ -158,6 +164,15 @@ export function TokenBadge({
         <StatRow label="Cost" value={tokens.cost} bold />
         {tokens.duration && (
           <StatRow label="Duration" value={tokens.duration} />
+        )}
+        {additionalUsage && (
+          <>
+            <div className="border-t border-border my-1" />
+            <UsageSection
+              usage={additionalUsage}
+              label={`${additionalLabel || 'Additional Token Usage'}:`}
+            />
+          </>
         )}
       </PopoverContent>
     </Popover>
@@ -227,10 +242,16 @@ export function TokenUsageDetail({
   usageIn,
   usageOut,
   durationMs,
+  label,
+  iconClassName,
 }: {
   usageIn?: RawTokenUsage | null;
   usageOut?: RawTokenUsage | null;
   durationMs?: number;
+  /** Custom label prefix (default: "Request Token Usage"). */
+  label?: string;
+  /** Extra CSS class for the trigger icon. */
+  iconClassName?: string;
 }) {
   const effectiveIn = usageIn;
   const effectiveOut =
@@ -238,10 +259,9 @@ export function TokenUsageDetail({
 
   if (!effectiveIn && !effectiveOut) return null;
 
+  const base = label || 'Request Token Usage';
   const showBoth = !!effectiveIn && !!effectiveOut;
-  const inLabel = showBoth
-    ? 'Request Token Usage (Input):'
-    : 'Request Token Usage:';
+  const inLabel = showBoth ? `${base} (Input):` : `${base}:`;
 
   return (
     <Popover>
@@ -250,17 +270,14 @@ export function TokenUsageDetail({
           className="inline-flex items-center cursor-help"
           aria-label="View token usage details"
           title="View token usage details">
-          <BarChart3 className="w-3 h-3" />
+          <BarChart3 className={`w-3 h-3 ${iconClassName || ''}`} />
         </span>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto max-w-[340px]">
         <div className="flex flex-col gap-1">
           {effectiveIn && <UsageSection usage={effectiveIn} label={inLabel} />}
           {effectiveOut && (
-            <UsageSection
-              usage={effectiveOut}
-              label="Request Token Usage (Output):"
-            />
+            <UsageSection usage={effectiveOut} label={`${base} (Output):`} />
           )}
           {typeof durationMs === 'number' && durationMs > 0 && (
             <span className="text-xs text-muted-foreground">

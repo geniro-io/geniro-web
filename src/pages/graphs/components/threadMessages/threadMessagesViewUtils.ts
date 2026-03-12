@@ -111,6 +111,18 @@ export const extractDurationMs = (
   return undefined;
 };
 
+/** Extracts `__durationMs` from `additionalKwargs` of a tool message payload.
+ *  Set by ShellTool on the ToolMessage to record shell execution time.
+ *  Returns `undefined` when not available. */
+export const extractShellDurationMs = (
+  payload?: MessagePayload,
+): number | undefined => {
+  const additional = getAdditionalKwargs(payload);
+  const dur = additional?.__durationMs;
+  if (typeof dur === 'number' && dur > 0) return dur;
+  return undefined;
+};
+
 export const getMessageValue = <T = unknown>(
   payload: MessagePayload | undefined,
   key: string,

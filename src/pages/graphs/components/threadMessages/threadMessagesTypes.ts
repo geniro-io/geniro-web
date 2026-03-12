@@ -95,8 +95,10 @@ export type PreparedMessage =
       requestTokenUsage?: ThreadMessageDtoRequestTokenUsage | null;
       requestTokenUsageIn?: ThreadMessageDtoRequestTokenUsage | null;
       requestTokenUsageOut?: ThreadMessageDtoRequestTokenUsage | null;
-      /** LLM request duration in milliseconds (from additionalKwargs.__requestUsage). */
+      /** Shell execution duration or LLM request duration in milliseconds. */
       durationMs?: number;
+      /** LLM request duration in ms — only set for shell tools when durationMs holds the shell duration. */
+      llmDurationMs?: number;
       nodeId?: string;
       createdAt?: string;
       roleLabel?: string;

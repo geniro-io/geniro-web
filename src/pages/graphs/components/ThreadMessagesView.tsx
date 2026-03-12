@@ -97,6 +97,7 @@ function ShellToolDisplayAdapter({
   requestTokenUsageIn,
   requestTokenUsageOut,
   durationMs,
+  llmDurationMs,
 }: {
   name: string;
   status: ToolRenderStatus;
@@ -107,6 +108,7 @@ function ShellToolDisplayAdapter({
   requestTokenUsageIn?: ThreadMessageDtoRequestTokenUsage | null;
   requestTokenUsageOut?: ThreadMessageDtoRequestTokenUsage | null;
   durationMs?: number;
+  llmDurationMs?: number;
 }) {
   const resultObj = isPlainObject(resultContent)
     ? (resultContent as Record<string, unknown>)
@@ -190,6 +192,7 @@ function ShellToolDisplayAdapter({
       usageIn={requestTokenUsageIn as RawTokenUsage | undefined}
       usageOut={requestTokenUsageOut as RawTokenUsage | undefined}
       durationMs={durationMs}
+      llmDurationMs={llmDurationMs}
       popoverContent={popoverContent}
     />
   );
@@ -538,6 +541,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
       requestTokenUsageIn?: ThreadMessageDtoRequestTokenUsage | null;
       requestTokenUsageOut?: ThreadMessageDtoRequestTokenUsage | null;
       durationMs?: number;
+      llmDurationMs?: number;
     }) => {
       return (
         <ShellToolDisplayAdapter
@@ -550,6 +554,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
           requestTokenUsageIn={opts.requestTokenUsageIn}
           requestTokenUsageOut={opts.requestTokenUsageOut}
           durationMs={opts.durationMs}
+          llmDurationMs={opts.llmDurationMs}
         />
       );
     };
@@ -842,6 +847,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
                 requestTokenUsageIn: it.requestTokenUsageIn,
                 requestTokenUsageOut: it.requestTokenUsageOut,
                 durationMs: it.durationMs,
+                llmDurationMs: it.llmDurationMs,
               })}
             </div>
           );
@@ -1405,6 +1411,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
                 requestTokenUsageIn: item.requestTokenUsageIn,
                 requestTokenUsageOut: item.requestTokenUsageOut,
                 durationMs: item.durationMs,
+                llmDurationMs: item.llmDurationMs,
               }),
             );
             i++;
@@ -1667,13 +1674,10 @@ function CollapsibleInnerArea({
           {emptyText}
         </span>
       )}
-      {visibleMessages.map((item, idx) => (
-        <div key={item.id || idx}>{renderItem(item, idx)}</div>
-      ))}
       {isCollapsible && (
         <div
           onClick={() => setExpanded((prev) => !prev)}
-          className="flex items-center gap-1 mt-1 cursor-pointer text-[11px] text-muted-foreground hover:text-foreground select-none transition-colors">
+          className="flex items-center gap-1 mb-1 cursor-pointer text-[11px] text-muted-foreground hover:text-foreground select-none transition-colors">
           {expanded ? (
             <>
               <ChevronDown className="w-[9px] h-[9px]" />
@@ -1687,6 +1691,9 @@ function CollapsibleInnerArea({
           )}
         </div>
       )}
+      {visibleMessages.map((item, idx) => (
+        <div key={item.id || idx}>{renderItem(item, idx)}</div>
+      ))}
     </div>
   );
 }
