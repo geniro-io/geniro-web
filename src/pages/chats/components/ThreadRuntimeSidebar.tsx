@@ -155,10 +155,10 @@ const RuntimeCard = ({
     STATUS_BADGE_VARIANT[runtime.status] ?? STATUS_BADGE_VARIANT.Stopped;
   const displayName = nodeName ?? runtime.nodeId;
 
-  const createdDate = new Date(runtime.createdAt);
-  const createdLabel = isNaN(createdDate.getTime())
+  const startedDate = new Date(runtime.lastUsedAt);
+  const startedLabel = isNaN(startedDate.getTime())
     ? '—'
-    : formatDistanceToNow(createdDate, { addSuffix: true });
+    : formatDistanceToNow(startedDate, { addSuffix: true });
 
   const isInactive =
     runtime.status === RuntimeInstanceDtoStatusEnum.Stopped ||
@@ -221,12 +221,8 @@ const RuntimeCard = ({
           {/* Lifecycle row — visually separated */}
           <div className="mt-1.5 pt-1.5 border-t border-dashed border-border/50 flex items-center gap-1.5">
             <Clock className="h-3 w-3 text-muted-foreground/50 shrink-0" />
-            <span className="text-[11px] text-muted-foreground truncate">
-              {createdLabel}
-            </span>
-            <span className="text-muted-foreground/40 text-[11px]">·</span>
             <span
-              className={`text-[11px] shrink-0 ${
+              className={`text-[11px] truncate ${
                 isInactive
                   ? 'text-muted-foreground/60'
                   : 'text-muted-foreground'
@@ -281,9 +277,9 @@ const RuntimeCard = ({
             </>
           )}
           <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/60">
-            Created
+            Started
           </span>
-          <span className="text-foreground">{createdLabel}</span>
+          <span className="text-foreground">{startedLabel}</span>
           <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/60">
             Activity
           </span>

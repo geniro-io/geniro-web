@@ -1327,6 +1327,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
               instructionContent={instructionContent}
               errorText={item.errorText}
               resultText={item.resultText}
+              needsMoreInfo={item.needsMoreInfo}
               model={item.model}
               statistics={item.statistics}
               popoverContent={topCommPopover}

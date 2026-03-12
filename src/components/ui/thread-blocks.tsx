@@ -1512,6 +1512,8 @@ export interface CommunicationBlockProps {
   errorText?: string;
   resultText?: string;
   resultLabel?: string;
+  /** When true, renders the result area with amber "Need more information" styling. */
+  needsMoreInfo?: boolean;
   statistics?: {
     usage?: {
       totalTokens?: number;
@@ -1542,6 +1544,7 @@ export function CommunicationBlock(props: CommunicationBlockProps) {
     errorText,
     resultText,
     resultLabel,
+    needsMoreInfo,
     statistics,
     model,
     popoverContent,
@@ -1674,11 +1677,17 @@ export function CommunicationBlock(props: CommunicationBlockProps) {
 
             {resultText && !errorText && (
               <div>
-                <SectionLabel>{resultLbl}</SectionLabel>
+                <SectionLabel>
+                  {needsMoreInfo ? 'Need more information' : resultLbl}
+                </SectionLabel>
                 <InlineText
                   text={resultText}
                   lines={3}
-                  accentClass={RESULT_CLASS}
+                  accentClass={
+                    needsMoreInfo
+                      ? 'bg-amber-50 border border-amber-200 text-amber-900 not-italic'
+                      : RESULT_CLASS
+                  }
                 />
               </div>
             )}

@@ -97,9 +97,10 @@ export const useThreadRuntimes = (
     const currentThreadId = threadIdRef.current;
     if (!currentThreadId) return;
 
-    // Events arrive scoped to the graph room. Match by graphId to ensure
-    // we only process events for the current graph.
+    // Events arrive scoped to the graph room. Match by graphId and threadId
+    // to ensure we only process events for the current thread, not siblings.
     if (data.graphId !== graphIdRef.current) return;
+    if (data.threadId !== currentThreadId) return;
 
     const { runtimeId, status } = data.data;
     if (!runtimeId) return;
@@ -107,13 +108,19 @@ export const useThreadRuntimes = (
     const isKnownRuntime = runtimesRef.current.some((r) => r.id === runtimeId);
 
     if (isKnownRuntime) {
-      setRuntimes((prev) =>
-        prev.map((r) =>
-          r.id === runtimeId
-            ? { ...r, status, updatedAt: new Date().toISOString() }
-            : r,
-        ),
-      );
+      if (status === 'Stopped' || status === 'Failed') {
+        // Server will hard-delete the record shortly after stopping.
+        // Refetch to get the accurate set of runtimes.
+        void fetchRuntimes(currentThreadId, { silent: true });
+      } else {
+        setRuntimes((prev) =>
+          prev.map((r) =>
+            r.id === runtimeId
+              ? { ...r, status, updatedAt: new Date().toISOString() }
+              : r,
+          ),
+        );
+      }
     } else {
       // Unknown runtime — refetch to get full data
       void fetchRuntimes(currentThreadId);

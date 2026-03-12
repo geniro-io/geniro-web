@@ -146,6 +146,8 @@ export type PreparedMessage =
       statistics?: SubagentStatistics;
       resultText?: string;
       errorText?: string;
+      /** True when the sub-agent finished with needsMoreInfo: true. */
+      needsMoreInfo?: boolean;
       model?: string;
       /** Raw tool call arguments for the communication_exec call. */
       rawToolArgs?: unknown;

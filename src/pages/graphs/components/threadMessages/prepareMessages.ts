@@ -793,6 +793,7 @@ export const prepareReadyMessages = (
             typeof commResultObj?.error === 'string'
               ? commResultObj.error
               : undefined;
+          const commNeedsMoreInfo = Boolean(commResultObj?.needsMoreInfo);
           const commBackendStats = commResultObj?.statistics as
             | SubagentStatistics
             | undefined;
@@ -845,6 +846,7 @@ export const prepareReadyMessages = (
             statistics: commStatistics,
             resultText: commResultText,
             errorText: commErrorText,
+            needsMoreInfo: commNeedsMoreInfo || undefined,
             model: commModel,
             rawToolArgs: parsedArgs ?? toolArgs,
             rawToolResult: resultContent,
