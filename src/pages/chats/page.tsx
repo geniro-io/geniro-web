@@ -668,15 +668,13 @@ export const ChatsPage = () => {
                       Chats
                     </span>
                     <div className="flex items-center gap-1">
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={handleCreateDraftThread}>
-                          <Plus className="w-3.5 h-3.5" />
-                        </Button>
-                      </PopoverTrigger>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={handleCreateDraftThread}>
+                        <Plus className="w-3.5 h-3.5" />
+                      </Button>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button

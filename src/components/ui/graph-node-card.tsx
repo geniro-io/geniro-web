@@ -550,8 +550,8 @@ export const CustomNode = React.memo(
         return 'allowed';
       }
 
-      // Same-type handles can never connect (output→output, input→input)
-      return 'blocked';
+      // Same-direction handles are not participants in this drag — leave them neutral.
+      return 'none';
     };
 
     const resolveHandleVisuals = (
@@ -832,7 +832,7 @@ export const CustomNode = React.memo(
 
       return (
         <div className="relative" style={{ minHeight: 28 }}>
-          {inputRules.map((t) => {
+          {inputRules.map((t, index) => {
             const id = makeHandleId('target', t);
             const miss = Boolean(
               t.required &&
@@ -857,9 +857,10 @@ export const CustomNode = React.memo(
                   left: '-18px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  background: visuals.background,
-                  border: visuals.border,
-                  boxShadow: visuals.boxShadow,
+                  background: index === 0 ? visuals.background : 'transparent',
+                  border: index === 0 ? visuals.border : 'none',
+                  boxShadow: index === 0 ? visuals.boxShadow : 'none',
+                  zIndex: inputRules.length - index,
                 }}
               />
             );
@@ -1053,7 +1054,7 @@ export const CustomNode = React.memo(
 
           return (
             <div className="relative w-full" style={{ minHeight: 28 }}>
-              {nodeTemplate.outputs.map((output) => {
+              {nodeTemplate.outputs.map((output, index) => {
                 const outRule: {
                   type: 'kind' | 'template';
                   value: string;
@@ -1089,9 +1090,11 @@ export const CustomNode = React.memo(
                       right: '-18px',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      background: visuals.background,
-                      border: visuals.border,
-                      boxShadow: visuals.boxShadow,
+                      background:
+                        index === 0 ? visuals.background : 'transparent',
+                      border: index === 0 ? visuals.border : 'none',
+                      boxShadow: index === 0 ? visuals.boxShadow : 'none',
+                      zIndex: (nodeTemplate.outputs?.length ?? 0) - index,
                     }}
                   />
                 );
