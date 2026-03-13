@@ -163,7 +163,7 @@ export const ModelsPage = () => {
                   {filteredModels.map((model) => (
                     <SelectItem key={model.id} value={model.id}>
                       {model.ownedBy
-                        ? `${model.ownedBy}/${model.id}`
+                        ? `${model.ownedBy} (${model.id})`
                         : model.id}
                     </SelectItem>
                   ))}
