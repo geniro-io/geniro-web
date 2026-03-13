@@ -149,6 +149,10 @@ function App({ authModule }: { authModule: AuthModule }) {
             />
             <Route path="/projects/:projectId/chats" element={<ChatsPage />} />
             <Route
+              path="/projects/:projectId/chats/:chatId"
+              element={<ChatsPage />}
+            />
+            <Route
               path="/projects/:projectId/repositories"
               element={<RepositoriesListPage />}
             />

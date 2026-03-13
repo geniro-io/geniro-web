@@ -69,7 +69,7 @@ import {
 } from './utils/chatsPageUtils';
 
 export const ChatsPage = () => {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { projectId } = useParams<{ projectId: string; chatId?: string }>();
 
   // --- Messages hook ---
   const {
