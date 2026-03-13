@@ -188,11 +188,14 @@ export const ProjectModelSettingsModal = ({
                       onValueChange={(val) => handleModelChange(slot.key, val)}>
                       <SelectTrigger className="flex-1">
                         <SelectValue
-                          placeholder={
-                            defaults?.[slot.key]
+                          placeholder={(() => {
+                            const userModel = userModels?.[slot.key];
+                            if (userModel)
+                              return `Use user setting (${userModel})`;
+                            return defaults?.[slot.key]
                               ? `Use default (${defaults[slot.key]})`
-                              : 'Use default'
-                          }
+                              : 'Use default';
+                          })()}
                         />
                       </SelectTrigger>
                       <SelectContent>
