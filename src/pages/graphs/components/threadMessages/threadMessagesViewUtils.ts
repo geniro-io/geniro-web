@@ -234,6 +234,13 @@ export const isToolLikeRole = (role?: string): boolean => {
   return role === 'tool';
 };
 
+export const isErrorMessage = (message: {
+  message?: MessagePayload;
+}): boolean => {
+  const additional = getAdditionalKwargs(message.message);
+  return Boolean(additional?.__isErrorMessage);
+};
+
 // ────────────────────────────────────────────
 // CSS injection
 // ────────────────────────────────────────────

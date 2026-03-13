@@ -55,6 +55,7 @@ import {
   getAdditionalKwargs,
   getMessageString,
   getMessageTitle,
+  isErrorMessage,
   isToolLikeRole,
   messageBlockStyle,
   scrollContainerStyle,
@@ -429,7 +430,6 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
 
     const renderSystemMessage = (message: ThreadMessageDto) => {
       const content = formatMessageContent(message.message?.content);
-
       return (
         <div className="w-[90%] mx-auto">
           <div className="text-xs text-muted-foreground text-center">
@@ -701,6 +701,7 @@ const ThreadMessagesView: React.FC<ThreadMessagesViewProps> = React.memo(
           nodeId={msgNodeId}
           avatarTooltip={avatarTooltip}
           timestamp={message.createdAt}
+          isError={isErrorMessage(message)}
           tokens={
             message.requestTokenUsage
               ? toTokenInfo(

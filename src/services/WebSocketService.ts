@@ -67,8 +67,11 @@ class WebSocketService {
     this.socket.on('connect', () => {
       console.debug('[WebSocket] Connected:', this.socket?.id);
       this.reconnectAttempts = 0;
+    });
 
-      // Re-subscribe to graphs after reconnection
+    // Re-subscribe only after the server confirms auth is complete
+    this.socket.on('socket_connected', () => {
+      console.debug('[WebSocket] Server auth ready, re-subscribing to graphs');
       this.subscribedGraphs.forEach((graphId) => {
         this.subscribeToGraph(graphId);
       });

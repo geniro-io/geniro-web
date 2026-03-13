@@ -15,7 +15,9 @@ function formatTimestamp(value?: string | null): string | undefined {
   if (!value) return undefined;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value; // already formatted — pass through
-  return formatDistanceToNow(date, { addSuffix: true });
+  // Clamp future dates to now to avoid "in less than a minute" from clock skew
+  const clamped = date.getTime() > Date.now() ? new Date() : date;
+  return formatDistanceToNow(clamped, { addSuffix: true });
 }
 
 const MARKDOWN_BUBBLE_STYLE: React.CSSProperties = {
@@ -50,6 +52,7 @@ export interface ChatBubbleProps {
   pendingNote?: string;
   isReport?: boolean;
   isWorking?: boolean;
+  isError?: boolean;
 
   // Escape hatch for non-markdown structured content (working blocks)
   customBody?: React.ReactNode;
@@ -71,6 +74,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
     pendingNote,
     isReport,
     isWorking,
+    isError,
     customBody,
   }) => {
     const isHuman = role === 'human';
@@ -91,11 +95,13 @@ export const ChatBubble: React.FC<ChatBubbleProps> = React.memo(
     // Compute bubble classes from state flags
     const bubbleClass = isPending
       ? 'border-2 border-dashed border-gray-300'
-      : isReport
-        ? 'bg-blue-50 text-blue-900 border border-blue-200'
-        : isHuman
-          ? 'bg-primary/10 border border-primary/20'
-          : 'bg-muted/40 border border-border';
+      : isError
+        ? 'bg-red-50 text-red-900 border border-red-200'
+        : isReport
+          ? 'bg-blue-50 text-blue-900 border border-blue-200'
+          : isHuman
+            ? 'bg-primary/10 border border-primary/20'
+            : 'bg-muted/40 border border-border';
 
     const bubbleStyle: React.CSSProperties | undefined = isWorking
       ? { background: '#fff', border: '1px solid #e5e5e5' }
