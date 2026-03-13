@@ -160,13 +160,16 @@ export const ModelsPage = () => {
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredModels.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      {model.ownedBy
-                        ? `${model.ownedBy} (${model.id})`
-                        : model.id}
-                    </SelectItem>
-                  ))}
+                  {filteredModels.map((model) => {
+                    const value = model.ownedBy || model.id;
+                    return (
+                      <SelectItem key={value} value={value}>
+                        {model.ownedBy
+                          ? `${model.ownedBy} (${model.id})`
+                          : model.id}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               {currentValue && (
