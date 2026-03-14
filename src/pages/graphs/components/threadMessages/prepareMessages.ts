@@ -684,10 +684,7 @@ export const prepareReadyMessages = (
           getMessageRunId(m.message) ?? getMessageRunId(matched?.message);
 
         // Subagent tool call → emit a 'subagent' prepared message
-        const isSubagentTool =
-          name === 'subagents_run_task' &&
-          tc.id &&
-          subagentInnerByToolCallId.has(tc.id);
+        const isSubagentTool = name === 'subagents_run_task' && tc.id != null;
         if (isSubagentTool) {
           const innerRawMessages = subagentInnerByToolCallId.get(tc.id!) ?? [];
           const innerPrepared = prepareReadyMessages(innerRawMessages, {
