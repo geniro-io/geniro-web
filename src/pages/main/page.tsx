@@ -11,6 +11,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -94,10 +95,14 @@ const StatCard = ({
 
 const AnalyticsGraphCard = ({
   graph,
+  onClick,
 }: {
   graph: AnalyticsByGraphResponseDtoGraphsInner;
+  onClick?: () => void;
 }) => (
-  <Card className="p-3 gap-1">
+  <Card
+    className="p-3 gap-1 cursor-pointer transition-colors hover:bg-accent/50"
+    onClick={onClick}>
     <div className="flex items-center justify-between mb-1.5">
       <div className="flex items-center gap-2">
         <Workflow className="w-4 h-4" style={{ color: TOKEN_COLORS.threads }} />
@@ -151,6 +156,8 @@ const isEmptyOverview = (overview: AnalyticsOverviewDto): boolean =>
 
 export const MainPage = () => {
   const { currentProject } = useCurrentProject();
+  const navigate = useNavigate();
+  const { projectId } = useParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [overview, setOverview] = useState<AnalyticsOverviewDto | null>(null);
@@ -326,7 +333,17 @@ export const MainPage = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {byGraph.graphs.map((graph) => (
-              <AnalyticsGraphCard graph={graph} key={graph.graphId} />
+              <AnalyticsGraphCard
+                graph={graph}
+                key={graph.graphId}
+                onClick={() =>
+                  navigate(
+                    projectId
+                      ? `/projects/${projectId}/graphs/${graph.graphId}`
+                      : `/graphs/${graph.graphId}`,
+                  )
+                }
+              />
             ))}
           </div>
         </>
