@@ -56,6 +56,7 @@ interface ListInstallationsResponse {
 export interface SystemSettingsDto {
   githubAppEnabled: boolean;
   litellmManagementEnabled: boolean;
+  isAdmin: boolean;
 }
 
 export const systemSettingsApi = {

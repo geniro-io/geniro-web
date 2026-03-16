@@ -21,9 +21,11 @@ export const SettingsLayout = () => {
   const location = useLocation();
   const { settings } = useSystemSettings();
 
+  const showLlmAdmin = settings.litellmManagementEnabled && settings.isAdmin;
+
   const navItems = useMemo<SettingsNavItem[]>(() => {
     const items = [...BASE_NAV_ITEMS];
-    if (settings.litellmManagementEnabled) {
+    if (showLlmAdmin) {
       items.push({
         path: '/settings/llm-models',
         label: 'LLM Models',
@@ -31,10 +33,10 @@ export const SettingsLayout = () => {
       });
     }
     return items;
-  }, [settings.litellmManagementEnabled]);
+  }, [showLlmAdmin]);
 
   const isLlmModelsRoute = location.pathname.startsWith('/settings/llm-models');
-  if (isLlmModelsRoute && !settings.litellmManagementEnabled) {
+  if (isLlmModelsRoute && !showLlmAdmin) {
     return <Navigate to="/settings/integrations" replace />;
   }
 
