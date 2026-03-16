@@ -1,8 +1,10 @@
-import { Cpu, Plug } from 'lucide-react';
-import { NavLink, Outlet, useLocation } from 'react-router';
+import { Cpu, Database, Plug } from 'lucide-react';
+import { useMemo } from 'react';
+import { Navigate, NavLink, Outlet, useLocation } from 'react-router';
 
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/components/ui/utils';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
 
 interface SettingsNavItem {
   path: string;
@@ -10,13 +12,31 @@ interface SettingsNavItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
+const BASE_NAV_ITEMS: SettingsNavItem[] = [
   { path: '/settings/integrations', label: 'Integrations', icon: Plug },
-  { path: '/settings/models', label: 'Models', icon: Cpu },
+  { path: '/settings/models', label: 'Model Preferences', icon: Cpu },
 ];
 
 export const SettingsLayout = () => {
   const location = useLocation();
+  const { settings } = useSystemSettings();
+
+  const navItems = useMemo<SettingsNavItem[]>(() => {
+    const items = [...BASE_NAV_ITEMS];
+    if (settings.litellmManagementEnabled) {
+      items.push({
+        path: '/settings/llm-models',
+        label: 'LLM Models',
+        icon: Database,
+      });
+    }
+    return items;
+  }, [settings.litellmManagementEnabled]);
+
+  const isLlmModelsRoute = location.pathname.startsWith('/settings/llm-models');
+  if (isLlmModelsRoute && !settings.litellmManagementEnabled) {
+    return <Navigate to="/settings/integrations" replace />;
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -24,7 +44,7 @@ export const SettingsLayout = () => {
         {/* Sidebar */}
         <aside className="w-48 flex-shrink-0">
           <nav className="space-y-0.5">
-            {SETTINGS_NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const Icon = item.icon;
               const active = location.pathname.startsWith(item.path);
               return (

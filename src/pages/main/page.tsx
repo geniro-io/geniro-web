@@ -11,7 +11,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate } from 'react-router';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -155,9 +155,8 @@ const isEmptyOverview = (overview: AnalyticsOverviewDto): boolean =>
   overview.totalPrice === 0;
 
 export const MainPage = () => {
-  const { currentProject } = useCurrentProject();
+  const { currentProject, projectId } = useCurrentProject();
   const navigate = useNavigate();
-  const { projectId } = useParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [overview, setOverview] = useState<AnalyticsOverviewDto | null>(null);

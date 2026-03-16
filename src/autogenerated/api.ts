@@ -369,6 +369,117 @@ export interface CreateGraphDtoSchemaNodesInner {
 /**
  *
  * @export
+ * @interface CreateLiteLlmCredentialDto
+ */
+export interface CreateLiteLlmCredentialDto {
+  /**
+   * Unique credential identifier
+   * @type {string}
+   * @memberof CreateLiteLlmCredentialDto
+   */
+  'credentialName': string;
+  /**
+   * Key-value pairs, e.g. { api_key: \"sk-...\" }
+   * @type {{ [key: string]: string; }}
+   * @memberof CreateLiteLlmCredentialDto
+   */
+  'credentialValues': { [key: string]: string };
+}
+/**
+ *
+ * @export
+ * @interface CreateLiteLlmModelDto
+ */
+export interface CreateLiteLlmModelDto {
+  /**
+   * Display name / alias
+   * @type {string}
+   * @memberof CreateLiteLlmModelDto
+   */
+  'modelName': string;
+  /**
+   *
+   * @type {CreateLiteLlmModelDtoLitellmParams}
+   * @memberof CreateLiteLlmModelDto
+   */
+  'litellmParams': CreateLiteLlmModelDtoLitellmParams;
+  /**
+   * Routing tags for this model
+   * @type {Array<string>}
+   * @memberof CreateLiteLlmModelDto
+   */
+  'tags'?: Array<string>;
+  /**
+   * Additional model info metadata
+   * @type {{ [key: string]: any; }}
+   * @memberof CreateLiteLlmModelDto
+   */
+  'modelInfo'?: { [key: string]: any };
+}
+/**
+ *
+ * @export
+ * @interface CreateLiteLlmModelDtoLitellmParams
+ */
+export interface CreateLiteLlmModelDtoLitellmParams {
+  /**
+   * Provider model ID, e.g. openai/gpt-4o
+   * @type {string}
+   * @memberof CreateLiteLlmModelDtoLitellmParams
+   */
+  'model': string;
+  /**
+   * Provider API key
+   * @type {string}
+   * @memberof CreateLiteLlmModelDtoLitellmParams
+   */
+  'apiKey'?: string;
+  /**
+   * Custom API base URL
+   * @type {string}
+   * @memberof CreateLiteLlmModelDtoLitellmParams
+   */
+  'apiBase'?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateLiteLlmModelDtoLitellmParams
+   */
+  'customLlmProvider'?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof CreateLiteLlmModelDtoLitellmParams
+   */
+  'maxTokens'?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof CreateLiteLlmModelDtoLitellmParams
+   */
+  'temperature'?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof CreateLiteLlmModelDtoLitellmParams
+   */
+  'requestTimeout'?: number;
+  /**
+   *
+   * @type {{ [key: string]: string; }}
+   * @memberof CreateLiteLlmModelDtoLitellmParams
+   */
+  'customHeaders'?: { [key: string]: string };
+  /**
+   * Named credential reference
+   * @type {string}
+   * @memberof CreateLiteLlmModelDtoLitellmParams
+   */
+  'litellmCredentialName'?: string;
+}
+/**
+ *
+ * @export
  * @interface CreateProjectDto
  */
 export interface CreateProjectDto {
@@ -1362,6 +1473,32 @@ export interface ListInstallationsResponseDtoInstallationsInner {
 /**
  *
  * @export
+ * @interface LiteLlmCredentialsResponseDto
+ */
+export interface LiteLlmCredentialsResponseDto {
+  /**
+   *
+   * @type {Array<LiteLlmCredentialsResponseDtoCredentialsInner>}
+   * @memberof LiteLlmCredentialsResponseDto
+   */
+  'credentials': Array<LiteLlmCredentialsResponseDtoCredentialsInner>;
+}
+/**
+ *
+ * @export
+ * @interface LiteLlmCredentialsResponseDtoCredentialsInner
+ */
+export interface LiteLlmCredentialsResponseDtoCredentialsInner {
+  /**
+   * Unique credential identifier
+   * @type {string}
+   * @memberof LiteLlmCredentialsResponseDtoCredentialsInner
+   */
+  'credentialName': string;
+}
+/**
+ *
+ * @export
  * @interface LiteLlmModelDto
  */
 export interface LiteLlmModelDto {
@@ -1383,6 +1520,99 @@ export interface LiteLlmModelDto {
    * @memberof LiteLlmModelDto
    */
   'supportsEmbedding': boolean;
+}
+/**
+ *
+ * @export
+ * @interface LiteLlmModelInfoItemDto
+ */
+export interface LiteLlmModelInfoItemDto {
+  /**
+   * LiteLLM database model ID
+   * @type {string}
+   * @memberof LiteLlmModelInfoItemDto
+   */
+  'id': string;
+  /**
+   * Model alias (display name)
+   * @type {string}
+   * @memberof LiteLlmModelInfoItemDto
+   */
+  'modelName': string;
+  /**
+   * Underlying provider model identifier
+   * @type {string}
+   * @memberof LiteLlmModelInfoItemDto
+   */
+  'providerModel': string;
+  /**
+   * Custom API base URL
+   * @type {string}
+   * @memberof LiteLlmModelInfoItemDto
+   */
+  'apiBase'?: string;
+  /**
+   * Provider override
+   * @type {string}
+   * @memberof LiteLlmModelInfoItemDto
+   */
+  'customLlmProvider'?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LiteLlmModelInfoItemDto
+   */
+  'supportsToolCalling'?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LiteLlmModelInfoItemDto
+   */
+  'supportsStreaming'?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LiteLlmModelInfoItemDto
+   */
+  'supportsReasoning'?: boolean;
+}
+/**
+ *
+ * @export
+ * @interface LiteLlmProvidersResponseDto
+ */
+export interface LiteLlmProvidersResponseDto {
+  /**
+   *
+   * @type {Array<LiteLlmProvidersResponseDtoProvidersInner>}
+   * @memberof LiteLlmProvidersResponseDto
+   */
+  'providers': Array<LiteLlmProvidersResponseDtoProvidersInner>;
+}
+/**
+ *
+ * @export
+ * @interface LiteLlmProvidersResponseDtoProvidersInner
+ */
+export interface LiteLlmProvidersResponseDtoProvidersInner {
+  /**
+   * Provider identifier, e.g. openai, anthropic
+   * @type {string}
+   * @memberof LiteLlmProvidersResponseDtoProvidersInner
+   */
+  'name': string;
+  /**
+   * Human-readable label
+   * @type {string}
+   * @memberof LiteLlmProvidersResponseDtoProvidersInner
+   */
+  'label': string;
+  /**
+   * Example model name format
+   * @type {string}
+   * @memberof LiteLlmProvidersResponseDtoProvidersInner
+   */
+  'modelHint': string;
 }
 /**
  *
@@ -1907,6 +2137,12 @@ export interface SystemSettingsResponseDto {
    * @memberof SystemSettingsResponseDto
    */
   'githubAppEnabled': boolean;
+  /**
+   * Whether the LiteLLM model management UI is enabled for the frontend
+   * @type {boolean}
+   * @memberof SystemSettingsResponseDto
+   */
+  'litellmManagementEnabled': boolean;
 }
 /**
  *
@@ -2067,6 +2303,75 @@ export const TemplateDtoInputsInnerOneOf1TypeEnum = {
 export type TemplateDtoInputsInnerOneOf1TypeEnum =
   (typeof TemplateDtoInputsInnerOneOf1TypeEnum)[keyof typeof TemplateDtoInputsInnerOneOf1TypeEnum];
 
+/**
+ *
+ * @export
+ * @interface TestModelConnectionDto
+ */
+export interface TestModelConnectionDto {
+  /**
+   * LiteLLM model string, e.g. openai/gpt-4o
+   * @type {string}
+   * @memberof TestModelConnectionDto
+   */
+  'litellmModel': string;
+  /**
+   * Provider API key
+   * @type {string}
+   * @memberof TestModelConnectionDto
+   */
+  'apiKey'?: string;
+  /**
+   * Custom API base URL
+   * @type {string}
+   * @memberof TestModelConnectionDto
+   */
+  'apiBase'?: string;
+  /**
+   * Named credential reference (resolved server-side)
+   * @type {string}
+   * @memberof TestModelConnectionDto
+   */
+  'litellmCredentialName'?: string;
+}
+/**
+ *
+ * @export
+ * @interface TestModelRequestDto
+ */
+export interface TestModelRequestDto {
+  /**
+   * Model alias to test
+   * @type {string}
+   * @memberof TestModelRequestDto
+   */
+  'model': string;
+}
+/**
+ *
+ * @export
+ * @interface TestModelResponseDto
+ */
+export interface TestModelResponseDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof TestModelResponseDto
+   */
+  'success': boolean;
+  /**
+   *
+   * @type {number}
+   * @memberof TestModelResponseDto
+   */
+  'latencyMs': number;
+  /**
+   *
+   * @type {string}
+   * @memberof TestModelResponseDto
+   */
+  'error'?: string;
+}
 /**
  *
  * @export
@@ -3686,6 +3991,104 @@ export interface UpdateGraphResponseDtoRevisionNewConfig {
    * @memberof UpdateGraphResponseDtoRevisionNewConfig
    */
   'temporary': boolean;
+}
+/**
+ *
+ * @export
+ * @interface UpdateLiteLlmModelDto
+ */
+export interface UpdateLiteLlmModelDto {
+  /**
+   * LiteLLM database model ID from model_info.id
+   * @type {string}
+   * @memberof UpdateLiteLlmModelDto
+   */
+  'modelId': string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateLiteLlmModelDto
+   */
+  'modelName'?: string;
+  /**
+   *
+   * @type {UpdateLiteLlmModelDtoLitellmParams}
+   * @memberof UpdateLiteLlmModelDto
+   */
+  'litellmParams'?: UpdateLiteLlmModelDtoLitellmParams;
+  /**
+   * Routing tags for this model
+   * @type {Array<string>}
+   * @memberof UpdateLiteLlmModelDto
+   */
+  'tags'?: Array<string>;
+  /**
+   * Additional model info metadata
+   * @type {{ [key: string]: any; }}
+   * @memberof UpdateLiteLlmModelDto
+   */
+  'modelInfo'?: { [key: string]: any };
+}
+/**
+ *
+ * @export
+ * @interface UpdateLiteLlmModelDtoLitellmParams
+ */
+export interface UpdateLiteLlmModelDtoLitellmParams {
+  /**
+   * Provider model ID, e.g. openai/gpt-4o
+   * @type {string}
+   * @memberof UpdateLiteLlmModelDtoLitellmParams
+   */
+  'model'?: string;
+  /**
+   * Provider API key
+   * @type {string}
+   * @memberof UpdateLiteLlmModelDtoLitellmParams
+   */
+  'apiKey'?: string;
+  /**
+   * Custom API base URL
+   * @type {string}
+   * @memberof UpdateLiteLlmModelDtoLitellmParams
+   */
+  'apiBase'?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateLiteLlmModelDtoLitellmParams
+   */
+  'customLlmProvider'?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof UpdateLiteLlmModelDtoLitellmParams
+   */
+  'maxTokens'?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof UpdateLiteLlmModelDtoLitellmParams
+   */
+  'temperature'?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof UpdateLiteLlmModelDtoLitellmParams
+   */
+  'requestTimeout'?: number;
+  /**
+   *
+   * @type {{ [key: string]: string; }}
+   * @memberof UpdateLiteLlmModelDtoLitellmParams
+   */
+  'customHeaders'?: { [key: string]: string };
+  /**
+   * Named credential reference
+   * @type {string}
+   * @memberof UpdateLiteLlmModelDtoLitellmParams
+   */
+  'litellmCredentialName'?: string;
 }
 /**
  *
@@ -9213,6 +9616,222 @@ export const LitellmApiAxiosParamCreator = function (
   return {
     /**
      *
+     * @summary Create a new named credential
+     * @param {CreateLiteLlmCredentialDto} createLiteLlmCredentialDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createCredential: async (
+      createLiteLlmCredentialDto: CreateLiteLlmCredentialDto,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'createLiteLlmCredentialDto' is not null or undefined
+      assertParamExists(
+        'createCredential',
+        'createLiteLlmCredentialDto',
+        createLiteLlmCredentialDto,
+      );
+      const localVarPath = `/api/v1/litellm/credentials`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'POST',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter['Content-Type'] = 'application/json';
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        createLiteLlmCredentialDto,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @summary Add a new LiteLLM model
+     * @param {CreateLiteLlmModelDto} createLiteLlmModelDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createModel: async (
+      createLiteLlmModelDto: CreateLiteLlmModelDto,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'createLiteLlmModelDto' is not null or undefined
+      assertParamExists(
+        'createModel',
+        'createLiteLlmModelDto',
+        createLiteLlmModelDto,
+      );
+      const localVarPath = `/api/v1/litellm/models`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'POST',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter['Content-Type'] = 'application/json';
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        createLiteLlmModelDto,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @summary Delete a named credential
+     * @param {string} name
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteCredential: async (
+      name: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'name' is not null or undefined
+      assertParamExists('deleteCredential', 'name', name);
+      const localVarPath = `/api/v1/litellm/credentials/{name}`.replace(
+        `{${'name'}}`,
+        encodeURIComponent(String(name)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'DELETE',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @summary Delete a LiteLLM model by database ID
+     * @param {string} id
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteModel: async (
+      id: string,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'id' is not null or undefined
+      assertParamExists('deleteModel', 'id', id);
+      const localVarPath = `/api/v1/litellm/models/{id}`.replace(
+        `{${'id'}}`,
+        encodeURIComponent(String(id)),
+      );
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'DELETE',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
@@ -9220,6 +9839,49 @@ export const LitellmApiAxiosParamCreator = function (
       options: RawAxiosRequestConfig = {},
     ): Promise<RequestArgs> => {
       const localVarPath = `/api/v1/litellm/model-defaults`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @summary List saved LiteLLM credentials
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listCredentials: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/v1/litellm/credentials`;
       // use dummy base URL string because the URL constructor only accepts absolute URLs.
       const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
       let baseOptions;
@@ -9295,6 +9957,266 @@ export const LitellmApiAxiosParamCreator = function (
         options: localVarRequestOptions,
       };
     },
+    /**
+     *
+     * @summary List all LiteLLM models with full config (admin)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listModelsInfo: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/v1/litellm/models/info`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @summary List available LLM providers
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listProviders: async (
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      const localVarPath = `/api/v1/litellm/providers`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'GET',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @summary Test a registered model connection
+     * @param {TestModelRequestDto} testModelRequestDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    testModel: async (
+      testModelRequestDto: TestModelRequestDto,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'testModelRequestDto' is not null or undefined
+      assertParamExists(
+        'testModel',
+        'testModelRequestDto',
+        testModelRequestDto,
+      );
+      const localVarPath = `/api/v1/litellm/models/test`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'POST',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter['Content-Type'] = 'application/json';
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        testModelRequestDto,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @summary Test a model connection with inline config (no registration)
+     * @param {TestModelConnectionDto} testModelConnectionDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    testModelConnection: async (
+      testModelConnectionDto: TestModelConnectionDto,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'testModelConnectionDto' is not null or undefined
+      assertParamExists(
+        'testModelConnection',
+        'testModelConnectionDto',
+        testModelConnectionDto,
+      );
+      const localVarPath = `/api/v1/litellm/models/test-connection`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'POST',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter['Content-Type'] = 'application/json';
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        testModelConnectionDto,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
+    /**
+     *
+     * @summary Update an existing LiteLLM model
+     * @param {UpdateLiteLlmModelDto} updateLiteLlmModelDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    updateModel: async (
+      updateLiteLlmModelDto: UpdateLiteLlmModelDto,
+      options: RawAxiosRequestConfig = {},
+    ): Promise<RequestArgs> => {
+      // verify required parameter 'updateLiteLlmModelDto' is not null or undefined
+      assertParamExists(
+        'updateModel',
+        'updateLiteLlmModelDto',
+        updateLiteLlmModelDto,
+      );
+      const localVarPath = `/api/v1/litellm/models`;
+      // use dummy base URL string because the URL constructor only accepts absolute URLs.
+      const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+      let baseOptions;
+      if (configuration) {
+        baseOptions = configuration.baseOptions;
+      }
+
+      const localVarRequestOptions = {
+        method: 'PATCH',
+        ...baseOptions,
+        ...options,
+      };
+      const localVarHeaderParameter = {} as any;
+      const localVarQueryParameter = {} as any;
+
+      // authentication bearer required
+      // http bearer authentication required
+      await setBearerAuthToObject(localVarHeaderParameter, configuration);
+
+      localVarHeaderParameter['Content-Type'] = 'application/json';
+
+      setSearchParams(localVarUrlObj, localVarQueryParameter);
+      let headersFromBaseOptions =
+        baseOptions && baseOptions.headers ? baseOptions.headers : {};
+      localVarRequestOptions.headers = {
+        ...localVarHeaderParameter,
+        ...headersFromBaseOptions,
+        ...options.headers,
+      };
+      localVarRequestOptions.data = serializeDataIfNeeded(
+        updateLiteLlmModelDto,
+        localVarRequestOptions,
+        configuration,
+      );
+
+      return {
+        url: toPathString(localVarUrlObj),
+        options: localVarRequestOptions,
+      };
+    },
   };
 };
 
@@ -9305,6 +10227,125 @@ export const LitellmApiAxiosParamCreator = function (
 export const LitellmApiFp = function (configuration?: Configuration) {
   const localVarAxiosParamCreator = LitellmApiAxiosParamCreator(configuration);
   return {
+    /**
+     *
+     * @summary Create a new named credential
+     * @param {CreateLiteLlmCredentialDto} createLiteLlmCredentialDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async createCredential(
+      createLiteLlmCredentialDto: CreateLiteLlmCredentialDto,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.createCredential(
+          createLiteLlmCredentialDto,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['LitellmApi.createCredential']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @summary Add a new LiteLLM model
+     * @param {CreateLiteLlmModelDto} createLiteLlmModelDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async createModel(
+      createLiteLlmModelDto: CreateLiteLlmModelDto,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.createModel(
+        createLiteLlmModelDto,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['LitellmApi.createModel']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @summary Delete a named credential
+     * @param {string} name
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async deleteCredential(
+      name: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.deleteCredential(name, options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['LitellmApi.deleteCredential']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @summary Delete a LiteLLM model by database ID
+     * @param {string} id
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async deleteModel(
+      id: string,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.deleteModel(
+        id,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['LitellmApi.deleteModel']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
     /**
      *
      * @param {*} [options] Override http request option.
@@ -9323,6 +10364,35 @@ export const LitellmApiFp = function (configuration?: Configuration) {
       const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
       const localVarOperationServerBasePath =
         operationServerMap['LitellmApi.getModelDefaults']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @summary List saved LiteLLM credentials
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async listCredentials(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<LiteLlmCredentialsResponseDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.listCredentials(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['LitellmApi.listCredentials']?.[
           localVarOperationServerIndex
         ]?.url;
       return (axios, basePath) =>
@@ -9361,6 +10431,161 @@ export const LitellmApiFp = function (configuration?: Configuration) {
           configuration,
         )(axios, localVarOperationServerBasePath || basePath);
     },
+    /**
+     *
+     * @summary List all LiteLLM models with full config (admin)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async listModelsInfo(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<Array<LiteLlmModelInfoItemDto>>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.listModelsInfo(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['LitellmApi.listModelsInfo']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @summary List available LLM providers
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async listProviders(
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<LiteLlmProvidersResponseDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.listProviders(options);
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['LitellmApi.listProviders']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @summary Test a registered model connection
+     * @param {TestModelRequestDto} testModelRequestDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async testModel(
+      testModelRequestDto: TestModelRequestDto,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<TestModelResponseDto>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.testModel(
+        testModelRequestDto,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['LitellmApi.testModel']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @summary Test a model connection with inline config (no registration)
+     * @param {TestModelConnectionDto} testModelConnectionDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async testModelConnection(
+      testModelConnectionDto: TestModelConnectionDto,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (
+        axios?: AxiosInstance,
+        basePath?: string,
+      ) => AxiosPromise<TestModelResponseDto>
+    > {
+      const localVarAxiosArgs =
+        await localVarAxiosParamCreator.testModelConnection(
+          testModelConnectionDto,
+          options,
+        );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['LitellmApi.testModelConnection']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
+    /**
+     *
+     * @summary Update an existing LiteLLM model
+     * @param {UpdateLiteLlmModelDto} updateLiteLlmModelDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    async updateModel(
+      updateLiteLlmModelDto: UpdateLiteLlmModelDto,
+      options?: RawAxiosRequestConfig,
+    ): Promise<
+      (axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>
+    > {
+      const localVarAxiosArgs = await localVarAxiosParamCreator.updateModel(
+        updateLiteLlmModelDto,
+        options,
+      );
+      const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+      const localVarOperationServerBasePath =
+        operationServerMap['LitellmApi.updateModel']?.[
+          localVarOperationServerIndex
+        ]?.url;
+      return (axios, basePath) =>
+        createRequestFunction(
+          localVarAxiosArgs,
+          globalAxios,
+          BASE_PATH,
+          configuration,
+        )(axios, localVarOperationServerBasePath || basePath);
+    },
   };
 };
 
@@ -9377,6 +10602,66 @@ export const LitellmApiFactory = function (
   return {
     /**
      *
+     * @summary Create a new named credential
+     * @param {CreateLiteLlmCredentialDto} createLiteLlmCredentialDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createCredential(
+      createLiteLlmCredentialDto: CreateLiteLlmCredentialDto,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .createCredential(createLiteLlmCredentialDto, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @summary Add a new LiteLLM model
+     * @param {CreateLiteLlmModelDto} createLiteLlmModelDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    createModel(
+      createLiteLlmModelDto: CreateLiteLlmModelDto,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .createModel(createLiteLlmModelDto, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @summary Delete a named credential
+     * @param {string} name
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteCredential(
+      name: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .deleteCredential(name, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @summary Delete a LiteLLM model by database ID
+     * @param {string} id
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    deleteModel(
+      id: string,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .deleteModel(id, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
@@ -9385,6 +10670,19 @@ export const LitellmApiFactory = function (
     ): AxiosPromise<ModelDefaultsDto> {
       return localVarFp
         .getModelDefaults(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @summary List saved LiteLLM credentials
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listCredentials(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<LiteLlmCredentialsResponseDto> {
+      return localVarFp
+        .listCredentials(options)
         .then((request) => request(axios, basePath));
     },
     /**
@@ -9399,6 +10697,77 @@ export const LitellmApiFactory = function (
         .listModels(options)
         .then((request) => request(axios, basePath));
     },
+    /**
+     *
+     * @summary List all LiteLLM models with full config (admin)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listModelsInfo(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<Array<LiteLlmModelInfoItemDto>> {
+      return localVarFp
+        .listModelsInfo(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @summary List available LLM providers
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    listProviders(
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<LiteLlmProvidersResponseDto> {
+      return localVarFp
+        .listProviders(options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @summary Test a registered model connection
+     * @param {TestModelRequestDto} testModelRequestDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    testModel(
+      testModelRequestDto: TestModelRequestDto,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<TestModelResponseDto> {
+      return localVarFp
+        .testModel(testModelRequestDto, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @summary Test a model connection with inline config (no registration)
+     * @param {TestModelConnectionDto} testModelConnectionDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    testModelConnection(
+      testModelConnectionDto: TestModelConnectionDto,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<TestModelResponseDto> {
+      return localVarFp
+        .testModelConnection(testModelConnectionDto, options)
+        .then((request) => request(axios, basePath));
+    },
+    /**
+     *
+     * @summary Update an existing LiteLLM model
+     * @param {UpdateLiteLlmModelDto} updateLiteLlmModelDto
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    updateModel(
+      updateLiteLlmModelDto: UpdateLiteLlmModelDto,
+      options?: RawAxiosRequestConfig,
+    ): AxiosPromise<void> {
+      return localVarFp
+        .updateModel(updateLiteLlmModelDto, options)
+        .then((request) => request(axios, basePath));
+    },
   };
 };
 
@@ -9409,6 +10778,68 @@ export const LitellmApiFactory = function (
  * @extends {BaseAPI}
  */
 export class LitellmApi extends BaseAPI {
+  /**
+   *
+   * @summary Create a new named credential
+   * @param {CreateLiteLlmCredentialDto} createLiteLlmCredentialDto
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof LitellmApi
+   */
+  public createCredential(
+    createLiteLlmCredentialDto: CreateLiteLlmCredentialDto,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return LitellmApiFp(this.configuration)
+      .createCredential(createLiteLlmCredentialDto, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @summary Add a new LiteLLM model
+   * @param {CreateLiteLlmModelDto} createLiteLlmModelDto
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof LitellmApi
+   */
+  public createModel(
+    createLiteLlmModelDto: CreateLiteLlmModelDto,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return LitellmApiFp(this.configuration)
+      .createModel(createLiteLlmModelDto, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @summary Delete a named credential
+   * @param {string} name
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof LitellmApi
+   */
+  public deleteCredential(name: string, options?: RawAxiosRequestConfig) {
+    return LitellmApiFp(this.configuration)
+      .deleteCredential(name, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @summary Delete a LiteLLM model by database ID
+   * @param {string} id
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof LitellmApi
+   */
+  public deleteModel(id: string, options?: RawAxiosRequestConfig) {
+    return LitellmApiFp(this.configuration)
+      .deleteModel(id, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
   /**
    *
    * @param {*} [options] Override http request option.
@@ -9423,6 +10854,19 @@ export class LitellmApi extends BaseAPI {
 
   /**
    *
+   * @summary List saved LiteLLM credentials
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof LitellmApi
+   */
+  public listCredentials(options?: RawAxiosRequestConfig) {
+    return LitellmApiFp(this.configuration)
+      .listCredentials(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
    * @param {*} [options] Override http request option.
    * @throws {RequiredError}
    * @memberof LitellmApi
@@ -9430,6 +10874,83 @@ export class LitellmApi extends BaseAPI {
   public listModels(options?: RawAxiosRequestConfig) {
     return LitellmApiFp(this.configuration)
       .listModels(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @summary List all LiteLLM models with full config (admin)
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof LitellmApi
+   */
+  public listModelsInfo(options?: RawAxiosRequestConfig) {
+    return LitellmApiFp(this.configuration)
+      .listModelsInfo(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @summary List available LLM providers
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof LitellmApi
+   */
+  public listProviders(options?: RawAxiosRequestConfig) {
+    return LitellmApiFp(this.configuration)
+      .listProviders(options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @summary Test a registered model connection
+   * @param {TestModelRequestDto} testModelRequestDto
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof LitellmApi
+   */
+  public testModel(
+    testModelRequestDto: TestModelRequestDto,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return LitellmApiFp(this.configuration)
+      .testModel(testModelRequestDto, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @summary Test a model connection with inline config (no registration)
+   * @param {TestModelConnectionDto} testModelConnectionDto
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof LitellmApi
+   */
+  public testModelConnection(
+    testModelConnectionDto: TestModelConnectionDto,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return LitellmApiFp(this.configuration)
+      .testModelConnection(testModelConnectionDto, options)
+      .then((request) => request(this.axios, this.basePath));
+  }
+
+  /**
+   *
+   * @summary Update an existing LiteLLM model
+   * @param {UpdateLiteLlmModelDto} updateLiteLlmModelDto
+   * @param {*} [options] Override http request option.
+   * @throws {RequiredError}
+   * @memberof LitellmApi
+   */
+  public updateModel(
+    updateLiteLlmModelDto: UpdateLiteLlmModelDto,
+    options?: RawAxiosRequestConfig,
+  ) {
+    return LitellmApiFp(this.configuration)
+      .updateModel(updateLiteLlmModelDto, options)
       .then((request) => request(this.axios, this.basePath));
   }
 }

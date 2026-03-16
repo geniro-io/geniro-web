@@ -9,6 +9,7 @@ export type SystemSettings = SystemSettingsDto;
 
 const DEFAULT_SETTINGS: SystemSettings = {
   githubAppEnabled: false,
+  litellmManagementEnabled: false,
 };
 
 let cachedSettings: SystemSettings | null = null;

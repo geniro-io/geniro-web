@@ -20,6 +20,7 @@ import { CreateProjectPage } from './pages/projects/create';
 import { ProjectsListPage } from './pages/projects/list';
 import { RepositoriesListPage } from './pages/repositories/list';
 import { IntegrationsPage } from './pages/settings/IntegrationsPage';
+import { LiteLlmAdminPage } from './pages/settings/LiteLlmAdminPage';
 import { ModelsPage } from './pages/settings/ModelsPage';
 import { SettingsLayout } from './pages/settings/SettingsLayout';
 import { StorybookPage } from './pages/storybook/page';
@@ -185,6 +186,7 @@ function App({ authModule }: { authModule: AuthModule }) {
               <Route index element={<Navigate to="integrations" replace />} />
               <Route path="integrations" element={<IntegrationsPage />} />
               <Route path="models" element={<ModelsPage />} />
+              <Route path="llm-models" element={<LiteLlmAdminPage />} />
             </Route>
             <Route
               path="/github-app/callback"
