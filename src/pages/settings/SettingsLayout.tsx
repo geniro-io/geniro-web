@@ -71,7 +71,7 @@ export const SettingsLayout = () => {
         <Separator orientation="vertical" className="flex-shrink-0" />
 
         {/* Section content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 overflow-y-auto">
           <Outlet />
         </div>
       </div>
